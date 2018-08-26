@@ -38,6 +38,7 @@ nbproject/*
 .vscode
 # Sass preprocessor
 .sass-cache/
+/composer.phar
 
 # Draft Files #
 ###############
@@ -49,3 +50,4 @@ nbproject/*
 /config/config_stub_xmp.php
 /tests/TestCase/Controller/MaxControllerTest.php
 /tests/TestCase/Controller/PagesControllerTest.php
+
