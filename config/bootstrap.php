@@ -216,8 +216,15 @@ if (Configure::read('debug')) {
     Plugin::load('DebugKit', ['bootstrap' => true]);
 }
 
-Configure::load('config_stub');
 
+//build a config_local file from default if missing
+if (!is_file(CONFIG . 'config_local.php')) {
+    $tmpConfig = file_get_contents(CONFIG . 'config_local.default.php');
+    file_put_contents(CONFIG . 'config_local.php', $tmpConfig);
+}
+Configure::load('config_local', 'default', false);
+
+Configure::load('config_stub');
 
 function rrmdir($dir)
 {

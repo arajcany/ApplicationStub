@@ -223,7 +223,7 @@ return [
     'Email' => [
         'default' => [
             'transport' => 'default',
-            'from' => 'you@localhost',
+            'from' => 'app@localhost',
             //'charset' => 'utf-8',
             //'headerCharset' => 'utf-8',
         ],
@@ -247,7 +247,7 @@ return [
             'className' => 'Cake\Database\Connection',
             'driver' => 'Cake\Database\Driver\Sqlite',
             'persistent' => false,
-            'database' => TMP . 'Stub_DB.sqlite',
+            'database' => CONFIG . 'Stub_DB.sqlite',
             'encoding' => 'utf8',
             'timezone' => 'UTC',
             'cacheMetadata' => true,

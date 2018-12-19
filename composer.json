@@ -7,7 +7,7 @@
     "php": ">=7.0",
     "arajcany/pre-press-tricks": "*",
     "arajcany/tool-box": "*",
-    "cakephp/cakephp": "3.6.*",
+    "cakephp/cakephp": "3.7.*",
     "cakephp/migrations": "^1.8.0",
     "cakephp/plugin-installer": "^1.0",
     "josegonzalez/dotenv": "3.*",
