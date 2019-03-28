@@ -19,6 +19,14 @@ if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
 
+if (!defined('LS')) {
+    if (DS === '\\') {
+        define('LS', "\r\n");
+    } else {
+        define('LS', "\n");
+    }
+}
+
 /**
  * These defines should only be edited if you have cake installed in
  * a directory layout other than the way it is distributed.

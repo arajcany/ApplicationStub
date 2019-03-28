@@ -1,4 +1,8 @@
 <?php
+if (!defined('APP_NAME')) {
+    define('APP_NAME', "ApplicationStub");
+}
+
 return [
     /**
      * Debug Level:
