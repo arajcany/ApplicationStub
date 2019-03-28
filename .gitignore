@@ -40,3 +40,4 @@ nbproject/*
 # Sass preprocessor
 .sass-cache/
 /composer.phar
+/config/Stub_DB.sqlite
