@@ -34,7 +34,7 @@ if (strtolower($gitBranch) != 'master') {
         </div>
     </div>
     <?php
-    //return;
+    return;
 }
 ?>
 
@@ -55,7 +55,7 @@ if (count($gitModified) > 0) {
         </div>
     </div>
     <?php
-    //return;
+    return;
 }
 ?>
 
