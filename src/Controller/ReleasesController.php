@@ -84,6 +84,8 @@ class ReleasesController extends AppController
             //ignore files and folders relative to the ROOT
             $ignoreFilesFolders = [
                 "config\\app.php",
+                "config\\config_local.php",
+                "config\\CompareProjects_DB.sqlite",
                 "bin\\installer\\",
                 ".git\\",
                 ".idea\\",
@@ -190,12 +192,21 @@ class ReleasesController extends AppController
 
     private function _getCommitsSinceLastBuild()
     {
-        $cmd = '"C:\Program Files\Git\bin\git.exe" log --format=oneline ';
+        $commits = [];
+
+        if (is_file('C:\Program Files\Git\cmd\git.exe')) {
+            $gitExeLocation = 'C:\Program Files\Git\cmd\git.exe';
+        } elseif (is_file('C:\Program Files\Git\bin\git.exe')) {
+            $gitExeLocation = 'C:\Program Files\Git\bin\git.exe';
+        } else {
+            return $commits;
+        }
+
+        $cmd = '"' . $gitExeLocation . '" log --format=oneline ';
         $out = null;
         $ret = null;
         exec($cmd, $out, $ret);
 
-        $commits = [];
         if (is_array($out)) {
             foreach ($out as $line) {
                 $line = explode(" ", $line, 2);

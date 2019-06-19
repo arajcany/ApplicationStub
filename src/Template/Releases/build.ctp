@@ -6,8 +6,6 @@
  * @var array $gitModified
  */
 
-use Cake\Core\Configure\Engine\PhpConfig;
-
 ?>
 
 <?php
@@ -44,7 +42,8 @@ if (count($gitModified) > 0) {
     <div class="row">
         <div class="col-md-12">
             <p class="alert alert-warning">
-                <?= __("Sorry, there are uncommitted files the ''{0}'' branch. Please commit all changes into 'Master' before attempting to build a release.", $gitBranch) ?>
+                <?= __("Sorry, there are uncommitted files the ''{0}'' branch. Please commit all changes into 'Master' before attempting to build a release.",
+                    $gitBranch) ?>
             </p>
             <?php
             $opts = [

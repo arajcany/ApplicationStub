@@ -44,3 +44,4 @@
 *.bz2 binary
 *.7z binary
 *.zip binary
+*.sqlite binary

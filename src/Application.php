@@ -46,9 +46,9 @@ class Application extends BaseApplication
             } catch (MissingPluginException $e) {
                 // Do not halt if the plugin is missing
             }
-
-            $this->addPlugin('Migrations');
         }
+
+        $this->addPlugin('Migrations');
 
         /*
          * Only try to load DebugKit in development mode
