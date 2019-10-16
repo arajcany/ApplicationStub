@@ -41,3 +41,4 @@ nbproject/*
 .sass-cache/
 /composer.phar
 /config/Stub_DB.sqlite
+config/internal.sqlite
