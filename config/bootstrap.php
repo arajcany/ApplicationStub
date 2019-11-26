@@ -1,4 +1,6 @@
 <?php
+ini_set('memory_limit', '2048M');
+
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -29,10 +31,14 @@ require __DIR__ . '/paths.php';
  */
 require CORE_PATH . 'config' . DS . 'bootstrap.php';
 
+use App\Model\Table\InternalOptionsTable;
+use App\Model\Table\SettingsTable;
 use Cake\Cache\Cache;
 use Cake\Console\ConsoleErrorHandler;
+use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Configure\Engine\PhpConfig;
+use Cake\Core\Plugin;
 use Cake\Database\Type;
 use Cake\Datasource\ConnectionManager;
 use Cake\Error\ErrorHandler;
@@ -40,6 +46,8 @@ use Cake\Http\ServerRequest;
 use Cake\Log\Log;
 use Cake\Mailer\Email;
 use Cake\Mailer\TransportFactory;
+use Cake\ORM\Locator\TableLocator;
+use Cake\Utility\Inflector;
 use Cake\Utility\Security;
 
 /**
@@ -73,6 +81,16 @@ try {
     Configure::load('app', 'default', false);
 } catch (\Exception $e) {
     exit($e->getMessage() . "\n");
+}
+
+//replace __SALT__
+if (Configure::read('Security.salt') == '__SALT__') {
+    $newSalt = sha1(Security::randomBytes(1024)) . sha1(Security::randomBytes(1024));
+    Configure::write('Security.salt', $newSalt);
+    $appConfigFilepath = CONFIG . 'app.php';
+    $appConfigContents = file_get_contents($appConfigFilepath);
+    $appConfigContents = str_replace('__SALT__', $newSalt, $appConfigContents);
+    file_put_contents($appConfigFilepath, $appConfigContents);
 }
 
 /*
@@ -153,6 +171,36 @@ Email::setConfig(Configure::consume('Email'));
 Log::setConfig(Configure::consume('Log'));
 Security::setSalt(Configure::consume('Security.salt'));
 
+/**
+ * @var SettingsTable $SettingsTable
+ * @var InternalOptionsTable $InternalOptionsTable
+ */
+
+$tableLocator = new TableLocator();
+
+//load Settings from DB
+try {
+    $tablesDefault = getConnectionTableList('default');
+    if (isset($tablesDefault['settings'])) {
+        $SettingsTable = $tableLocator->get('Settings');
+        $SettingsTable->saveSettingsToConfigure();
+    } else {
+        $SettingsTable = false;
+    }
+} catch (\Exception $e) {
+    $SettingsTable = false;
+}
+
+//load InternalOptions from DB
+$tablesInternal = getConnectionTableList('internal');
+if (isset($tablesInternal['internal_options'])) {
+    $InternalOptionsTable = $tableLocator->get('InternalOptions');
+    $InternalOptionsTable->saveOptionsToConfigure();
+} else {
+    $InternalOptionsTable = $tableLocator->get('InternalOptions');
+    $InternalOptionsTable->buildInternalOptionsTable();
+}
+
 /*
  * The default crypto extension in 3.0 is OpenSSL.
  * If you are migrating from 2.x uncomment this code to
@@ -200,6 +248,28 @@ if (!is_file(CONFIG . 'config_local.php')) {
 Configure::load('config_local', 'default', false);
 
 Configure::load('config_stub');
+Configure::load('config_seed');
+
+if (1 == 2) {
+    //TODO load values from DB
+} else {
+    $tz = 'Australia/Sydney';
+    $tf = 'HH:mm:ss';
+    $df = 'yyyy-MM-dd';
+    $dtf = 'yyyy-MM-dd HH:mm:ss';
+}
+if (!defined('TZ')) {
+    define('TZ', $tz);
+}
+if (!defined('TF')) {
+    define('TF', $tf);
+}
+if (!defined('DF')) {
+    define('DF', $df);
+}
+if (!defined('DTF')) {
+    define('DTF', $dtf);
+}
 
 function rrmdir($dir)
 {
@@ -216,4 +286,27 @@ function rrmdir($dir)
         }
         rmdir($dir);
     }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * This function is purely to use Cache when getting a list of tables
+ *
+ * @param string $connectionName
+ * @param bool $readFromCache
+ * @return array|mixed|null
+ */
+function getConnectionTableList($connectionName = '', $readFromCache = true)
+{
+    if ($readFromCache) {
+        $list = Cache::read($connectionName, 'table_list');
+        if ($list) {
+            return $list;
+        }
+    }
+
+    $list = ConnectionManager::get($connectionName)->getSchemaCollection()->listTables();
+    $list = array_flip($list);
+    Cache::write($connectionName, $list, 'table_list');
+    return $list;
 }

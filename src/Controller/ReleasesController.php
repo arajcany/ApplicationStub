@@ -86,6 +86,7 @@ class ReleasesController extends AppController
                 "config\\app.php",
                 "config\\config_local.php",
                 "config\\CompareProjects_DB.sqlite",
+                "config\\internal.sqlite",
                 "bin\\installer\\",
                 ".git\\",
                 ".idea\\",
@@ -117,6 +118,10 @@ class ReleasesController extends AppController
             $fileList[] = [
                 'external' => CONFIG . "empty",
                 'internal' => "$app_name\\tmp\\configure.txt"
+            ];
+            $fileList[] = [
+                'external' => CONFIG . "empty",
+                'internal' => "$app_name\\tmp\\cache\\clear_all.txt"
             ];
             //------------------------------------------------------------------------
 

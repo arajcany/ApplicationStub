@@ -13,7 +13,7 @@ return [
      * Development Mode:
      * true: Errors and warnings shown.
      */
-    'debug' => filter_var(env('DEBUG', true), FILTER_VALIDATE_BOOLEAN),
+    'debug' => filter_var(env('DEBUG', false), FILTER_VALIDATE_BOOLEAN),
 
     /**
      * Configure basic information about the application.
@@ -95,6 +95,32 @@ return [
         'default' => [
             'className' => 'Cake\Cache\Engine\FileEngine',
             'path' => CACHE,
+            'url' => env('CACHE_DEFAULT_URL', null),
+        ],
+
+        'table_list' => [
+            'className' => 'File',
+            'prefix' => 'table_list_',
+            'path' => CACHE,
+            'duration' => '+1 hour',
+            'url' => env('CACHE_DEFAULT_URL', null),
+        ],
+
+        'query_results_app' => [
+            //more for caching application properties such as Settings
+            'className' => 'File',
+            'prefix' => 'app_',
+            'path' => CACHE . 'queries/app',
+            'duration' => '+300 seconds',
+            'url' => env('CACHE_DEFAULT_URL', null),
+        ],
+
+        'query_results_general' => [
+            //for caching general queries
+            'className' => 'File',
+            'prefix' => 'general_',
+            'path' => CACHE . 'queries/general',
+            'duration' => '+1 minute',
             'url' => env('CACHE_DEFAULT_URL', null),
         ],
 
