@@ -4,6 +4,8 @@ namespace App\Model\Table;
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
+use Cake\I18n\FrozenTime;
+use Cake\I18n\Time;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
@@ -137,8 +139,22 @@ class SettingsTable extends Table
          * @var \App\Model\Entity\Setting $setting
          */
         foreach ($settings as $setting) {
-            $settingsList[$setting->property_key] = $setting->property_value;
-            $settingsGrouped[$setting->property_group][$setting->property_key] = $setting->property_value;
+            $value = $setting->property_value;
+
+            if ($value === 'false') {
+                $value = false;
+            }
+
+            if ($value === 'true') {
+                $value = true;
+            }
+
+            if ($value === 'null') {
+                $value = null;
+            }
+
+            $settingsList[$setting->property_key] = $value;
+            $settingsGrouped[$setting->property_group][$setting->property_key] = $value;
         }
 
         Configure::write('Settings', $settingsList);
@@ -167,6 +183,9 @@ class SettingsTable extends Table
         if ($configValue !== null) {
             return $configValue;
         }
+
+        //update the Configure values
+        $this->saveSettingsToConfigure(false);
 
         //fallback to reading from DB
         $value = $this->findByPropertyKey($settingKey)->toArray();
@@ -217,6 +236,60 @@ class SettingsTable extends Table
         } else {
             return false;
         }
+    }
+
+    /**
+     * Return a FrozenTime object for a password expiry date.
+     * Date is based on the password_expiry setting.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getPasswordExpiryDate()
+    {
+        $days = $this->getSetting('password_reset_days');
+
+        //fallback
+        if ($days <= 0) {
+            $days = 365;
+        }
+
+        $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
+
+
+        return $frozenTimeObj;
+    }
+
+    /**
+     * Return a FrozenTime object for a password expiry date that has passed.
+     * Useful for when a password needs to have a force reset.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getExpiredPasswordExpiryDate()
+    {
+        $frozenTimeObj = (new FrozenTime('-10 days'))->startOfDay();
+
+        return $frozenTimeObj;
+    }
+
+    /**
+     * Return a FrozenTime object for a user account expiration date.
+     * Date is based on the password_expiry setting.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getAccountExpirationDate()
+    {
+        $days = $this->getSetting('account_expiry');
+
+        //fallback
+        if ($days <= 0) {
+            $days = 365 * 10;
+        }
+
+        $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
+
+        return $frozenTimeObj;
     }
 
 }
