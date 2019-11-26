@@ -17,13 +17,14 @@
     <?php echo $this->fetch('viewPluginCss'); ?>
 </head>
 
-<body>
+<body class="mb-0">
+
+
 
 <main role="main" class="container-fluid">
-
     <?= $this->Flash->render() ?>
 
-    <div class="row">
+    <div class="row mb-5">
         <div class="col-12">
             <?= $this->fetch('content') ?>
         </div>
@@ -31,15 +32,7 @@
 
 </main><!-- /.container -->
 
-<div class="m-5">
-    &nbsp;
-</div>
-
-<footer class="footer">
-    <div class="container-fluid">
-        <span class="text-muted">&copy; <?= date("Y") ?> Fuji Xerox Australia</span>
-    </div>
-</footer>
+<?php echo $this->element('footer') ?>
 
 <?php echo $this->element('corejs') ?>
 

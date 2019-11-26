@@ -52,18 +52,9 @@
         </div>
     </div>
 
-
 </main><!-- /.container -->
 
-<div class="m-5">
-    &nbsp;
-</div>
-
-<footer class="footer">
-    <div class="container-fluid">
-        <span class="text-muted">&copy; <?= date("Y") ?> https://github.com/arajcany</span>
-    </div>
-</footer>
+<?php echo $this->element('footer') ?>
 
 <?php echo $this->element('corejs') ?>
 

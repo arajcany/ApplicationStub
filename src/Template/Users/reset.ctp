@@ -9,7 +9,7 @@
 <div class="row">
     <div class="col-md-4 ml-auto mr-auto">
         <!-- BEGIN LOGIN FORM -->
-        <?= $this->Form->create($user, ['class' => 'form-signin']) ?>
+        <?= $this->Form->create($user, ['class' => 'form-signin', 'type' => 'POST']) ?>
         <h3 class="form-title">Please reset your password</h3>
         <?= $this->Flash->render() ?>
         <div class="form-group">
