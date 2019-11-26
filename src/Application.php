@@ -22,6 +22,7 @@ use Cake\Error\Middleware\ErrorHandlerMiddleware;
 use Cake\Http\BaseApplication;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
+use Composer\Cache;
 use Migrations\Migrations;
 
 /**
@@ -46,9 +47,10 @@ class Application extends BaseApplication
             } catch (MissingPluginException $e) {
                 // Do not halt if the plugin is missing
             }
-        }
 
-        $this->addPlugin('Migrations');
+            $this->addPlugin('TinyAuth');
+            $this->addPlugin('Migrations');
+        }
 
         /*
          * Only try to load DebugKit in development mode
@@ -59,6 +61,8 @@ class Application extends BaseApplication
         }
 
         $this->buildDatabase();
+        $this->clearCache();
+
     }
 
     /**
@@ -99,6 +103,10 @@ class Application extends BaseApplication
 
         //connect to the DB
         $Conn = ConnectionManager::get('default');
+
+        //TODO build DB if not available
+        //$result = $Conn->query("if not exists(select * from sys.databases where name = 'ApplicationStub') create database ApplicationStub");
+
         if (!$Conn) {
             return false;
         }
@@ -119,5 +127,23 @@ class Application extends BaseApplication
         }
 
         return $migrate;
+    }
+
+    /**
+     * Clear CACHE based on a signal file - useful after an update or install.
+     */
+    private function clearCache()
+    {
+        $clearCacheSignalFile = \CACHE . "clear.txt";
+        if (is_file($clearCacheSignalFile)) {
+            \Cake\Cache\Cache::clear();
+            unlink($clearCacheSignalFile);
+        }
+
+        $clearCacheSignalFile = \CACHE . "clear_all.txt";
+        if (is_file($clearCacheSignalFile)) {
+            \Cake\Cache\Cache::clearAll();
+            unlink($clearCacheSignalFile);
+        }
     }
 }
