@@ -194,7 +194,7 @@ class UsersRolesStatuses extends AbstractMigration
             ])
             ->create();
 
-        $this->table('user_locales')
+        $this->table('user_localizations')
             ->addColumn('user_id', 'integer', [
                 'default' => null,
                 'limit' => 10,
@@ -240,6 +240,11 @@ class UsersRolesStatuses extends AbstractMigration
                 'limit' => 50,
                 'null' => true,
             ])
+            ->addColumn('week_start', 'string', [
+                'default' => null,
+                'limit' => 50,
+                'null' => true,
+            ])
             ->create();
     }
 
@@ -254,7 +259,7 @@ class UsersRolesStatuses extends AbstractMigration
 
         $this->table('users')->drop()->save();
 
-        $this->table('user_locales')->drop()->save();
+        $this->table('user_localizations')->drop()->save();
     }
 }
 

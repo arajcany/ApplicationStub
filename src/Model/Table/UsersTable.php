@@ -15,7 +15,9 @@ use Cake\Validation\Validator;
  * Users Model
  *
  * @property \App\Model\Table\UserStatusesTable|\Cake\ORM\Association\BelongsTo $UserStatuses
+ * @property \App\Model\Table\UserLocalizationsTable|\Cake\ORM\Association\HasMany $UserLocalizations
  * @property \App\Model\Table\RolesTable|\Cake\ORM\Association\BelongsToMany $Roles
+ *
  * @property \App\Model\Table\SettingsTable $Settings
  *
  * @method \App\Model\Entity\User get($primaryKey, $options = [])
@@ -55,6 +57,9 @@ class UsersTable extends Table
         $this->belongsTo('UserStatuses', [
             'foreignKey' => 'user_statuses_id'
         ]);
+        $this->hasOne('UserLocalizations', [
+            'foreignKey' => 'user_id'
+        ]);
         $this->belongsToMany('Roles', [
             'foreignKey' => 'user_id',
             'targetForeignKey' => 'role_id',
@@ -75,22 +80,22 @@ class UsersTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmpty('id', 'create');
+            ->allowEmptyString('id', 'create');
 
         $validator
             ->email('email')
             ->requirePresence('email', 'create')
-            ->notEmpty('email');
+            ->notBlank('email');
 
         $validator
             ->scalar('username')
             ->requirePresence('username', 'create')
-            ->notEmpty('username');
+            ->notBlank('username');
 
         $validator
             ->scalar('password')
             ->requirePresence('password', 'create')
-            ->notEmpty('password');
+            ->notBlank('password');
 
         //check if strong passwords are required
         $password_strong_bool = $this->Settings->getSetting('password_strong_bool');
@@ -99,8 +104,8 @@ class UsersTable extends Table
         }
 
         $validator
-            ->allowEmpty('password_2', 'create')
-            ->allowEmpty('password_2', 'update')
+            ->allowEmptyString('password_2', 'create')
+            ->allowEmptyString('password_2', 'update')
             ->add('password_2', 'compareWith', [
                 'rule' => ['compareWith', 'password'],
                 'message' => 'Passwords do not match.'
@@ -108,61 +113,59 @@ class UsersTable extends Table
 
         $validator
             ->scalar('first_name')
-            ->requirePresence('first_name', 'create')
-            ->notEmpty('first_name');
+            ->requirePresence('first_name', 'create');
 
         $validator
             ->scalar('last_name')
-            ->requirePresence('last_name', 'create')
-            ->notEmpty('last_name');
+            ->requirePresence('last_name', 'create');
 
         $validator
             ->scalar('address_1')
-            ->allowEmpty('address_1');
+            ->allowEmptyString('address_1');
 
         $validator
             ->scalar('address_2')
-            ->allowEmpty('address_2');
+            ->allowEmptyString('address_2');
 
         $validator
             ->scalar('suburb')
-            ->allowEmpty('suburb');
+            ->allowEmptyString('suburb');
 
         $validator
             ->scalar('state')
-            ->allowEmpty('state');
+            ->allowEmptyString('state');
 
         $validator
             ->scalar('post_code')
-            ->allowEmpty('post_code');
+            ->allowEmptyString('post_code');
 
         $validator
             ->scalar('country')
-            ->allowEmpty('country');
+            ->allowEmptyString('country');
 
         $validator
             ->scalar('mobile')
-            ->allowEmpty('mobile');
+            ->allowEmptyString('mobile');
 
         $validator
             ->scalar('phone')
-            ->allowEmpty('phone');
+            ->allowEmptyString('phone');
 
         $validator
             ->dateTime('activation')
-            ->allowEmpty('activation');
+            ->allowEmptyDateTime('activation');
 
         $validator
             ->dateTime('expiration')
-            ->allowEmpty('expiration');
+            ->allowEmptyDateTime('expiration');
 
         $validator
             ->boolean('is_confirmed')
-            ->allowEmpty('is_confirmed');
+            ->allowEmptyString('is_confirmed');
 
         $validator
             ->dateTime('password_expiry')
-            ->allowEmpty('password_expiry');
+            ->allowEmptyDateTime('password_expiry');
 
         return $validator;
     }

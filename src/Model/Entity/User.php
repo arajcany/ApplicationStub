@@ -30,6 +30,8 @@ use Cake\ORM\Entity;
  * @property int $user_statuses_id
  * @property \Cake\I18n\FrozenTime $password_expiry
  *
+ * @property \App\Model\Entity\UserStatus $user_status
+ * @property \App\Model\Entity\UserLocalization $user_localization
  * @property \App\Model\Entity\Role[] $roles
  */
 class User extends Entity
@@ -66,6 +68,7 @@ class User extends Entity
         'user_statuses_id' => true,
         'password_expiry' => true,
         'user_status' => true,
+        'user_localization' => true,
         'roles' => true
     ];
 

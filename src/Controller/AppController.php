@@ -45,7 +45,6 @@ use Cake\Core\Configure;
  * TODO implement HTTPS
  * TODO implement CSRF
  * TODO implement blackHoleHandler
- * TODO implement User locale -> fallback to App locale -> fallback to default locale
  */
 class AppController extends Controller
 {
@@ -144,6 +143,47 @@ class AppController extends Controller
         if ($this->Auth->user()) {
             $this->loadComponent('AppSettingsForUser');
             $this->AppSettingsForUser->setTimeouts();
+            $userLocalizations = $this->AppSettingsForUser->getLocalization();
+        } else {
+            $userLocalizations = [];
+        }
+
+        //localizations from DB
+        if (Configure::check('SettingsGrouped.localization')) {
+            $appLocalizations = Configure::read('SettingsGrouped.localization');
+        } else {
+            $appLocalizations = [];
+        }
+
+        //localizations from bootstrap
+        $defaultLocalisations =
+            [
+                'locale' => Configure::read("App.defaultLocale"),
+                'timezone' => Configure::read("App.defaultTimezone"),
+                'location' => '',
+                'date_format' => 'yyyy-MM-dd',
+                'time_format' => 'HH:mm:ss',
+                'datetime_format' => 'yyyy-MM-dd HH:mm:ss',
+                'week_start' => 'Sunday'
+            ];
+
+        $compiledLocalisations = array_merge($defaultLocalisations, $appLocalizations, $userLocalizations);
+
+        //set some localizations as constants
+        if (!defined('LCL')) {
+            define('LCL', $compiledLocalisations);
+        }
+        if (!defined('TZ')) {
+            define('TZ', $compiledLocalisations['timezone']);
+        }
+        if (!defined('TF')) {
+            define('TF', $compiledLocalisations['time_format']);
+        }
+        if (!defined('DF')) {
+            define('DF', $compiledLocalisations['date_format']);
+        }
+        if (!defined('DTF')) {
+            define('DTF', $compiledLocalisations['datetime_format']);
         }
 
         //kill flash messages if User has been redirected to /login from /

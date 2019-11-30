@@ -250,27 +250,6 @@ Configure::load('config_local', 'default', false);
 Configure::load('config_stub');
 Configure::load('config_seed');
 
-if (1 == 2) {
-    //TODO load values from DB
-} else {
-    $tz = 'Australia/Sydney';
-    $tf = 'HH:mm:ss';
-    $df = 'yyyy-MM-dd';
-    $dtf = 'yyyy-MM-dd HH:mm:ss';
-}
-if (!defined('TZ')) {
-    define('TZ', $tz);
-}
-if (!defined('TF')) {
-    define('TF', $tf);
-}
-if (!defined('DF')) {
-    define('DF', $df);
-}
-if (!defined('DTF')) {
-    define('DTF', $dtf);
-}
-
 function rrmdir($dir)
 {
     if (is_dir($dir)) {

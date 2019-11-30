@@ -64,17 +64,17 @@ class RolesTable extends Table
         $validator
             ->scalar('name')
             ->requirePresence('name', 'create')
-            ->notEmpty('name');
+            ->notBlank('name');
 
         $validator
             ->scalar('description')
             ->requirePresence('description', 'create')
-            ->notEmpty('description');
+            ->notBlank('description');
 
         $validator
             ->scalar('alias')
             ->requirePresence('alias', 'create')
-            ->notEmpty('alias');
+            ->notBlank('alias');
 
         return $validator;
     }

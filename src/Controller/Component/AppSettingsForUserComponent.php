@@ -2,6 +2,7 @@
 
 namespace App\Controller\Component;
 
+use App\Model\Entity\User;
 use App\Model\Table\UsersTable;
 use Cake\Controller\Component;
 use Cake\Controller\ComponentRegistry;
@@ -87,4 +88,42 @@ class AppSettingsForUserComponent extends Component
 
     }
 
+
+    /**
+     * Get the Localization values for the logged in User
+     *
+     * @return array|\Cake\Datasource\EntityInterface|null
+     */
+    public function getLocalization()
+    {
+        /**
+         * @var User $user
+         */
+        $user = $this->Users->find('all')
+            ->where(['Users.id' => $this->AuthUser->id()])
+            ->contain(['UserLocalizations'])
+            ->first();
+
+        if (!$user->user_localization) {
+            return [];
+        }
+
+        $localizationValues = [
+            'location' => $user->user_localization->location,
+            'locale' => $user->user_localization->locale,
+            'timezone' => $user->user_localization->timezone,
+            'time_format' => $user->user_localization->time_format,
+            'date_format' => $user->user_localization->date_format,
+            'datetime_format' => $user->user_localization->datetime_format,
+            'week_start' => $user->user_localization->week_start,
+        ];
+
+        foreach ($localizationValues as $k => $localizationValue) {
+            if (is_null($localizationValue) || empty($localizationValue)) {
+                unset($localizationValues[$k]);
+            }
+        }
+
+        return $localizationValues;
+    }
 }

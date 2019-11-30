@@ -2,7 +2,7 @@
 
 use Migrations\AbstractMigration;
 
-class SeedSettingsLocale extends AbstractMigration
+class SeedSettingsLocalization extends AbstractMigration
 {
     public function up()
     {
@@ -21,10 +21,23 @@ class SeedSettingsLocale extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
+                'name' => 'Location',
+                'description' => 'Default Location',
+                'property_group' => 'localization',
+                'property_key' => 'location',
+                'property_value' => '',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => '0',
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
                 'name' => 'Language',
                 'description' => 'Language as presented in the GUI',
-                'property_group' => 'locale',
-                'property_key' => 'language',
+                'property_group' => 'localization',
+                'property_key' => 'locale',
                 'property_value' => 'en-AU',
                 'selections' => '{"en-AU":"English - Australian"}',
                 'html_select_type' => 'select',
@@ -36,7 +49,7 @@ class SeedSettingsLocale extends AbstractMigration
                 'modified' => $currentDate,
                 'name' => 'Date Format',
                 'description' => 'Format of the Date as presented in the GUI',
-                'property_group' => 'locale',
+                'property_group' => 'localization',
                 'property_key' => 'date_format',
                 'property_value' => 'yyyy-MM-dd',
                 'selections' => '{
@@ -61,7 +74,7 @@ class SeedSettingsLocale extends AbstractMigration
                 'modified' => $currentDate,
                 'name' => 'Time Format',
                 'description' => 'Format of the Time as presented in the GUI',
-                'property_group' => 'locale',
+                'property_group' => 'localization',
                 'property_key' => 'time_format',
                 'property_value' => 'HH:mm:ss',
                 'selections' => '{
@@ -83,7 +96,7 @@ class SeedSettingsLocale extends AbstractMigration
                 'modified' => $currentDate,
                 'name' => 'Date and Time Format',
                 'description' => 'Format of the Date and Time as presented in the GUI',
-                'property_group' => 'locale',
+                'property_group' => 'localization',
                 'property_key' => 'datetime_format',
                 'property_value' => 'yyyy-MM-dd HH:mm:ss',
                 'selections' => '{
@@ -102,7 +115,7 @@ class SeedSettingsLocale extends AbstractMigration
                 'modified' => $currentDate,
                 'name' => 'Weeks Starts On',
                 'description' => 'The first day of the week',
-                'property_group' => 'locale',
+                'property_group' => 'localization',
                 'property_key' => 'week_start',
                 'property_value' => 'Sunday',
                 'selections' => '{"Sunday":"Sunday","Monday":"Monday","Tuesday":"Tuesday","Wednesday":"Wednesday","Thursday":"Thursday","Friday":"Friday","Saturday":"Saturday"}',
@@ -115,7 +128,7 @@ class SeedSettingsLocale extends AbstractMigration
                 'modified' => $currentDate,
                 'name' => 'Timezone',
                 'description' => 'Timezone of the Application',
-                'property_group' => 'locale',
+                'property_group' => 'localization',
                 'property_key' => 'timezone',
                 'property_value' => 'Australia/Sydney',
                 'selections' => file_get_contents(__DIR__ . "/../php_timezones.json"),
