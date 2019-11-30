@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Controller\AppController;
+use Cake\Database\Driver\Sqlite;
 use Cake\I18n\FrozenTime;
 use Cake\Validation\Validation;
 
@@ -36,7 +37,7 @@ class UsersController extends AppController
     public function index()
     {
         $this->paginate = [
-            'contain' => ['UserStatuses','Roles']
+            'contain' => ['UserStatuses', 'Roles']
         ];
         $users = $this->paginate($this->Users);
 
@@ -164,6 +165,14 @@ class UsersController extends AppController
      */
     public function login()
     {
+        $dbDriver = ($this->Users->getConnection())->getDriver();
+        if ($dbDriver instanceof Sqlite) {
+            $caseSensitive = true;
+        } else {
+            $caseSensitive = false;
+        }
+        $this->set('caseSensitive', $caseSensitive);
+
         $this->viewBuilder()->setLayout('login');
 
         //see if they are already logged in

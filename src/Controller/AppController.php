@@ -15,6 +15,7 @@
 
 namespace App\Controller;
 
+use App\Controller\Component\AppSettingsForUserComponent;
 use Cake\Controller\Controller;
 use Cake\Http\Exception\UnauthorizedException;
 use Cake\I18n\FrozenTime;
@@ -37,6 +38,7 @@ use Cake\Core\Configure;
  *
  * @property \TinyAuth\Controller\Component\AuthComponent $Auth
  * @property \TinyAuth\Controller\Component\AuthUserComponent $AuthUser
+ * @property AppSettingsForUserComponent $AppSettingsForUser
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  *
@@ -138,31 +140,10 @@ class AppController extends Controller
         $this->loadComponent('TinyAuth.AuthUser', $tinyAuthorizeConfig);
         //debug($this->AuthUser->getConfig());
 
-        //set the Session Timeouts based on Roles
+        //if User is logged in, configure the App for the User
         if ($this->Auth->user()) {
-            $timeouts = $this->Roles->listByNameAndTimeout();
-            if ($this->AuthUser->hasRole('superadmin')) {
-                Configure::write('Session.timeout', $timeouts['SuperAdmin']);
-                Configure::write('Session.cookie_lifetime', $timeouts['SuperAdmin']);
-            } elseif ($this->AuthUser->hasRole('admin')) {
-                Configure::write('Session.timeout', $timeouts['Admin']);
-                Configure::write('Session.cookie_lifetime', $timeouts['Admin']);
-            } elseif ($this->AuthUser->hasRole('superuser')) {
-                Configure::write('Session.timeout', $timeouts['SuperUser']);
-                Configure::write('Session.cookie_lifetime', $timeouts['SuperUser']);
-            } elseif ($this->AuthUser->hasRole('user')) {
-                Configure::write('Session.timeout', $timeouts['User']);
-                Configure::write('Session.cookie_lifetime', $timeouts['User']);
-            } elseif ($this->AuthUser->hasRole('manager')) {
-                Configure::write('Session.timeout', $timeouts['Manager']);
-                Configure::write('Session.cookie_lifetime', $timeouts['Manager']);
-            } elseif ($this->AuthUser->hasRole('supervisor')) {
-                Configure::write('Session.timeout', $timeouts['Supervisor']);
-                Configure::write('Session.cookie_lifetime', $timeouts['Supervisor']);
-            } elseif ($this->AuthUser->hasRole('operator')) {
-                Configure::write('Session.timeout', $timeouts['Operator']);
-                Configure::write('Session.cookie_lifetime', $timeouts['Operator']);
-            }
+            $this->loadComponent('AppSettingsForUser');
+            $this->AppSettingsForUser->setTimeouts();
         }
 
         //kill flash messages if User has been redirected to /login from /
