@@ -55,35 +55,35 @@ class SeedsTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmpty('id', 'create');
+            ->allowEmptyString('id', 'create');
 
         $validator
             ->scalar('activation')
-            ->allowEmpty('activation');
+            ->allowEmptyDateTime('activation');
 
         $validator
             ->scalar('expiration')
-            ->allowEmpty('expiration');
+            ->allowEmptyDateTime('expiration');
 
         $validator
             ->scalar('token')
-            ->allowEmpty('token');
+            ->allowEmptyString('token');
 
         $validator
             ->scalar('url')
-            ->allowEmpty('url');
+            ->allowEmptyString('url');
 
         $validator
             ->integer('bids')
-            ->allowEmpty('bids');
+            ->allowEmptyString('bids');
 
         $validator
             ->integer('bid_limit')
-            ->allowEmpty('bid_limit');
+            ->allowEmptyString('bid_limit');
 
         $validator
             ->integer('user_link')
-            ->allowEmpty('user_link');
+            ->allowEmptyString('user_link');
 
         return $validator;
     }

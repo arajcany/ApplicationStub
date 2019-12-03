@@ -51,27 +51,27 @@ class UserStatusesTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmpty('id', 'create');
+            ->allowEmptyString('id', 'create');
 
         $validator
             ->integer('rank')
-            ->allowEmpty('rank');
+            ->allowEmptyString('rank');
 
         $validator
             ->scalar('name')
-            ->allowEmpty('name');
+            ->allowEmptyString('name');
 
         $validator
             ->scalar('description')
-            ->allowEmpty('description');
+            ->allowEmptyString('description');
 
         $validator
             ->scalar('alias')
-            ->allowEmpty('alias');
+            ->allowEmptyString('alias');
 
         $validator
             ->scalar('name_status_icon')
-            ->allowEmpty('name_status_icon');
+            ->allowEmptyString('name_status_icon');
 
         return $validator;
     }

@@ -58,26 +58,26 @@ class InternalOptionsTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmpty('id', 'create');
+            ->allowEmptyString('id', 'create');
 
         $validator
             ->scalar('option_key')
             ->requirePresence('option_key', 'create')
-            ->notEmpty('option_key')
+            ->notBlank('option_key')
             ->add('option_key', 'unique', ['rule' => 'validateUnique', 'provider' => 'table']);
 
         $validator
             ->scalar('option_value')
             ->requirePresence('option_value', 'create')
-            ->notEmpty('option_value');
+            ->notBlank('option_value');
 
         $validator
             ->boolean('is_masked')
-            ->allowEmpty('is_masked');
+            ->allowEmptyString('is_masked');
 
         $validator
             ->boolean('apply_mask')
-            ->allowEmpty('apply_mask');
+            ->allowEmptyString('apply_mask');
 
         return $validator;
     }
