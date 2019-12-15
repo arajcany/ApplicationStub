@@ -75,6 +75,7 @@ try {
     if (!is_file(CONFIG . 'app.php')) {
         $tmpConfig = file_get_contents(CONFIG . 'app.default.php');
         file_put_contents(CONFIG . 'app.php', $tmpConfig);
+        exit("Please configure the DB credentials in \config\app.php" . "\n");
     }
 
     Configure::config('default', new PhpConfig());
@@ -170,6 +171,27 @@ TransportFactory::setConfig(Configure::consume('EmailTransport'));
 Email::setConfig(Configure::consume('Email'));
 Log::setConfig(Configure::consume('Log'));
 Security::setSalt(Configure::consume('Security.salt'));
+
+/*
+ * Try to connect to the default DB. If not, exit with error message.
+ */
+if (!Cache::read('default_is_online', 'table_list')) {
+    try {
+        /**
+         * @var Cake\Database\Connection $conn
+         */
+        $conn = ConnectionManager::get('default');
+        $schema = $conn->getSchemaCollection();
+        if ($schema) {
+            Cache::write('default_is_online', true, 'table_list');
+        }
+    } catch (\PDOException $e) {
+        $msg = __("Sorry, could not connect to the default DB.<br><strong>{0}</strong><br>Please check the DB configuration in \config\app.php", $e->getMessage());
+        exit($msg);
+    }
+}else{
+    debug('online');
+}
 
 /**
  * @var SettingsTable $SettingsTable
