@@ -189,8 +189,6 @@ if (!Cache::read('default_is_online', 'table_list')) {
         $msg = __("Sorry, could not connect to the default DB.<br><strong>{0}</strong><br>Please check the DB configuration in \config\app.php", $e->getMessage());
         exit($msg);
     }
-}else{
-    debug('online');
 }
 
 /**
