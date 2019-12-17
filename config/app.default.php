@@ -46,7 +46,7 @@ return [
     'App' => [
         'namespace' => 'App',
         'encoding' => env('APP_ENCODING', 'UTF-8'),
-        'defaultLocale' => env('APP_DEFAULT_LOCALE', 'en_US'),
+        'defaultLocale' => env('APP_DEFAULT_LOCALE', 'en_AU'),
         'defaultTimezone' => env('APP_DEFAULT_TIMEZONE', 'UTC'),
         'base' => false,
         'dir' => 'src',
@@ -101,7 +101,7 @@ return [
         'table_list' => [
             'className' => 'File',
             'prefix' => 'table_list_',
-            'path' => CACHE,
+            'path' => CACHE . 'connection',
             'duration' => '+1 hour',
             'url' => env('CACHE_DEFAULT_URL', null),
         ],
