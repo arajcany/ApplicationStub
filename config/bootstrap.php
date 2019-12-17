@@ -175,15 +175,20 @@ Security::setSalt(Configure::consume('Security.salt'));
 /*
  * Try to connect to the default DB. If not, exit with error message.
  */
-try {
-    /**
-     * @var Cake\Database\Connection $conn
-     */
-    $conn = ConnectionManager::get('default');
-    $schema = $conn->getSchemaCollection();
-} catch (\PDOException $e) {
-    $msg = __("Sorry, could not connect to the default DB.<br><strong>{0}</strong><br>Please check the DB configuration in \config\app.php", $e->getMessage());
-    exit($msg);
+if (!Cache::read('default_is_online', 'table_list')) {
+    try {
+        /**
+         * @var Cake\Database\Connection $conn
+         */
+        $conn = ConnectionManager::get('default');
+        $schema = $conn->getSchemaCollection();
+        if ($schema) {
+            Cache::write('default_is_online', true, 'table_list');
+        }
+    } catch (\PDOException $e) {
+        $msg = __("Sorry, could not connect to the default DB.<br><strong>{0}</strong><br>Please check the DB configuration in \config\app.php", $e->getMessage());
+        exit($msg);
+    }
 }
 
 /**
