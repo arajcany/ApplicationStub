@@ -50,6 +50,14 @@ $user = $this->request->getSession()->read('Auth.User');
                            aria-haspopup="true" aria-expanded="false">Admin Menu</a>
                         <div class="dropdown-menu" aria-labelledby="dropdown02">
                             <?php
+                            $title = 'Users';
+                            $url = ['controller' => 'users', 'action' => 'index'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
+                            <?php
                             $title = 'Settings';
                             $url = ['controller' => 'settings', 'action' => 'index'];
                             $options = [
