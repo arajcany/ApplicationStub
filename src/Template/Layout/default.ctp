@@ -21,30 +21,9 @@
 
 <?php echo $this->element('navbar') ?>
 
-<main role="main" class="container-fluid">
+<main role="main" class="container">
 
     <?= $this->Flash->render() ?>
-
-    <?php
-
-    if ($this->request->getParam('controller') == 'Pages') {
-        ?>
-        <div class="starter-template">
-            <div class="row">
-                <div class="col-12">
-                    <h1>Application Stub</h1>
-
-                    <?php if (1 == 1) { ?>
-                        <p class="lead">
-                            Please select an Action from the Menu.
-                        </p>
-                    <?php } ?>
-                </div>
-            </div>
-        </div>
-        <?php
-    }
-    ?>
 
     <div class="row">
         <div class="col-12">

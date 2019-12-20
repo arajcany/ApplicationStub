@@ -3,12 +3,12 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\User $user
  * @var \App\Model\Entity\UserStatus[] $userStatuses
- * @var \App\Model\Entity\Role[] $roles
+ * @var \App\Model\Entity\Role[]|Query $roles
  *
  */
 ?>
-<div class="row">
-    <div class="col-10 ml-auto mr-auto">
+<div class="row mb-5">
+    <div class="col-12 ml-auto mr-auto">
         <div class="users form large-9 medium-8 columns content">
             <?php
             $formOpts = [
@@ -16,6 +16,7 @@
 
             $labelClass = 'form-control-label';
             $inputClass = 'form-control mb-4';
+            $checkboxClass = 'mr-2 mb-4';
 
             $defaultOptions = [
                 'label' => [
@@ -24,6 +25,8 @@
                 'options' => null,
                 'class' => $inputClass,
             ];
+
+            $checkboxOptions = array_merge($defaultOptions, ['class' => $checkboxClass]);
             ?>
             <?= $this->Form->create($user) ?>
             <fieldset>
@@ -44,18 +47,20 @@
                 echo $this->Form->control('phone', $defaultOptions);
                 //echo $this->Form->control('activation', $defaultOptions);
                 //echo $this->Form->control('expiration', $defaultOptions);
-                echo $this->Form->control('is_confirmed', $defaultOptions);
+                echo $this->Form->control('is_confirmed', $checkboxOptions);
 
                 $customOpts = array_merge($defaultOptions, ['options' => $userStatuses, 'empty' => false]);
                 echo $this->Form->control('user_statuses_id', $customOpts);
 
                 //echo $this->Form->control('password_expiry', $defaultOptions);
 
-                $customOpts = array_merge($defaultOptions, ['options' => $roles]);
+                $height = min($roles->count(), 20);
+                $customOpts = array_merge($defaultOptions, ['options' => $roles, 'size' => $height]);
                 echo $this->Form->control('roles._ids', $customOpts);
                 ?>
             </fieldset>
-            <?= $this->Form->button(__('Submit')) ?>
+            <?= $this->Html->link(__('Cancel'), ['action' => 'index'], ['class' => 'btn btn-secondary float-left']) ?>
+            <?= $this->Form->button(__('Submit'), ['class' => 'btn btn-primary float-right']) ?>
             <?= $this->Form->end() ?>
         </div>
     </div>

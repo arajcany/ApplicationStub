@@ -7,11 +7,11 @@
 use Cake\Utility\Text; ?>
 
 <div class="row">
-    <div class="col-10 ml-auto mr-auto">
+    <div class="col-12 ml-auto mr-auto">
         <?php
         $q = $this->request->getQuery();
         $opts = [
-            'class' => 'btn btn-secondary float-right',
+            'class' => 'btn btn-primary float-right',
         ];
         echo $this->Html->link(__('New User'), ['action' => 'add', '?' => $q], $opts)
         ?>
@@ -19,14 +19,13 @@ use Cake\Utility\Text; ?>
 </div>
 
 <div class="row">
-    <div class="col-10 ml-auto mr-auto">
-
+    <div class="col-12 ml-auto mr-auto">
         <div class="users index large-9 medium-8 columns content">
             <h3><?= __('Users') ?></h3>
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>
-                    <th scope="col"><?= $this->Paginator->sort('id') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('id', 'ID') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('email') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('username') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('first_name') ?></th>
@@ -62,11 +61,11 @@ use Cake\Utility\Text; ?>
             </table>
             <div class="paginator">
                 <ul class="pagination">
-                    <?= $this->Paginator->first('<< ' . __('first')) ?>
-                    <?= $this->Paginator->prev('< ' . __('previous')) ?>
+                    <?= $this->Paginator->first() ?>
+                    <?= $this->Paginator->prev() ?>
                     <?= $this->Paginator->numbers() ?>
-                    <?= $this->Paginator->next(__('next') . ' >') ?>
-                    <?= $this->Paginator->last(__('last') . ' >>') ?>
+                    <?= $this->Paginator->next() ?>
+                    <?= $this->Paginator->last() ?>
                 </ul>
                 <p><?= $this->Paginator->counter(['format' => __('Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')]) ?></p>
             </div>

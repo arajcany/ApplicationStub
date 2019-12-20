@@ -5,7 +5,7 @@
  */
 ?>
 <div class="row">
-    <div class="col-10 ml-auto mr-auto">
+    <div class="col-12 ml-auto mr-auto">
 
         <div class="settings form large-9 medium-8 columns content">
             <?php

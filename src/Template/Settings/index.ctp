@@ -14,7 +14,7 @@
         </nav>
     </div>
 
-    <div class="col-10 ml-auto mr-auto">
+    <div class="col-12 ml-auto mr-auto">
         <div class="settings index large-9 medium-8 columns content">
             <h3><?= __('Settings') ?></h3>
             <table class="table table-sm table-striped table-bordered">
