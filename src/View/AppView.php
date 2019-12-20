@@ -22,6 +22,11 @@ use Cake\View\View;
  * Your application’s default view class
  *
  * @link https://book.cakephp.org/3.0/en/views.html#the-app-view
+ * @property \App\View\Helper\ExtendedFlashHelper $Flash
+ * @property \App\View\Helper\ExtendedFormHelper $Form
+ * @property \App\View\Helper\ExtendedPaginatorHelper $Paginator
+ * @property \App\View\Helper\ExtendedHtmlHelper $Html
+ * @property \App\View\Helper\ExtendedTextHelper $Text
  * @property \TinyAuth\View\Helper\AuthUserHelper $AuthUser
  */
 class AppView extends View
@@ -38,31 +43,12 @@ class AppView extends View
      */
     public function initialize()
     {
-        $templates = [
-            'nextActive' => '<li class="page-item next"><a class="page-link" rel="next" href="{{url}}">{{text}}</a></li>',
-            'nextDisabled' => '<li class="page-item next disabled"><a class="page-link" href="" onclick="return false;">{{text}}</a></li>',
-            'prevActive' => '<li class="page-item prev"><a class="page-link" rel="prev" href="{{url}}">{{text}}</a></li>',
-            'prevDisabled' => '<li class="page-item prev disabled"><a class="page-link" href="" onclick="return false;">{{text}}</a></li>',
-            'counterRange' => '{{start}} - {{end}} of {{count}}',
-            'counterPages' => '{{page}} of {{pages}}',
-            'first' => '<li class="page-item first"><a class="page-link" href="{{url}}">{{text}}</a></li>',
-            'last' => '<li class="page-item last"><a class="page-link" href="{{url}}">{{text}}</a></li>',
-            'number' => '<li><a class="page-link" href="{{url}}">{{text}}</a></li>',
-            'current' => '<li class="page-item active"><a class="page-link" href="">{{text}}</a></li>',
-            'ellipsis' => '<li class="ellipsis">&hellip;</li>',
-            'sort' => '<a href="{{url}}">{{text}}</a>',
-            'sortAsc' => '<a class="asc" href="{{url}}">{{text}}</a>',
-            'sortDesc' => '<a class="desc" href="{{url}}">{{text}}</a>',
-            'sortAscLocked' => '<a class="asc locked" href="{{url}}">{{text}}</a>',
-            'sortDescLocked' => '<a class="desc locked" href="{{url}}">{{text}}</a>',
-        ];
-
-        $this->Paginator->setTemplates($templates);
-        $templates = [
-            'error' => '<div class="alert text-danger">{{content}}</div>',
-        ];
-
-        $this->Form->setTemplates($templates);
+        parent::initialize();
+        $this->loadHelper('Flash', ['className' => 'ExtendedFlash']);
+        $this->loadHelper('Form', ['className' => 'ExtendedForm']);
+        $this->loadHelper('Paginator', ['className' => 'ExtendedPaginator']);
+        $this->loadHelper('Html', ['className' => 'ExtendedHtml']);
+        $this->loadHelper('Text', ['className' => 'ExtendedText']);
 
 
         $tinyAuthConfig = [
