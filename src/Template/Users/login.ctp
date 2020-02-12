@@ -72,7 +72,7 @@
 <!-- END LOGIN FORM -->
 
 <?php
-$this->start('viewCustomScripts');
+$this->append('viewCustomScripts');
 ?>
 <script>
     <?php //allows for username or email login by populating hidden 'email' field ?>
