@@ -292,4 +292,38 @@ class SettingsTable extends Table
         return $frozenTimeObj;
     }
 
+    /**
+     * Return a FrozenTime object for the default expiration date.
+     * Date is based on the data_purge setting.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getDefaultActivationDate()
+    {
+
+        $frozenTimeObj = (new FrozenTime())->startOfDay();
+
+        return $frozenTimeObj;
+    }
+
+    /**
+     * Return a FrozenTime object for the default expiration date.
+     * Date is based on the data_purge setting.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getDefaultExpirationDate()
+    {
+        $days = $this->getSetting('data_purge');
+
+        //fallback
+        if ($days <= 0) {
+            $days = 365 * 10;
+        }
+
+        $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
+
+        return $frozenTimeObj;
+    }
+
 }
