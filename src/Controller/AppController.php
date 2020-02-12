@@ -29,7 +29,6 @@ use Cake\Core\Configure;
  * Add your application-wide methods in the class below, your controllers
  * will inherit them.
  *
- * @property array $BasicAuthUser
  * @property \App\Model\Table\SettingsTable $Settings
  * @property \App\Model\Table\SeedsTable $Seeds
  * @property \App\Model\Table\RolesTable $Roles
@@ -48,7 +47,6 @@ use Cake\Core\Configure;
  */
 class AppController extends Controller
 {
-    public $BasicAuthUser = [];
     public $Settings;
     public $Seeds;
     public $Roles;
