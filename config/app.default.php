@@ -1,9 +1,26 @@
 <?php
 if (!defined('APP_NAME')) {
-    define('APP_NAME', "ApplicationStub");
+    define('APP_NAME', "__APP_NAME__");
+}
+
+if (!defined('APP_DESC')) {
+    define('APP_DESC', "__APP_DESCRIPTION__");
 }
 
 return [
+    /**
+     * The 'Mode' of the Application:
+     * prod Production
+     * uat UAT
+     * dev Development
+     *
+     * NOTE: this does not override the debug settings!!!!!
+     * This is simply a flag so that you can make decision based on the value.
+     * e.g. if the value is 'dev' you might want to show a green bar in
+     * the header so that the developer can see this a dev instance
+     */
+    'mode' => 'prod',
+
     /**
      * Debug Level:
      *

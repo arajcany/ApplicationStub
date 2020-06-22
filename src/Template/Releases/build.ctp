@@ -32,7 +32,7 @@ if (strtolower($gitBranch) != 'master') {
         </div>
     </div>
     <?php
-    return;
+    //return;
 }
 ?>
 
@@ -42,7 +42,7 @@ if (count($gitModified) > 0) {
     <div class="row">
         <div class="col-md-12">
             <p class="alert alert-warning">
-                <?= __("Sorry, there are uncommitted files the ''{0}'' branch. Please commit all changes into 'Master' before attempting to build a release.",
+                <?= __("Sorry, there are uncommitted files in the ''{0}'' branch. Please commit all changes into ''{0}'' before attempting to build a release.",
                     $gitBranch) ?>
             </p>
             <?php
@@ -54,12 +54,12 @@ if (count($gitModified) > 0) {
         </div>
     </div>
     <?php
-    return;
+    //return;
 }
 ?>
 
 <div class="row">
-    <div class="col-md-12 col-xl-8 m-xl-auto">
+    <div class="col-xl-12 m-auto">
         <div class="releasesBuild">
             <div class="card">
                 <div class="card-header">

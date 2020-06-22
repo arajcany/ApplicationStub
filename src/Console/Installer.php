@@ -19,7 +19,9 @@ if (!defined('STDIN')) {
     define('STDIN', fopen('php://stdin', 'r'));
 }
 
+use Cake\Utility\Inflector;
 use Cake\Utility\Security;
+use Cake\Utility\Text;
 use Composer\Script\Event;
 use Exception;
 
@@ -48,8 +50,8 @@ class Installer
      * Does some routine installation tasks so people don't have to.
      *
      * @param \Composer\Script\Event $event The composer event object.
-     * @throws \Exception Exception raised by validator.
      * @return void
+     * @throws \Exception Exception raised by validator.
      */
     public static function postInstall(Event $event)
     {
@@ -59,6 +61,7 @@ class Installer
 
         static::createAppConfig($rootDir, $io);
         static::createWritableDirectories($rootDir, $io);
+        static::updateNameAndDescription($rootDir, $io);
 
         // ask if the permissions should be changed
         if ($io->isInteractive()) {
@@ -88,6 +91,104 @@ class Installer
         if (class_exists($class)) {
             $class::customizeCodeceptionBinary($event);
         }
+    }
+
+    /**
+     * Update the Name and Description of this Application
+     *
+     * @param string $rootDir The application's root directory.
+     * @param \Composer\IO\IOInterface $io IO interface to write to console.
+     *
+     * @return bool|void
+     * @throws Exception
+     */
+    public static function updateNameAndDescription($rootDir, $io)
+    {
+        if (!$io->isInteractive()) {
+            return true;
+        }
+
+        $composerJsonFile = $rootDir . "/composer.json";
+        $composerJson = file_get_contents($composerJsonFile);
+        $composerJson = json_decode($composerJson, JSON_OBJECT_AS_ARRAY);
+        $composerJsonOriginal = $composerJson;
+
+        $defaultVendorName = explode("/", $composerJson['name'])[0];
+        $defaultAppName = explode("/", $composerJson['name'])[1];
+        $defaultAppDescription = $composerJson['description'];
+
+        //VendorName
+        $validator = function ($arg) use ($defaultVendorName) {
+            if ($arg == "Y" || $arg == "y") {
+                return $defaultVendorName;
+            } elseif (strlen($arg) > 0) {
+                return Text::slug(strtolower($arg));
+            }
+
+            throw new Exception('Please supply your Vendor Name.');
+        };
+
+        $validatedVendorName = $io->askAndValidate(
+            "<info>What is your Vendor Name? </info><comment>[Defaults to '{$defaultVendorName}']</comment>: ",
+            $validator,
+            5,
+            'Y'
+        );
+
+        //AppName
+        $validator = function ($arg) use ($defaultAppName) {
+            if ($arg == "Y" || $arg == "y") {
+                return $defaultAppName;
+            } elseif (strlen($arg) > 0) {
+                return Text::slug(strtolower($arg));
+            }
+
+            throw new Exception('Please supply a name for this application.');
+        };
+
+        $validatedAppName = $io->askAndValidate(
+            "<info>Provide a Name for this Application? </info><comment>[Defaults to '{$defaultAppName}']</comment>: ",
+            $validator,
+            5,
+            'Y'
+        );
+
+        //AppDescription
+        $validator = function ($arg) use ($defaultAppDescription) {
+            if ($arg == "Y" || $arg == "y") {
+                return $defaultAppDescription;
+            } elseif (strlen($arg) > 0) {
+                return $arg;
+            }
+
+            throw new Exception('Please supply a brief description of this application.');
+        };
+
+        $validatedAppDescription = $io->askAndValidate(
+            "<info>Provide a Description for this Application? </info><comment>[Defaults to '{$defaultAppDescription}']</comment>: ",
+            $validator,
+            5,
+            'Y'
+        );
+
+        $io->write("Vendor: " . $validatedVendorName);
+        $io->write("App Name: " . $validatedAppName);
+        $io->write("App Desc: " . $validatedAppDescription);
+
+        $composerJson['name'] = "{$validatedVendorName}/{$validatedAppName}";
+        $composerJson['description'] = $validatedAppDescription;
+
+        //save only if there is a difference
+        if (json_encode($composerJsonOriginal) != json_encode($composerJson)) {
+            $composerJson = json_encode($composerJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+            $result = file_put_contents($composerJsonFile, $composerJson);
+        }
+
+        $appConfig = $rootDir . '/config/app.php';
+        static::updateValueInFile($appConfig, "__APP_NAME__", Inflector::camelize(Inflector::variable($validatedAppName)), $io);
+        static::updateValueInFile($appConfig, "__APP_DESCRIPTION__", $validatedAppDescription, $io);
+
+        return;
     }
 
     /**
@@ -243,5 +344,43 @@ class Installer
             return;
         }
         $io->write('Unable to update __APP_NAME__ value.');
+    }
+
+    /**
+     * Update the given value in a given file
+     *
+     * @param string $file A path to a file relative to the application's root
+     * @param string $oldValue
+     * @param string $newValue
+     * @param \Composer\IO\IOInterface $io IO interface to write to console.
+     * @return void
+     */
+    public static function updateValueInFile($file, $oldValue, $newValue, $io)
+    {
+        $filename = pathinfo($file, PATHINFO_BASENAME);
+
+        if (!is_file($file)) {
+            $io->write("Fail: Could not find the file {$filename}.");
+
+            return;
+        }
+
+        $content = file_get_contents($file);
+        $content = str_replace($oldValue, $newValue, $content, $count);
+
+        if ($count == 0) {
+            $io->write("Warning: The value '{$oldValue}' was not found in {$filename}.");
+
+            return;
+        }
+
+        $result = file_put_contents($file, $content);
+        if ($result) {
+            $io->write("Success: The value '{$oldValue}' was replaced with '{$newValue}' in {$filename}.");
+
+            return;
+        }
+
+        $io->write("Fail: Could not write to file {$filename}.");
     }
 }
