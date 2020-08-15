@@ -137,18 +137,20 @@ class InternalOptionsTable extends Table
         $vals = [
             ['option_key' => 'hk', 'option_value' => $hk, 'is_masked' => 0, 'apply_mask' => 0,],
             ['option_key' => 'hs', 'option_value' => $hs, 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'company_name', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'street', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'suburb', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'state', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'postcode', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'phone', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'web', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
-            ['option_key' => 'email', 'option_value' => ' ', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'company_name', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'street', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'suburb', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'state', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'postcode', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'phone', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'web', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
+            ['option_key' => 'email', 'option_value' => '-', 'is_masked' => 0, 'apply_mask' => 0,],
         ];
 
-        $ents = $this->newEntities($vals);
-        $this->saveMany($ents);
+        foreach ($vals as $val) {
+            $ent = $this->newEntity($val);
+            $this->save($ent);
+        }
 
         $this->saveOptionsToConfigure();
         $this->encryptOptions();
