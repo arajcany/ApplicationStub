@@ -55,13 +55,13 @@ class SettingsTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmptyString('id', 'create');
+            ->allowEmptyString('id', null, 'create');
 
         $validator
             ->scalar('name')
             ->maxLength('name', 50)
             ->requirePresence('name', 'create')
-            ->allowEmptyString('name', false);
+            ->allowEmptyString('name', null, false);
 
         $validator
             ->scalar('description')
@@ -72,13 +72,13 @@ class SettingsTable extends Table
             ->scalar('property_group')
             ->maxLength('property_group', 50)
             ->requirePresence('property_group', 'create')
-            ->allowEmptyString('property_group', false);
+            ->allowEmptyString('property_group', null, false);
 
         $validator
             ->scalar('property_key')
             ->maxLength('property_key', 50)
             ->requirePresence('property_key', 'create')
-            ->allowEmptyString('property_key', false);
+            ->allowEmptyString('property_key', null, false);
 
         $validator
             ->scalar('property_value')

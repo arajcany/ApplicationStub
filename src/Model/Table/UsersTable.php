@@ -80,7 +80,7 @@ class UsersTable extends Table
     {
         $validator
             ->integer('id')
-            ->allowEmptyString('id', 'create');
+            ->allowEmptyString('id', null, 'create');
 
         $validator
             ->email('email')
@@ -104,8 +104,8 @@ class UsersTable extends Table
         }
 
         $validator
-            ->allowEmptyString('password_2', 'create')
-            ->allowEmptyString('password_2', 'update')
+            ->allowEmptyString('password_2', null, 'create')
+            ->allowEmptyString('password_2', null, 'update')
             ->add('password_2', 'compareWith', [
                 'rule' => ['compareWith', 'password'],
                 'message' => 'Passwords do not match.'
