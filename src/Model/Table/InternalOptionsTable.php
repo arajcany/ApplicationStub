@@ -152,6 +152,8 @@ class InternalOptionsTable extends Table
             $this->save($ent);
         }
 
+        Cache::write('first_run', true, 'quick_burn');
+
         $this->saveOptionsToConfigure();
         $this->encryptOptions();
     }

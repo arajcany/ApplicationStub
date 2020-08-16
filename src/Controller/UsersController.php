@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Controller\AppController;
+use Cake\Cache\Cache;
 use Cake\Database\Driver\Sqlite;
 use Cake\I18n\FrozenTime;
 use Cake\Validation\Validation;
@@ -165,6 +165,10 @@ class UsersController extends AppController
      */
     public function login()
     {
+        if (Cache::read('first_run', 'quick_burn') === true) {
+            return $this->redirect(['controller' => 'installers', 'action' => 'configure']);
+        }
+
         $dbDriver = ($this->Users->getConnection())->getDriver();
         if ($dbDriver instanceof Sqlite) {
             $caseSensitive = true;

@@ -115,6 +115,13 @@ return [
             'url' => env('CACHE_DEFAULT_URL', null),
         ],
 
+        'quick_burn' => [
+            'className' => 'Cake\Cache\Engine\FileEngine',
+            'path' => CACHE,
+            'duration' => '+1 min',
+            'url' => env('CACHE_DEFAULT_URL', null),
+        ],
+
         'table_list' => [
             'className' => 'File',
             'prefix' => 'table_list_',

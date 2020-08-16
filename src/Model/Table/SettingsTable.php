@@ -273,8 +273,21 @@ class SettingsTable extends Table
     }
 
     /**
+     * Return a FrozenTime object for a user account activation date.
+     * Date is start of today.
+     *
+     * @return Time|FrozenTime
+     */
+    public function getAccountActivationDate()
+    {
+        $frozenTimeObj = (new FrozenTime())->startOfDay();
+
+        return $frozenTimeObj;
+    }
+
+    /**
      * Return a FrozenTime object for a user account expiration date.
-     * Date is based on the password_expiry setting.
+     * Date is based on the account_expiry setting.
      *
      * @return Time|FrozenTime
      */
@@ -284,7 +297,7 @@ class SettingsTable extends Table
 
         //fallback
         if ($days <= 0) {
-            $days = 365 * 10;
+            $days = 365;
         }
 
         $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
@@ -300,7 +313,6 @@ class SettingsTable extends Table
      */
     public function getDefaultActivationDate()
     {
-
         $frozenTimeObj = (new FrozenTime())->startOfDay();
 
         return $frozenTimeObj;
