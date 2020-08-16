@@ -99,7 +99,17 @@ if (Configure::read('Security.salt') == '__SALT__') {
  * You can use a file like app_local.php to provide local overrides to your
  * shared configuration.
  */
-//Configure::load('app_local', 'default');
+
+//build a config_local file from default if missing
+if (!is_file(CONFIG . 'config_local.php')) {
+    $tmpConfig = file_get_contents(CONFIG . 'config_local.default.php');
+    file_put_contents(CONFIG . 'config_local.php', $tmpConfig);
+}
+Configure::load('config_local', 'default', false);
+Configure::load('config_stub');
+Configure::load('config_seed');
+Configure::load('config_cache');
+Configure::load('config_logs_errors');
 
 /*
  * When debug = true the metadata cache should only last
@@ -259,16 +269,6 @@ Type::build('datetime')
 Type::build('timestamp')
     ->useImmutable();
 
-
-//build a config_local file from default if missing
-if (!is_file(CONFIG . 'config_local.php')) {
-    $tmpConfig = file_get_contents(CONFIG . 'config_local.default.php');
-    file_put_contents(CONFIG . 'config_local.php', $tmpConfig);
-}
-Configure::load('config_local', 'default', false);
-
-Configure::load('config_stub');
-Configure::load('config_seed');
 
 function rrmdir($dir)
 {
