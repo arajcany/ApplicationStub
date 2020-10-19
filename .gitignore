@@ -1,4 +1,4 @@
-# CakePHP specific files #
+# Local application specific files #
 ##########################
 /config/app.php
 /config/config_local.php
@@ -41,6 +41,6 @@ nbproject/*
 .sass-cache/
 /composer.phar
 /config/Stub_DB.sqlite
-config/internal.sqlite
-config/internal_dev.sqlite
+/config/internal.sqlite
+/config/internal_dev.sqlite
 /config/version.ini

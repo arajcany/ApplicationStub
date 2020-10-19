@@ -19,6 +19,7 @@ use arajcany\ToolBox\Utility\ZipMaker;
 class BuildTasks
 {
     private $buildFile = null;
+    private $log = [];
 
     /**
      * DefaultApplication constructor.
@@ -39,36 +40,51 @@ class BuildTasks
     }
 
     /**
-     * @param string $buildFile
+     * @param $buildFile
      */
-    public function setBuildFile(string $buildFile)
+    public function setBuildFile($buildFile)
     {
         $this->buildFile = $buildFile;
     }
 
     /**
+     * @return array
+     */
+    public function getLog(): array
+    {
+        return $this->log;
+    }
+
+    /**
+     * Write to the log variable
+     *
+     * @param $data
+     */
+    public function writeToLog($data)
+    {
+        if (is_object($data)) {
+            $data = json_decode(json_encode($data));
+        }
+
+        $this->log[] = $data;
+    }
+
+    /**
      * Builds the release ZIP file according to the parameters specified in $this->buildFile
      *
-     * @return mixed
+     * @return bool
      */
     public function build()
     {
-        $log = [];
         $app_name = APP_NAME;
 
         $drive = explode(DS, ROOT);
-        $drive = $drive[0] . DS;
-
-        if ($this->request->getData('place_in_drive')) {
-            if (strlen($this->request->getData('place_in_drive')) > 0) {
-                $drive = $this->request->getData('place_in_drive');
-                $drive = TextFormatter::makeEndsWith($drive, DS);
-            }
-        }
+        array_pop($drive);
+        $drive = implode(DS, $drive);
+        $drive = TextFormatter::makeEndsWith($drive, DS);
 
         $zm = new ZipMaker();
-        $log[] = json_encode($this->request->getData(), JSON_PRETTY_PRINT);
-        $log[] = __("Building a release of {0}.", APP_NAME);
+        $this->writeToLog(__("Building a release of {0}.", $app_name));
 
         //----create a file list to zip---------------------------------
         $baseDir = ROOT;
@@ -77,7 +93,7 @@ class BuildTasks
         $ignoreFilesFolders = [
             "config\\app.php",
             "config\\config_local.php",
-            "config\\CompareProjects_DB.sqlite",
+            "config\\Stub_DB.sqlite",
             "config\\internal.sqlite",
             "bin\\installer\\",
             ".git\\",
@@ -120,18 +136,18 @@ class BuildTasks
 
         //----create the required zip files---------------------------------
         $date = date('Ymd_His');
-        $zipUpdater = str_replace(" ", "_", "{$date}_{$app_name}.zip");
-        $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipUpdater}", $baseDir, $app_name);
+        $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}.zip");
+        $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipFileName}", $baseDir, $app_name);
         if ($zipResult) {
-            $log[] = __('Created {0}', $zipUpdater);
+            $this->writeToLog(__('Created {0}', $zipFileName));
+            $return = true;
         } else {
-            $log[] = __('Could not create {0}', $zipUpdater);
+            $this->writeToLog(__('Could not create {0}', $zipFileName));
+            $return = false;
         }
         //------------------------------------------------------------------------
 
-        //save messages
-        $this->request->getSession()->write('releasesBuildLog', implode(LS, $log));
-        return $this->redirect(['action' => 'index']);
+        return $return;
     }
 
 }
