@@ -102,6 +102,7 @@ class BuildTasks
             "tmp\\",
             "tests\\",
             "src\\Controller\\ReleasesController.php",
+            "src\\Command\\ReleasesCommand.php",
             "src\\Template\\Releases\\",
         ];
 
