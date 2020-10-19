@@ -21,7 +21,7 @@ SET app=%0
 SET lib=%~dp0
 
 
-REM cmd /C composer -V
+cmd /C composer install --no-dev
 
 echo.
 
@@ -29,7 +29,7 @@ php "%lib%cake.php" Releases build
 
 echo.
 
-REM cmd /C composer -V
+cmd /C composer install
 
 echo.
 
