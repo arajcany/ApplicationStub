@@ -67,27 +67,4 @@ class ReleasesController extends AppController
         return null;
     }
 
-
-    /**
-     * Build a release package
-     */
-    public function build()
-    {
-
-        if ($this->request->is('post')) {
-            $this->BuildTasks = new BuildTasks();
-
-        }//end POST
-
-
-        $drive = explode("\\", ROOT);
-        $drive = str_replace(" ", "_", $drive[0] . DS . APP_NAME . "_Builds" . DS);
-        $this->set('drive', $drive);
-
-        $this->set('gitBranch', $this->GitTasks->getGitBranch());
-        $this->set('gitModified', $this->GitTasks->getGitModified());
-
-        return null;
-    }
-
 }
