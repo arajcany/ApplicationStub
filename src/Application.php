@@ -20,8 +20,11 @@ use Cake\Core\Exception\MissingPluginException;
 use Cake\Datasource\ConnectionManager;
 use Cake\Error\Middleware\ErrorHandlerMiddleware;
 use Cake\Http\BaseApplication;
+use Cake\Http\Middleware\CsrfProtectionMiddleware;
+use Cake\Http\ServerRequest;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
+use Cake\Routing\Router;
 use Composer\Cache;
 use Migrations\Migrations;
 
@@ -56,6 +59,7 @@ class Application extends BaseApplication
          * Only try to load DebugKit in development mode
          * Debug Kit should not be installed on a production system
          */
+        Configure::write('DebugKit.safeTld', ['localhost.applicationstub', 'localhost',]);
         if (Configure::read('debug')) {
             $this->addPlugin(\DebugKit\Plugin::class);
         }
@@ -73,6 +77,18 @@ class Application extends BaseApplication
      */
     public function middleware($middlewareQueue)
     {
+        $securityCsrf = boolval(Configure::read('Settings.security_csrf'));
+        $applyCsrf = $this->applyCsrfToCurrentUrl();
+
+        //is csrf required
+        if ($securityCsrf) {
+            if ($applyCsrf) {
+                $csrfOptions = [];
+                $csrf = new CsrfProtectionMiddleware($csrfOptions);
+                $middlewareQueue->add($csrf);
+            }
+        }
+
         $middlewareQueue
             // Catch any exceptions in the lower layers,
             // and make an error page/response
@@ -145,5 +161,58 @@ class Application extends BaseApplication
             \Cake\Cache\Cache::clearAll();
             unlink($clearCacheSignalFile);
         }
+    }
+
+    /**
+     * @return bool
+     */
+    private function applyCsrfToCurrentUrl()
+    {
+        $Request = new ServerRequest();
+        $requestData = Router::parseRequest($Request);
+
+        $currentUrl = Router::url(['controller' => $requestData['controller'], 'action' => $requestData['action']]);
+
+        if (in_array($currentUrl, $this->getIgnoreCsrfUrls($Request))) {
+            return false;
+        } else {
+            return true;
+        }
+
+    }
+
+    /**
+     * @param ServerRequest $Request
+     * @return array
+     */
+    private function getIgnoreCsrfUrls(ServerRequest $Request)
+    {
+        $ignore = Configure::read('Csrf.ignore');
+
+        $ignoreCompiled = [];
+        foreach ($ignore as $k => $v) {
+            if (isset($v['controller']) && isset($v['action'])) {
+
+                if (isset($v['requestType'])) {
+                    $requestType = $v['requestType'];
+                    if (!$Request->is($requestType)) {
+                        continue;
+                    }
+                }
+
+                $c = $v['controller'];
+                $actions = $v['action'];
+
+                if (is_string($actions)) {
+                    $actions = [$actions];
+                }
+
+                foreach ($actions as $a) {
+                    $ignoreCompiled[] = Router::url(['controller' => $c, 'action' => $a], false);
+                }
+            }
+        }
+
+        return $ignoreCompiled;
     }
 }

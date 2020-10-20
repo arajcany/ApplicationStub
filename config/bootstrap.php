@@ -110,6 +110,7 @@ Configure::load('config_stub');
 Configure::load('config_seed');
 Configure::load('config_cache');
 Configure::load('config_logs_errors');
+Configure::load('config_csrf', 'default');
 
 /*
  * When debug = true the metadata cache should only last

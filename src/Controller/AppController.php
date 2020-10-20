@@ -17,7 +17,9 @@ namespace App\Controller;
 
 use App\Controller\Component\AppSettingsForUserComponent;
 use Cake\Controller\Controller;
+use Cake\Controller\Exception\SecurityException;
 use Cake\Http\Exception\UnauthorizedException;
+use Cake\Http\Response;
 use Cake\I18n\FrozenTime;
 use Cake\Routing\Router;
 use Exception;
@@ -41,9 +43,6 @@ use Cake\Core\Configure;
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  *
- * TODO implement HTTPS
- * TODO implement CSRF
- * TODO implement blackHoleHandler
  */
 class AppController extends Controller
 {
@@ -60,7 +59,7 @@ class AppController extends Controller
      *
      * e.g. `$this->loadComponent('Security');`
      *
-     * @return \Cake\Http\Response
+     * @return Response
      * @throws \Exception
      */
     public function initialize()
@@ -78,11 +77,19 @@ class AppController extends Controller
         ]);
         $this->loadComponent('Flash');
 
-        /*
-         * Enable the following component for recommended CakePHP security settings.
-         * see https://book.cakephp.org/3.0/en/controllers/components/security.html
-         */
-        //$this->loadComponent('Security');
+        $securityHttps = boolval(Configure::read('Settings.security_https'));
+
+        //load SecurityComponent if required
+        if ($securityHttps) {
+            $securityConfig = [
+                'blackHoleCallback' => 'blackHoleHandler',
+            ];
+            $this->loadComponent('Security', $securityConfig);
+            $this->Security->requireSecure();
+        }
+
+        //$error = 'Always throw this error';
+        //throw new Exception($error);
 
 
         $this->set('basePath', Router::url(null, false));
@@ -203,5 +210,25 @@ class AppController extends Controller
             }
         }
 
+    }
+
+
+    /**
+     * Handle black-holed connections
+     *
+     * @param string $type passed in by the callback as either 'secure' || 'auth'
+     * @param SecurityException|null $exception
+     * @return Response|null
+     */
+    public function blackHoleHandler($type = '', SecurityException $exception = null)
+    {
+        //http/s
+        if ($type == 'secure') {
+            if (!$this->request->is('ssl')) {
+                return $this->redirect('https://' . env('SERVER_NAME') . Router::url($this->request->getRequestTarget()));
+            }
+        }
+
+        return null;
     }
 }

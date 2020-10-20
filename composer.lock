@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3805263f95f8aee35c165bf7245d1202",
+    "content-hash": "25d14f747f23f26dbac09b2dffadc72f",
     "packages": [
         {
             "name": "arajcany/pre-press-tricks",
@@ -4951,6 +4951,7 @@
     "prefer-lowest": false,
     "platform": {
         "php": ">=7.0",
+        "ext-exif": "*",
         "ext-fileinfo": "*",
         "ext-json": "*",
         "ext-pdo": "*"
