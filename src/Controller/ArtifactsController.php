@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Controller\AppController;
+use Cake\Utility\Hash;
 
 /**
  * Artifacts Controller
@@ -50,17 +51,29 @@ class ArtifactsController extends AppController
     {
         $artifact = $this->Artifacts->newEntity();
         if ($this->request->is('post')) {
-            $artifact = $this->Artifacts->patchEntity($artifact, $this->request->getData());
-            if ($this->Artifacts->save($artifact)) {
-                $this->Flash->success(__('The artifact has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+            if (isset($this->request->getData('file')[0])) {
+                $files = $this->request->getData('file');
+            } else {
+                $files = [$this->request->getData('file')];
             }
-            $this->Flash->error(__('The artifact could not be saved. Please, try again.'));
+            foreach ($files as $file) {
+                $result = $this->Artifacts->createArtifact($file);
+                if ($result) {
+                    $this->Flash->success(__('The artifact has been saved.'));
+                } else {
+                    $this->Flash->error(__('The artifact could not be saved. Please, try again.'));
+                    $this->Flash->error(json_encode($file, JSON_PRETTY_PRINT));
+                }
+            }
+
+            return $this->redirect(['action' => 'index']);
         }
         $this->set(compact('artifact'));
-    }
+        $this->set('_serialize', ['artifact']);
 
+        return null;
+    }
 
     /**
      * Delete method

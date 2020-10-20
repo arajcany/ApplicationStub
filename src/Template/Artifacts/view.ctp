@@ -4,20 +4,21 @@
  * @var \App\Model\Entity\Artifact $artifact
  */
 ?>
-<nav class="large-3 medium-4 columns" id="actions-sidebar">
-    <ul class="side-nav">
-        <li class="heading"><?= __('Actions') ?></li>
-        <li><?= $this->Html->link(__('Edit Artifact'), ['action' => 'edit', $artifact->id]) ?> </li>
-        <li><?= $this->Form->postLink(__('Delete Artifact'), ['action' => 'delete', $artifact->id], ['confirm' => __('Are you sure you want to delete # {0}?', $artifact->id)]) ?> </li>
-        <li><?= $this->Html->link(__('List Artifacts'), ['action' => 'index']) ?> </li>
-        <li><?= $this->Html->link(__('New Artifact'), ['action' => 'add']) ?> </li>
-        <li><?= $this->Html->link(__('List Artifact Metadata'), ['controller' => 'ArtifactMetadata', 'action' => 'index']) ?> </li>
-        <li><?= $this->Html->link(__('New Artifact Metadata'), ['controller' => 'ArtifactMetadata', 'action' => 'add']) ?> </li>
-    </ul>
-</nav>
+
+<div class="row">
+    <div class="col-12 ml-auto mr-auto">
+        <?php
+        $opts = [
+            'class' => 'btn btn-primary float-right',
+        ];
+        echo $this->Html->link(__('Done'), ['action' => 'index'], $opts)
+        ?>
+    </div>
+</div>
+
 <div class="artifacts view large-9 medium-8 columns content">
     <h3><?= h($artifact->name) ?></h3>
-    <table class="vertical-table">
+    <table class="vertical-table table-bordered">
         <tr>
             <th scope="row"><?= __('Name') ?></th>
             <td><?= h($artifact->name) ?></td>
@@ -35,19 +36,27 @@
             <td><?= h($artifact->token) ?></td>
         </tr>
         <tr>
-            <th scope="row"><?= __('Url') ?></th>
-            <td><?= h($artifact->url) ?></td>
+            <th scope="row"><?= __('URL') ?></th>
+            <td>
+                <?= h($artifact->url) ?>
+                <br>
+                <?= h($artifact->full_url) ?>
+            </td>
         </tr>
         <tr>
-            <th scope="row"><?= __('Unc') ?></th>
-            <td><?= h($artifact->unc) ?></td>
+            <th scope="row"><?= __('UNC') ?></th>
+            <td>
+                <?= h($artifact->unc) ?>
+                <br>
+                <?= h($artifact->full_unc) ?>
+            </td>
         </tr>
         <tr>
             <th scope="row"><?= __('Artifact Metadata') ?></th>
             <td><?= $artifact->has('artifact_metadata') ? $this->Html->link($artifact->artifact_metadata->id, ['controller' => 'ArtifactMetadata', 'action' => 'view', $artifact->artifact_metadata->id]) : '' ?></td>
         </tr>
         <tr>
-            <th scope="row"><?= __('Id') ?></th>
+            <th scope="row"><?= __('ID') ?></th>
             <td><?= $this->Number->format($artifact->id) ?></td>
         </tr>
         <tr>
@@ -73,6 +82,10 @@
         <tr>
             <th scope="row"><?= __('Auto Delete') ?></th>
             <td><?= $artifact->auto_delete ? __('Yes') : __('No'); ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Preview') ?></th>
+            <td><?= $this->Html->image($artifact->full_url) ?></td>
         </tr>
     </table>
 </div>

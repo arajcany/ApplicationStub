@@ -2,29 +2,47 @@
 
 namespace App\Model\Table;
 
+use App\Model\Entity\Artifact;
+use arajcany\ToolBox\I18n\TimeMaker;
+use arajcany\ToolBox\Utility\Security\Security;
+use arajcany\ToolBox\Utility\TextFormatter;
+use Cake\Core\Configure;
+use Cake\Datasource\EntityInterface;
+use Cake\Filesystem\Folder;
+use Cake\I18n\FrozenTime;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
+use finfo;
+use Intervention\Image\ImageManager;
 
 /**
  * Artifacts Model
  *
  * @property \App\Model\Table\ArtifactMetadataTable&\Cake\ORM\Association\HasMany $ArtifactMetadata
  *
- * @method \App\Model\Entity\Artifact get($primaryKey, $options = [])
- * @method \App\Model\Entity\Artifact newEntity($data = null, array $options = [])
- * @method \App\Model\Entity\Artifact[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\Artifact|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\Artifact saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\Artifact patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\Artifact[] patchEntities($entities, array $data, array $options = [])
- * @method \App\Model\Entity\Artifact findOrCreate($search, callable $callback = null, $options = [])
+ * @property array $infoMessages
+ * @property array $warningMessages
+ * @property array $errorMessages
+ *
+ * @method Artifact get($primaryKey, $options = [])
+ * @method Artifact newEntity($data = null, array $options = [])
+ * @method Artifact[] newEntities(array $data, array $options = [])
+ * @method Artifact|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method Artifact saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method Artifact patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
+ * @method Artifact[] patchEntities($entities, array $data, array $options = [])
+ * @method Artifact findOrCreate($search, callable $callback = null, $options = [])
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class ArtifactsTable extends Table
 {
+    private $infoMessages = [];
+    private $warningMessages = [];
+    private $errorMessages = [];
+
     /**
      * Initialize method
      *
@@ -105,5 +123,418 @@ class ArtifactsTable extends Table
             ->allowEmptyString('unc');
 
         return $validator;
+    }
+
+    /**
+     * @return array
+     */
+    public function getInfoMessages(): array
+    {
+        return $this->infoMessages;
+    }
+
+    /**
+     * @return array
+     */
+    public function getWarningMessages(): array
+    {
+        return $this->warningMessages;
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrorMessages(): array
+    {
+        return $this->errorMessages;
+    }
+
+    /**
+     * Pass $data for saving to filesystem and db
+     *
+     * At its most basic, the $data can be POST array of $_FILE e.g.
+     *  [
+     *      'tmp_name' => '',
+     *      'error' => '', //int
+     *      'name' => '',
+     *      'type' => '',
+     *      'size' => '' //int
+     *  ]
+     *
+     *
+     * Which will be converted to the entity format below.
+     *  [
+     *      'blob' => '', // blob data
+     *      'name' => '',
+     *      'description' => '',
+     *      'size' => '',
+     *      'mime_type' => '',
+     *      'activation' => [
+     *          'year' => '',
+     *          'month' => '',
+     *          'day' => '',
+     *          'hour' => '',
+     *          'minute' => '',
+     *          'second' => '',
+     *      ],
+     *      'expiration' => [
+     *          'year' => '',
+     *          'month' => '',
+     *          'day' => '',
+     *          'hour' => '',
+     *          'minute' => '',
+     *          'second' => '',
+     *      ],
+     *      'auto_delete' => '',
+     *      'token' => '',
+     *      'url' => '',
+     *      'unc' => ''
+     *  ]
+     *
+     * Some basic precedence rules
+     * 1) 'tmp_name' overrides 'name'
+     * 2) 'type' overrides 'mime_type'
+     *
+     *
+     * @param array $data
+     * @return Artifact|array|bool
+     */
+    public function createArtifact($data)
+    {
+        //check if Artifact already exists
+        if (!empty($data['token'])) {
+            $artifact = $this->find('all')->where(['token' => $data['token']])->first();
+            if (!$artifact) {
+                $artifact = $this->newEntity();
+            }
+        } else {
+            $artifact = $this->newEntity();
+        }
+
+        $timeObjCurrent = new FrozenTime();
+
+        $defaultData = [
+            'tmp_name' => null,
+            'blob' => null,
+            'error' => 0,
+            'name' => null,
+            'description' => null,
+            'type' => null,
+            'size' => null,
+            'activation' => (clone $timeObjCurrent),
+            'expiration' => (clone $timeObjCurrent)->addMonths(Configure::read("Settings.data_purge")),
+            'auto_delete' => true,
+            'token' => null,
+            'url' => null,
+            'unc' => null
+        ];
+
+        $data = array_merge($defaultData, $data);
+
+
+        //fix up activation
+        if (is_array($data['activation'])) {
+            $data['activation'] = TimeMaker::makeFrozenTimeFromUnknown($data['activation'], TZ, 'UTC');
+        }
+
+        //fix up expiration
+        if (is_array($data['expiration'])) {
+            $data['expiration'] = TimeMaker::makeFrozenTimeFromUnknown($data['expiration'], TZ, 'UTC');
+        }
+
+        //fix up token, unc and url
+        //only do new unc/url if this is a new Artifact
+        if (!empty($artifact->url) && !empty($artifact->unc)) {
+            $data['url'] = $artifact->url;
+            $data['unc'] = $artifact->unc;
+        } elseif (is_string($data['token']) && strlen($data['token']) >= 40) {
+            $chunks = $this->str_split_random($data['token'], 2, 3);
+            $url = implode('/', $chunks) . '/';
+            $unc = implode('\\', $chunks) . '\\';
+
+            $data['url'] = $url;
+            $data['unc'] = $unc;
+        } elseif (is_string($data['token']) && strlen($data['token']) < 40) {
+            $token = sha1($data['token'] . Security::randomBytes(16));
+            $chunks = $this->str_split_random($token, 2, 3);
+            $url = implode('/', $chunks) . '/';
+            $unc = implode('\\', $chunks) . '\\';
+
+            $data['token'] = $token;
+            $data['url'] = $url;
+            $data['unc'] = $unc;
+        } else {
+            $token = sha1(Security::randomBytes(1600));
+            $chunks = $this->str_split_random($token, 2, 3);
+            $url = implode('/', $chunks) . '/';
+            $unc = implode('\\', $chunks) . '\\';
+
+            $data['token'] = $token;
+            $data['url'] = $url;
+            $data['unc'] = $unc;
+        }
+
+
+        if (isset($data['tmp_name']) && !empty($data['tmp_name'])) {
+            //uploaded data takes precedence over blob data
+            $src = $data['tmp_name'];
+            $dir = TextFormatter::makeEndsWith(Configure::read('Settings.repo_unc'), "\\") . $data['unc'];
+            $fso = new Folder($dir, true);
+
+            if ($fso) {
+                $dest = $dir . $data['name'];
+                $saveDataResult = move_uploaded_file($src, $dest);
+                if ($saveDataResult) {
+                    $this->infoMessages[] = ["code" => 0, "message" => "The file was moved to the destination folder."];
+                } else {
+                    $this->errorMessages[] = ["code" => 1, "message" => "Failed to move the file to the destination folder."];
+                }
+            } else {
+                $saveDataResult = false;
+                $this->errorMessages[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+            }
+
+            switch ($e = $data["error"]) {
+                case 0:
+                    $this->infoMessages[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
+                    break;
+                case 1:
+                    $uploadMaxFilesize = ini_get('upload_max_filesize');
+                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
+                    break;
+                case 2:
+                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
+                    break;
+                case 3:
+                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
+                    break;
+                case 4:
+                    $this->errorMessages[] = ["code" => $e, "message" => "No file was uploaded."];
+                    break;
+                case 5:
+                    $this->errorMessages[] = ["code" => $e, "message" => "Unknown error."];
+                    break;
+                case 6:
+                    $this->errorMessages[] = ["code" => $e, "message" => "Missing a temporary folder."];
+                    break;
+                case 7:
+                    $this->errorMessages[] = ["code" => $e, "message" => "Failed to write file to disk."];
+                    break;
+                case 8:
+                    $this->errorMessages[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
+                    break;
+            }
+
+            //mime type
+            if ($data['type']) {
+                $data['mime_type'] = $data['type'];
+            } else {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type
+                $data['mime_type'] = finfo_file($finfo, $data['tmp_name']);
+            }
+        } elseif (isset($data['blob']) && !empty($data['blob'])) {
+            //if a blob $data has been sent
+            $src = $data['blob'];
+            $dir = TextFormatter::makeEndsWith(Configure::read('Settings.repo_unc'), "\\") . $data['unc'];
+            $fso = new Folder($dir, true);
+
+            if ($fso) {
+                $dest = $dir . $data['name'];
+                $saveDataResult = file_put_contents($dest, $src);
+                if ($saveDataResult) {
+                    $this->infoMessages[] = ["code" => 0, "message" => "The file was saved to the destination folder."];
+                } else {
+                    $this->errorMessages[] = ["code" => 1, "message" => "Failed to save the file to the destination folder."];
+                }
+            } else {
+                $saveDataResult = false;
+                $this->errorMessages[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+            }
+
+            //mime type
+            if (!$data['mime_type']) {
+                $finfo = new finfo(FILEINFO_MIME);
+                $data['mime_type'] = explode(";", $finfo->buffer($data['blob']))[0];
+            }
+
+            //size
+            if (!$data['size']) {
+                $data['size'] = mb_strlen($data['blob']);
+            }
+        } else {
+            //no blob data to save
+            $saveDataResult = false;
+        }
+
+        //save the Entity, only if blob was saved
+        if ($saveDataResult) {
+            $artifact = $this->patchEntity($artifact, $data);
+            $saveEntityResult = $this->save($artifact);
+            if ($saveEntityResult) {
+                $this->infoMessages = ["code" => 0, "message" => "Entity saved."];
+            } else {
+                $this->errorMessages = ["code" => 1, "message" => "Entity could not be saved."];
+            }
+        } else {
+            $saveEntityResult = false;
+            $this->errorMessages = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
+        }
+
+        if ($saveDataResult && $saveEntityResult) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Split a string into random chunks
+     *
+     * @param string $string
+     * @param int $minLength
+     * @param int $maxLength
+     * @return array
+     */
+    public function str_split_random($string = '', $minLength = 1, $maxLength = 4)
+    {
+        $l = strlen($string);
+        $i = 0;
+
+        $chunks = [];
+        while ($i < $l) {
+            $r = rand($minLength, $maxLength);
+            $chunks[] = substr($string, $i, $r);
+            $i += $r;
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * Wrapper function to saveArtifactData() but where the actual image data needs to be magically created.
+     * Used when an Artifact is required (e.g. to serve up an image) but the data does not exist yet.
+     *
+     * @param array $data
+     * @param array $metadata
+     * @return mixed \App\Model\Entity\Artifact|bool
+     */
+    public function createArtifactOld(array $data = [], array $metadata = [])
+    {
+        //setup $data
+        $dataDefaults = [
+            'name' => '',
+            'type' => 'image/png',
+            'width' => 32,
+            'height' => 32,
+            'background' => '#808080',
+            'quality' => '90',
+        ];
+        $data = array_merge($dataDefaults, $data);
+
+        //create a token
+        $token = sha1(json_encode($data));
+
+        //check if Artifact exists based on $token
+        $artifact = $this->find('all')->where(['token' => $token])->first();
+        if ($artifact) {
+            return $artifact;
+        }
+
+        //setup $metadata
+        $activation = new FrozenTime();
+        $expiration = new FrozenTime('+ ' . Configure::read('Settings.data_purge') . ' months');
+        $metadataDefaults = [
+            'name' => "{$data['width']}x{$data['height']}",
+            'description' => "Placeholder Image {$data['width']}px {$data['height']}px",
+            'mime_type' => $data['type'],
+            'activation' => $activation,
+            'expiration' => $expiration,
+            'auto_delete' => true,
+            'token' => $token,
+        ];
+        $metadata = array_merge($metadataDefaults, $metadata);
+
+        //generate the image and save
+        $data['blob'] = $this->getImageResource($data);
+        $result = $this->saveArtifact($data, $metadata);
+        return $result;
+    }
+
+    /**
+     * Return an Intervention Image resource based on the settings
+     *
+     * @param array $settings
+     * @return \Intervention\Image\Image
+     */
+    public function getImageResource($settings = [])
+    {
+        $settingsDefault = [
+            'width' => 64,
+            'height' => 64,
+            'background' => '#808080',
+            'format' => 'png',
+            'quality' => '90',
+        ];
+        $s = array_merge($settingsDefault, $settings);
+
+        //mime type overrides the format
+        if (isset($s['type'])) {
+            $s['format'] = $this->getExtensionFromMimeType($s['type']);
+        }
+
+        $manager = new ImageManager();
+        $imageResource = $manager
+            ->canvas($s['width'], $s['height'], $s['background'])
+            ->encode($s['format'], $s['quality']);
+        return $imageResource;
+    }
+
+    /**
+     * Overwrite the delete method so as to include the FSO deletion
+     *
+     * @param EntityInterface|Artifact $entity
+     * @param array $options
+     * @return bool|mixed
+     */
+    public function delete(EntityInterface $entity, $options = [])
+    {
+        if (is_file($entity->full_unc)) {
+            unlink($entity->full_unc);
+        }
+
+        return parent::delete($entity, $options);
+    }
+
+    /**
+     * Extract the extension from a MIME TYPE string
+     *
+     * @param string $mimeType
+     * @return string
+     */
+    public function getExtensionFromMimeType($mimeType = "")
+    {
+        $mimeType = explode("/", $mimeType);
+        if (isset($mimeType[1])) {
+            $extension = $mimeType[1];
+            $extension = strtolower($extension);
+            $in = ["jpeg"];
+            $out = ["jpg"];
+            $extension = str_replace($in, $out, $extension);
+            return $extension;
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Delete Artifacts that have been orphaned.
+     *
+     * @param null $seasonId
+     * @param null $franchiseId
+     * @param bool $cascade
+     */
+    public function deleteOrphanedArtifacts($seasonId = null, $franchiseId = null, $cascade = true)
+    {
+        //todo: replace stub code
     }
 }

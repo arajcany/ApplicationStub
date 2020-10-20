@@ -16,16 +16,6 @@
     </div>
 </div>
 
-<div class="row mt-2">
-    <div class="col-12 ml-auto mr-auto">
-        <?php
-        $opts = [
-            'class' => 'btn btn-sm btn-secondary float-right ml-1',
-        ];
-        ?>
-    </div>
-</div>
-
 <div class="row">
     <div class="col-12 ml-auto mr-auto">
         <div class="artifacts index large-9 medium-8 columns content">

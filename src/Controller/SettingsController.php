@@ -78,10 +78,23 @@ class SettingsController extends AppController
 
     /**
      * Generate seed data
+     * @param null $gte
+     * @param null $lte
      */
-    public function seed()
+    public function seed($gte = null, $lte = null)
     {
-        $seeds = $this->Settings->find('all')->orderAsc('id')->enableHydration(false);
+        $seeds = $this->Settings->find('all')
+            ->orderAsc('id')
+            ->enableHydration(false);
+
+        if ($gte) {
+            $seeds = $seeds->where(['id >=' => $gte]);
+        }
+
+        if ($lte) {
+            $seeds = $seeds->where(['id <=' => $lte]);
+        }
+
         $this->set('seeds', $seeds);
     }
 }

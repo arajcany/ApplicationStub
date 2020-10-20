@@ -1,7 +1,11 @@
 <?php
+
 namespace App\Model\Entity;
 
+use arajcany\ToolBox\Utility\TextFormatter;
+use Cake\Core\Configure;
 use Cake\ORM\Entity;
+use Cake\Routing\Router;
 
 /**
  * Artifact Entity
@@ -18,7 +22,9 @@ use Cake\ORM\Entity;
  * @property bool|null $auto_delete
  * @property string|null $token
  * @property string|null $url
+ * @property string|null $full_url
  * @property string|null $unc
+ * @property string|null $full_unc
  *
  * @property \App\Model\Entity\ArtifactMetadata[] $artifact_metadata
  */
@@ -57,4 +63,34 @@ class Artifact extends Entity
     protected $_hidden = [
         'token',
     ];
+
+    /**
+     * Get the Full URL
+     *
+     * @return string
+     */
+    protected function _getFullUrl()
+    {
+        //auto switching between static and dynamic url based on Setting
+        $mode = Configure::read('Settings.repo_mode');
+
+        if ($mode == 'static') {
+            $str = TextFormatter::makeEndsWith(Configure::read('Settings.repo_url'), "/") . $this->_properties['url'] . $this->_properties['name'];
+        } else {
+            $str = Router::url("/", true) . "artifacts/fetch/" . $this->_properties['token'];
+        }
+
+        return trim($str);
+    }
+
+    /**
+     * Get the Full UNC
+     *
+     * @return string
+     */
+    protected function _getFullUnc()
+    {
+        $str = TextFormatter::makeEndsWith(Configure::read('Settings.repo_unc'), "\\") . $this->_properties['unc'] . $this->_properties['name'];
+        return trim($str);
+    }
 }
