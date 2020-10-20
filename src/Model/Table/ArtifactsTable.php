@@ -274,6 +274,37 @@ class ArtifactsTable extends Table
             $data['unc'] = $unc;
         }
 
+        switch ($e = $data["error"]) {
+            case 0:
+                $this->infoMessages[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
+                break;
+            case 1:
+                $uploadMaxFilesize = ini_get('upload_max_filesize');
+                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
+                break;
+            case 2:
+                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
+                break;
+            case 3:
+                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
+                break;
+            case 4:
+                $this->errorMessages[] = ["code" => $e, "message" => "No file was uploaded."];
+                break;
+            case 5:
+                $this->errorMessages[] = ["code" => $e, "message" => "Unknown error."];
+                break;
+            case 6:
+                $this->errorMessages[] = ["code" => $e, "message" => "Missing a temporary folder."];
+                break;
+            case 7:
+                $this->errorMessages[] = ["code" => $e, "message" => "Failed to write file to disk."];
+                break;
+            case 8:
+                $this->errorMessages[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
+                break;
+        }
+
 
         if (isset($data['tmp_name']) && !empty($data['tmp_name'])) {
             //uploaded data takes precedence over blob data
@@ -292,37 +323,6 @@ class ArtifactsTable extends Table
             } else {
                 $saveDataResult = false;
                 $this->errorMessages[] = ["code" => 1, "message" => "Failed to create the destination folder."];
-            }
-
-            switch ($e = $data["error"]) {
-                case 0:
-                    $this->infoMessages[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
-                    break;
-                case 1:
-                    $uploadMaxFilesize = ini_get('upload_max_filesize');
-                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
-                    break;
-                case 2:
-                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
-                    break;
-                case 3:
-                    $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
-                    break;
-                case 4:
-                    $this->errorMessages[] = ["code" => $e, "message" => "No file was uploaded."];
-                    break;
-                case 5:
-                    $this->errorMessages[] = ["code" => $e, "message" => "Unknown error."];
-                    break;
-                case 6:
-                    $this->errorMessages[] = ["code" => $e, "message" => "Missing a temporary folder."];
-                    break;
-                case 7:
-                    $this->errorMessages[] = ["code" => $e, "message" => "Failed to write file to disk."];
-                    break;
-                case 8:
-                    $this->errorMessages[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
-                    break;
             }
 
             //mime type
@@ -363,6 +363,7 @@ class ArtifactsTable extends Table
             }
         } else {
             //no blob data to save
+            $this->errorMessages[] = ["code" => 1, "message" => "No blob data to save."];
             $saveDataResult = false;
         }
 
@@ -370,14 +371,29 @@ class ArtifactsTable extends Table
         if ($saveDataResult) {
             $artifact = $this->patchEntity($artifact, $data);
             $saveEntityResult = $this->save($artifact);
+
+
             if ($saveEntityResult) {
                 $this->infoMessages = ["code" => 0, "message" => "Entity saved."];
+
+                $exif = $this->getCleanExifData($dest);
+
+                $artifactMetadata = [
+                    'artifact_id' => $artifact->id,
+                    'width' => 0,
+                    'height' => 0,
+                ];
+                $artifactMetadata = $this->ArtifactMetadata->newEntity($artifactMetadata);
+                $artifactMetadata->exif = $exif;
+                $this->ArtifactMetadata->save($artifactMetadata);
+
             } else {
-                $this->errorMessages = ["code" => 1, "message" => "Entity could not be saved."];
+                debug($this->getErrorMessages());
+                $this->errorMessages[] = ["code" => 1, "message" => "Entity could not be saved."];
             }
         } else {
             $saveEntityResult = false;
-            $this->errorMessages = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
+            $this->errorMessages[] = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
         }
 
         if ($saveDataResult && $saveEntityResult) {
@@ -537,4 +553,49 @@ class ArtifactsTable extends Table
     {
         //todo: replace stub code
     }
+
+
+    private function getCleanExifData($stream, $sections = null, $arrays = false, $thumbnail = false)
+    {
+        $exif = exif_read_data($stream, $sections, $arrays, $thumbnail);
+
+        $allowedExifValues = $this->getAllowedExifValues();
+
+        $exifClean = [];
+        foreach ($allowedExifValues as $allowedExifValue) {
+            if (isset($exif[$allowedExifValue])) {
+                $exifClean[$allowedExifValue] = $exif[$allowedExifValue];
+            }
+        }
+
+        return $exifClean;
+    }
+
+    private function getAllowedExifValues()
+    {
+        $exifValues = [
+            'FileName',
+            'FileDateTime',
+            'FileSize',
+            'FileType',
+            'MimeType',
+            'SectionsFound',
+            'COMPUTED',
+            'DateTime',
+            'Artist',
+            'Copyright',
+            'Author',
+            'Exif_IFD_Pointer',
+            'THUMBNAIL',
+            'DateTimeOriginal',
+            'DateTimeDigitized',
+            'SubSecTimeOriginal',
+            'SubSecTimeDigitized',
+            'Company',
+        ];
+
+        return $exifValues;
+    }
+
+
 }

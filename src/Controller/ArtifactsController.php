@@ -63,7 +63,8 @@ class ArtifactsController extends AppController
                     $this->Flash->success(__('The artifact has been saved.'));
                 } else {
                     $this->Flash->error(__('The artifact could not be saved. Please, try again.'));
-                    $this->Flash->error(json_encode($file, JSON_PRETTY_PRINT));
+                    $errors = $this->Artifacts->getErrorMessages();
+                    $this->Flash->error(json_encode($errors, JSON_PRETTY_PRINT));
                 }
             }
 
