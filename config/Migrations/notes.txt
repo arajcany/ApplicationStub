@@ -1,4 +1,4 @@
-bin/cake bake migration_diff NameOfTheMigrations --connection my_other_connection
+bin\cake bake migration_diff NameOfTheMigrations --connection my_other_connection
 
 bin\cake bake model Artifacts
 bin\cake bake model ArtifactMetadata

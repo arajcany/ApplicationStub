@@ -5,6 +5,7 @@ namespace App\Controller;
 use Cake\Cache\Cache;
 use Cake\Database\Driver\Sqlite;
 use Cake\I18n\FrozenTime;
+use Cake\Routing\Router;
 use Cake\Validation\Validation;
 
 /**
@@ -165,6 +166,15 @@ class UsersController extends AppController
      */
     public function login()
     {
+        //die if application login is requested outside of authorised domains
+        $domain = str_replace(['http://', 'https://'], "", Router::fullBaseUrl());
+        $isAllowed = $this->Settings->isDomainWhitelisted($domain);
+        if (!$isAllowed) {
+            $this->response = $this->response->withType('text/plain');
+            $this->response = $this->response->withStringBody('Not Allowed!');
+            return $this->response;
+        }
+
         if (Cache::read('first_run', 'quick_burn') === true) {
             return $this->redirect(['controller' => 'installers', 'action' => 'configure']);
         }

@@ -60,6 +60,19 @@ class SeedSettingsSecurity extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
+                'name' => 'Login Domain Whitelist',
+                'description' => 'Login is only available when requested from domains in the whitelist',
+                'property_group' => 'install',
+                'property_key' => 'login_domain_whitelist',
+                'property_value' => '',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
                 'name' => 'Historical Data Purge',
                 'description' => 'Purge data older than the specified number of months',
                 'property_group' => 'archive',

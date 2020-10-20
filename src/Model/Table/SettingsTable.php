@@ -255,7 +255,6 @@ class SettingsTable extends Table
 
         $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
 
-
         return $frozenTimeObj;
     }
 
@@ -336,6 +335,32 @@ class SettingsTable extends Table
         $frozenTimeObj = (new FrozenTime('+' . $days . ' days'))->endOfDay();
 
         return $frozenTimeObj;
+    }
+
+    /**
+     * Check if the passed in domain is in the whitelist.
+     * Whitelist filtering will not be employed if whitelist is empty.
+     *
+     * @param $domain
+     * @return bool
+     */
+    public function isDomainWhitelisted($domain)
+    {
+        $loginDomainWhitelist = $this->getSetting('login_domain_whitelist');
+        $loginDomainWhitelist = trim($loginDomainWhitelist);
+
+        if (empty($loginDomainWhitelist)) {
+            return true;
+        }
+
+        $loginDomainWhitelist = str_replace(["\r\n", "\r", "\n"], ",", $loginDomainWhitelist);
+        $loginDomainWhitelist = explode(",", $loginDomainWhitelist);
+
+        if (in_array($domain, $loginDomainWhitelist)) {
+            return true;
+        }
+
+        return false;
     }
 
 }
