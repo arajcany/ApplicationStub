@@ -26,6 +26,7 @@ use Cake\Collection\CollectionInterface;
                     <th scope="col"><?= $this->Paginator->sort('id', 'ID') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('activation') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('expiration') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('server') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('domain') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('name') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('worker_link') ?></th>
@@ -35,7 +36,6 @@ use Cake\Collection\CollectionInterface;
                     <th scope="col"><?= $this->Paginator->sort('status') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('progress_bar', 'Progress') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('priority') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('return_value') ?></th>
                     <th scope="col" class="actions"><?= __('Actions') ?></th>
                 </tr>
                 </thead>
@@ -45,6 +45,7 @@ use Cake\Collection\CollectionInterface;
                         <td><?= $this->Number->format($errand->id) ?></td>
                         <td><?= h($errand->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
                         <td><?= h($errand->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
+                        <td><?= h($errand->server) ?></td>
                         <td><?= h($errand->domain) ?></td>
                         <td><?= h($errand->name) ?></td>
                         <td><?= $this->Number->format($errand->worker_link) ?></td>
@@ -54,7 +55,6 @@ use Cake\Collection\CollectionInterface;
                         <td><?= h($errand->status) ?></td>
                         <td><?= $this->Number->format($errand->progress_bar) ?></td>
                         <td><?= $this->Number->format($errand->priority) ?></td>
-                        <td><?= $this->Number->format($errand->return_value) ?></td>
                         <td class="actions">
                             <?= $this->Html->link(__('View'), ['action' => 'view', $errand->id]) ?>
                         </td>

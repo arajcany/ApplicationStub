@@ -65,6 +65,7 @@ use Cake\Collection\CollectionInterface;
                 <thead>
                 <tr>
                     <th scope="col"><?= $this->Paginator->sort('id', 'ID') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('server') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('domain') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('name') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('type') ?></th>
@@ -79,6 +80,7 @@ use Cake\Collection\CollectionInterface;
                 <?php foreach ($workers as $worker): ?>
                     <tr>
                         <td><?= $this->Number->format($worker->id) ?></td>
+                        <td><?= h($worker->server) ?></td>
                         <td><?= h($worker->domain) ?></td>
                         <td><?= h($worker->name) ?></td>
                         <td><?= h($worker->type) ?></td>
