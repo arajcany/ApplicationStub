@@ -65,6 +65,30 @@ $user = $this->request->getSession()->read('Auth.User');
                             ];
                             echo $this->Html->link($title, $url, $options)
                             ?>
+                            <?php
+                            $title = 'Background Services';
+                            $url = ['controller' => 'background-services', 'action' => 'index'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
+                            <?php
+                            $title = 'Workers';
+                            $url = ['controller' => 'workers', 'action' => 'index'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
+                            <?php
+                            $title = 'Errands';
+                            $url = ['controller' => 'errands', 'action' => 'index'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
                         </div>
                     </li>
 

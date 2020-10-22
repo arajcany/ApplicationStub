@@ -84,19 +84,19 @@ use App\View\AppView;
         </tr>
         <tr>
             <th scope="row"><?= __('Created') ?></th>
-            <td><?= h($errand->created) ?></td>
+            <td><?= h($errand->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Modified') ?></th>
-            <td><?= h($errand->modified) ?></td>
+            <td><?= h($errand->modified->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Activation') ?></th>
-            <td><?= h($errand->activation) ?></td>
+            <td><?= h($errand->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Expiration') ?></th>
-            <td><?= h($errand->expiration) ?></td>
+            <td><?= h($errand->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Started') ?></th>

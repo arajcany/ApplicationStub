@@ -41,11 +41,11 @@ use App\View\AppView;
         </tr>
         <tr>
             <th scope="row"><?= __('Created') ?></th>
-            <td><?= h($worker->created) ?></td>
+            <td><?= h($worker->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Modified') ?></th>
-            <td><?= h($worker->modified) ?></td>
+            <td><?= h($worker->modified->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Appointment Date') ?></th>

@@ -84,7 +84,7 @@ use Cake\Collection\CollectionInterface;
                         <td><?= h($worker->type) ?></td>
                         <td><?= $this->Number->format($worker->errand_link) ?></td>
                         <td><?= h($worker->errand_name) ?></td>
-                        <td><?= h($worker->retirement_date) ?></td>
+                        <td><?= h($worker->retirement_date->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
                         <td><?= $this->Number->format($worker->pid) ?></td>
                         <td class="actions">
                             <?= $this->Html->link(__('View'), ['action' => 'view', $worker->id]) ?>

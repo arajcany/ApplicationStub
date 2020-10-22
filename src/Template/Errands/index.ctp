@@ -43,8 +43,8 @@ use Cake\Collection\CollectionInterface;
                 <?php foreach ($errands as $errand): ?>
                     <tr>
                         <td><?= $this->Number->format($errand->id) ?></td>
-                        <td><?= h($errand->activation) ?></td>
-                        <td><?= h($errand->expiration) ?></td>
+                        <td><?= h($errand->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
+                        <td><?= h($errand->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
                         <td><?= h($errand->domain) ?></td>
                         <td><?= h($errand->name) ?></td>
                         <td><?= $this->Number->format($errand->worker_link) ?></td>

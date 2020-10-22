@@ -41,8 +41,8 @@
                         <td><?= h($artifact->name) ?></td>
                         <td><?= $this->Number->format($artifact->size) ?></td>
                         <td><?= h($artifact->mime_type) ?></td>
-                        <td><?= h($artifact->activation) ?></td>
-                        <td><?= h($artifact->expiration) ?></td>
+                        <td><?= h($artifact->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
+                        <td><?= h($artifact->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
                         <td><?= h($artifact->auto_delete) ?></td>
                         <td><?= h($artifact->token) ?></td>
                         <td class="actions">

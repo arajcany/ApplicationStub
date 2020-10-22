@@ -65,19 +65,19 @@
         </tr>
         <tr>
             <th scope="row"><?= __('Created') ?></th>
-            <td><?= h($artifact->created) ?></td>
+            <td><?= h($artifact->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Modified') ?></th>
-            <td><?= h($artifact->modified) ?></td>
+            <td><?= h($artifact->modified->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Activation') ?></th>
-            <td><?= h($artifact->activation) ?></td>
+            <td><?= h($artifact->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Expiration') ?></th>
-            <td><?= h($artifact->expiration) ?></td>
+            <td><?= h($artifact->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Auto Delete') ?></th>
