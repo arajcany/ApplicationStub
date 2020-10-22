@@ -13,6 +13,7 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\FrozenTime|null $expiration
  * @property bool|null $auto_delete
  * @property int|null $wait_for_link
+ * @property string|null $server
  * @property string|null $domain
  * @property string|null $name
  * @property int|null $worker_link
@@ -49,6 +50,7 @@ class Errand extends Entity
         'expiration' => true,
         'auto_delete' => true,
         'wait_for_link' => true,
+        'server' => true,
         'domain' => true,
         'name' => true,
         'worker_link' => true,

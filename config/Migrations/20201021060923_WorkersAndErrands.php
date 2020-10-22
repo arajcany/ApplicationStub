@@ -39,6 +39,11 @@ class WorkersAndErrands extends AbstractMigration
                 'limit' => null,
                 'null' => true,
             ])
+            ->addColumn('server', 'string', [
+                'default' => null,
+                'limit' => 128,
+                'null' => true,
+            ])
             ->addColumn('domain', 'string', [
                 'default' => null,
                 'limit' => 128,
@@ -135,6 +140,11 @@ class WorkersAndErrands extends AbstractMigration
             ->addColumn('modified', 'timestamp', [
                 'default' => null,
                 'limit' => null,
+                'null' => true,
+            ])
+            ->addColumn('server', 'string', [
+                'default' => null,
+                'limit' => 128,
                 'null' => true,
             ])
             ->addColumn('domain', 'string', [

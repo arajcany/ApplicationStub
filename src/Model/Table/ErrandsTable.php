@@ -90,6 +90,11 @@ class ErrandsTable extends Table
             ->allowEmptyString('wait_for_link');
 
         $validator
+            ->scalar('server')
+            ->maxLength('server', 128)
+            ->allowEmptyString('server');
+
+        $validator
             ->scalar('domain')
             ->maxLength('domain', 128)
             ->allowEmptyString('domain');
@@ -333,6 +338,7 @@ class ErrandsTable extends Table
             'expiration' => $expiration,
             'auto_delete' => true,
             'wait_for_link' => null,
+            'server' => gethostname(),
             'domain' => parse_url(Router::url("/", true), PHP_URL_HOST),
             'name' => ' ',
             'worker_link' => null,

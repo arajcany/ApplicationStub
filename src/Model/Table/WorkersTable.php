@@ -58,6 +58,11 @@ class WorkersTable extends Table
             ->allowEmptyString('id', null, 'create');
 
         $validator
+            ->scalar('server')
+            ->maxLength('server', 128)
+            ->allowEmptyString('server');
+
+        $validator
             ->scalar('domain')
             ->maxLength('domain', 128)
             ->allowEmptyString('domain');
@@ -141,6 +146,7 @@ class WorkersTable extends Table
         $worker->termination_date = $timeObjTermination;
         $worker->force_retirement = false;
         $worker->pid = getmypid();
+        $worker->server = gethostname();
         $worker->domain = parse_url(Router::url("/", true), PHP_URL_HOST);
         $worker = $this->save($worker);
 

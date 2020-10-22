@@ -9,6 +9,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property \Cake\I18n\FrozenTime|null $created
  * @property \Cake\I18n\FrozenTime|null $modified
+ * @property string|null $server
  * @property string|null $domain
  * @property string|null $name
  * @property string|null $type
@@ -34,6 +35,7 @@ class Worker extends Entity
     protected $_accessible = [
         'created' => true,
         'modified' => true,
+        'server' => true,
         'domain' => true,
         'name' => true,
         'type' => true,
