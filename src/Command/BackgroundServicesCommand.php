@@ -6,6 +6,7 @@ use Cake\Console\Arguments;
 use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
+use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
 use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
@@ -190,29 +191,31 @@ class BackgroundServicesCommand extends Command
             $Model = $this->loadModel($class);
             $Model->$method(...$parameters);
 
-            $completed = new FrozenTime('now');
-            $status = 'Completed';
-            $progressBar = 100;
-            $errorsThrown = null;
-            $errorsRetry = 0;
+            $errand->completed = new FrozenTime('now');
+            $errand->status = 'Completed';
+            $errand->progress_bar = 100;
+
         } catch (\Throwable $e) {
-            $completed = null;
-            $status = 'Errored';
-            $progressBar = 0;
             $errorsThrown = [
                 'code' => $e->getCode(),
                 'message' => $e->getMessage(),
                 'trace' => $e->getTrace(),
             ];
-            $errorsRetry = $errand->errors_retry + 1;
-        }
 
-        //log the completed/failed Errand
-        $errand->completed = $completed;
-        $errand->status = $status;
-        $errand->progress_bar = $progressBar;
-        $errand->errors_thrown = $errorsThrown;
-        $errand->errors_retry = $errorsRetry;
+            $errand->completed = null;
+            $errand->status = 'Errored';
+            $errand->progress_bar = 0;
+            $errand->errors_thrown = $errorsThrown;
+
+            if ($errand->errors_retry < $errand->errors_retry_limit) {
+                $errand->errors_retry = $errand->errors_retry + 1;
+                $errand->started = null;
+                $errand->completed = null;
+                $errand->status = null;
+                $errand->progress_bar = 0;
+            }
+
+        }
 
         $this->Errands->save($errand);
 

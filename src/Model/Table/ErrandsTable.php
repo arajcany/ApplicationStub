@@ -332,13 +332,14 @@ class ErrandsTable extends Table
     {
         $activation = new FrozenTime();
         $expiration = new FrozenTime('+ ' . Configure::read('Settings.data_purge') . ' months');
+        $errandRetryLimit = Configure::read("Settings.errand_retry_limit");
 
         $defaultOptions = [
             'activation' => $activation,
             'expiration' => $expiration,
             'auto_delete' => true,
             'wait_for_link' => null,
-            'server' => gethostname(),
+            'server' => null,
             'domain' => parse_url(Router::url("/", true), PHP_URL_HOST),
             'name' => ' ',
             'worker_link' => null,
@@ -351,11 +352,11 @@ class ErrandsTable extends Table
             'completed' => null,
             'progress_bar' => null,
             'priority' => 5,
-            //'return_value' => null,
-            //'return_message' => null,
-            //'errors_thrown' => null,
-            //'errors_retry' => null,
-            //'errors_retry_limit' => null,
+            'return_value' => null,
+            'return_message' => null,
+            'errors_thrown' => null,
+            'errors_retry' => 0,
+            'errors_retry_limit' => $errandRetryLimit,
         ];
 
         $options = array_merge($defaultOptions, $options);
