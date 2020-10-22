@@ -8,6 +8,7 @@ use Cake\ORM\Table;
 use Cake\Routing\Router;
 use Cake\Utility\Security;
 use Cake\Validation\Validator;
+use mysql_xdevapi\Exception;
 
 /**
  * Seeds Model

@@ -4,3 +4,14 @@ bin\cake bake model Artifacts
 bin\cake bake model ArtifactMetadata
 
 bin\cake bake controller Artifacts
+
+
+bin\cake bake model Errands
+bin\cake bake model Workers
+
+bin\cake bake controller Errands
+bin\cake bake controller Workers
+
+bin\cake bake template Errands
+bin\cake bake template Workers
+
