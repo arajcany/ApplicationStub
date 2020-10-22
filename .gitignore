@@ -44,5 +44,6 @@ nbproject/*
 /config/internal.sqlite
 /config/internal_dev.sqlite
 /config/version.ini
-bin/nssm.exe
-bin/nssm.exe
+/bin/BackgroundServices/nssm.exe
+/bin/BackgroundServices/services_install.bat
+/bin/BackgroundServices/services_remove.bat

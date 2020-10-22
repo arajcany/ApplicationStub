@@ -9,11 +9,17 @@ use App\View\AppView;
 use Cake\Collection\CollectionInterface;
 
 ?>
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">
+            <?= __('Errands') ?>
+        </h1>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-12 ml-auto mr-auto">
         <div class="errands index large-9 medium-8 columns content">
-            <h3><?= __('Errands') ?></h3>
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>

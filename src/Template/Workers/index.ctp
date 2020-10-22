@@ -10,9 +10,16 @@ use Cake\Collection\CollectionInterface;
 ?>
 
 <div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">
+            <?= __('Workers') ?>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-lg-12 mb-5">
         <div class="workers index large-9 medium-8 columns content">
-            <h3><?= __('Tasks') ?></h3>
             <div class="card">
                 <div class="card-header">
                     <strong>Choose a Task</strong>

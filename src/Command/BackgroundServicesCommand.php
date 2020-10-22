@@ -7,6 +7,7 @@ use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\I18n\FrozenTime;
+use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Text;
 use Exception;
