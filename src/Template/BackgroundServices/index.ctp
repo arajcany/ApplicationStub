@@ -27,12 +27,12 @@
                             'class' => "btn btn-primary"
                         ];
                         echo $this->Html->link(
-                            __('Create Services'),
-                            ['action' => 'create',],
+                            __('Create Batch Files'),
+                            ['action' => 'batch',],
                             $options
                         )
                         ?>
-                        This will create Batch files that can be used to Install and Remove Windows Services.
+                        Create batch files that can be used to install/remove the Windows Services.
                     </p>
 
                 </div>

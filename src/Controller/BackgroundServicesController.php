@@ -45,11 +45,17 @@ class BackgroundServicesController extends AppController
         $this->set('services', $services);
     }
 
-    public function create()
+    /**
+     * Create Batch files that aid with Install/Remove of the Windows Serevice
+     * @return \Cake\Http\Response|null
+     */
+    public function batch()
     {
-        $nssm = ROOT . DS . 'bin' . DS . 'BackgroundServices' . DS . 'nssm.exe';
-        $serviceInstallFile = ROOT . DS . 'bin' . DS . 'BackgroundServices' . DS . 'services_install.bat';
-        $serviceRemoveFile = ROOT . DS . 'bin' . DS . 'BackgroundServices' . DS . 'services_remove.bat';
+        $batchLocation = ROOT . DS . 'bin' . DS . 'BackgroundServices' . DS;
+        $nssm = $batchLocation . 'nssm.exe';
+        $serviceInstallFile = $batchLocation . 'services_install.bat';
+        $serviceRemoveFile = $batchLocation . 'services_remove.bat';
+
         if (is_file($nssm)) {
             $isNssm = true;
         } else {
@@ -109,9 +115,8 @@ class BackgroundServicesController extends AppController
             $commandsRemove = implode("\r\n", $commandsRemove) . "\r\npause\r\n";
             file_put_contents($serviceRemoveFile, $commandsRemove);
 
-            $this->Flash->success(__('Batch files have been created to Install and Remove the Windows Services.'));
+            $this->Flash->success(__('Batch files created in {0}. Run as Administrator to install Windows Services.', $batchLocation));
             return $this->redirect(['action' => 'index']);
-
         }
 
     }

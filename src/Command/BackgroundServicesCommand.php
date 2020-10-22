@@ -9,6 +9,7 @@ use Cake\Console\ConsoleOptionParser;
 use Cake\I18n\FrozenTime;
 use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
+use Cake\Routing\Router;
 use Cake\Utility\Text;
 use Exception;
 
@@ -20,6 +21,7 @@ use Exception;
  * @property \App\Model\Table\WorkersTable $Workers
  * @property \App\Model\Table\MessagesTable $Messages
  * @property \App\Model\Table\MessageBeaconsTable $MessageBeacons
+ * @property \App\Model\Table\HeartbeatsTable $Heartbeats
  */
 class BackgroundServicesCommand extends Command
 {
@@ -28,6 +30,7 @@ class BackgroundServicesCommand extends Command
     public $Workers;
     //public $Messages;
     //public $MessageBeacons;
+    public $Heartbeats;
 
     /**
      * Hook method for defining this command's option parser.
@@ -58,6 +61,7 @@ class BackgroundServicesCommand extends Command
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
         //$this->Messages = TableRegistry::getTableLocator()->get('Messages');
         //$this->MessageBeacons = TableRegistry::getTableLocator()->get('MessageBeacons');
+        $this->Heartbeats = TableRegistry::getTableLocator()->get('Heartbeats');
 
         $serviceType = $args->getArgumentAt(0);
 
@@ -82,6 +86,12 @@ class BackgroundServicesCommand extends Command
     private function runErrandsService(Arguments $args, ConsoleIo $io)
     {
         $io->out('Initiating an Errand Worker...');
+
+        $hbOptions = [
+            'type' => 'BackgroundService',
+            'context' => 'errand start',
+        ];
+        $this->Heartbeats->create($hbOptions);
 
         //====Create a Worker=============================================================
         $worker = $this->Workers->getWorker('errand');
