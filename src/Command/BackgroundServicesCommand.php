@@ -181,6 +181,7 @@ class BackgroundServicesCommand extends Command
         $errand->progress_bar = 0;
         $errand->worker_link = $worker->id;
         $errand->worker_name = $worker->name;
+        $errand->server = $worker->server;
         $this->Errands->save($errand);
 
         $class = $errand->class;
