@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Controller\AppController;
+use App\Model\Table\ArtifactsTable;
 use App\Model\Table\ErrandsTable;
 use App\Model\Table\WorkersTable;
 use arajcany\ToolBox\Utility\Security\Security;
@@ -11,6 +12,7 @@ use Cake\ORM\TableRegistry;
 /**
  * Developers Controller
  *
+ * @property ArtifactsTable $Artifacts;
  * @property ErrandsTable $Errands;
  * @property WorkersTable $Workers;
  */
@@ -23,7 +25,7 @@ class DevelopersController extends AppController
     {
         parent::initialize();
 
-
+        $this->Artifacts = TableRegistry::getTableLocator()->get('Artifacts');
         $this->Errands = TableRegistry::getTableLocator()->get('Errands');
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
 
@@ -58,6 +60,26 @@ class DevelopersController extends AppController
 
 //        $worker = $this->Workers->getWorker('errand');
 //        $toDebug['$worker'] = $worker;
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
+    public function artifacts()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+        $options = [
+            'width' => mt_rand(64, 256),
+            'height' => mt_rand(64, 256),
+            'background' => '#808080',
+            'format' => 'png',
+            'quality' => '90',
+        ];
+
+        $artifact = $this->Artifacts->createPlaceholderArtifact($options);
+        $toDebug['$errand'] = $artifact;
 
         $this->set('toDebug', $toDebug);
     }

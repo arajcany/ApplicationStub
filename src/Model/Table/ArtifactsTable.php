@@ -15,6 +15,7 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 use finfo;
+use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
 
 /**
@@ -22,9 +23,11 @@ use Intervention\Image\ImageManager;
  *
  * @property \App\Model\Table\ArtifactMetadataTable&\Cake\ORM\Association\HasMany $ArtifactMetadata
  *
- * @property array $infoMessages
- * @property array $warningMessages
- * @property array $errorMessages
+ * @property array $successAlerts
+ * @property array $dangerAlerts
+ * @property array $warningAlerts
+ * @property array $infoAlerts
+ * @property int $returnCode
  *
  * @method Artifact get($primaryKey, $options = [])
  * @method Artifact newEntity($data = null, array $options = [])
@@ -39,9 +42,11 @@ use Intervention\Image\ImageManager;
  */
 class ArtifactsTable extends Table
 {
-    private $infoMessages = [];
-    private $warningMessages = [];
-    private $errorMessages = [];
+    private $successAlerts = [];
+    private $dangerAlerts = [];
+    private $warningAlerts = [];
+    private $infoAlerts = [];
+    private $returnCode = 0;
 
     /**
      * Initialize method
@@ -126,28 +131,118 @@ class ArtifactsTable extends Table
     }
 
     /**
-     * @return array
+     * @return int
      */
-    public function getInfoMessages(): array
+    public function getReturnCode(): int
     {
-        return $this->infoMessages;
+        return $this->returnCode;
     }
 
     /**
      * @return array
      */
-    public function getWarningMessages(): array
+    public function getAllAlerts(): array
     {
-        return $this->warningMessages;
+        return [
+            'success' => $this->successAlerts,
+            'danger' => $this->successAlerts,
+            'warning' => $this->successAlerts,
+            'info' => $this->successAlerts,
+        ];
     }
 
     /**
      * @return array
      */
-    public function getErrorMessages(): array
+    public function getSuccessAlerts(): array
     {
-        return $this->errorMessages;
+        return $this->successAlerts;
     }
+
+    /**
+     * @return array
+     */
+    public function getDangerAlerts(): array
+    {
+        return $this->dangerAlerts;
+    }
+
+    /**
+     * @return array
+     */
+    public function getWarningAlerts(): array
+    {
+        return $this->warningAlerts;
+    }
+
+    /**
+     * @return array
+     */
+    public function getInfoAlerts(): array
+    {
+        return $this->infoAlerts;
+    }
+
+    /**
+     * @param array|string $message
+     * @return array
+     */
+    public function addSuccessAlerts($message): array
+    {
+        if (is_string($message)) {
+            $message = [$message];
+        }
+
+        $this->successAlerts = array_merge($this->successAlerts, $message);
+
+        return $this->successAlerts;
+    }
+
+    /**
+     * @param array|string $message
+     * @return array
+     */
+    public function addDangerAlerts($message): array
+    {
+        if (is_string($message)) {
+            $message = [$message];
+        }
+
+        $this->dangerAlerts = array_merge($this->dangerAlerts, $message);
+
+        return $this->dangerAlerts;
+    }
+
+    /**
+     * @param array|string $message
+     * @return array
+     */
+    public function addWarningAlerts($message): array
+    {
+        if (is_string($message)) {
+            $message = [$message];
+        }
+
+        $this->warningAlerts = array_merge($this->warningAlerts, $message);
+
+        return $this->warningAlerts;
+    }
+
+    /**
+     * @param array|string $message
+     * @return array
+     */
+    public function addInfoAlerts($message): array
+    {
+        if (is_string($message)) {
+            $message = [$message];
+        }
+
+        $this->infoAlerts = array_merge($this->infoAlerts, $message);
+
+        return $this->infoAlerts;
+    }
+
 
     /**
      * Pass $data for saving to filesystem and db
@@ -199,7 +294,7 @@ class ArtifactsTable extends Table
      * @param array $data
      * @return Artifact|array|bool
      */
-    public function createArtifact($data)
+    public function createArtifact(array $data)
     {
         //check if Artifact already exists
         if (!empty($data['token'])) {
@@ -276,32 +371,32 @@ class ArtifactsTable extends Table
 
         switch ($e = $data["error"]) {
             case 0:
-                $this->infoMessages[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
+                $this->infoAlerts[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
                 break;
             case 1:
                 $uploadMaxFilesize = ini_get('upload_max_filesize');
-                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
                 break;
             case 2:
-                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
                 break;
             case 3:
-                $this->errorMessages[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
                 break;
             case 4:
-                $this->errorMessages[] = ["code" => $e, "message" => "No file was uploaded."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "No file was uploaded."];
                 break;
             case 5:
-                $this->errorMessages[] = ["code" => $e, "message" => "Unknown error."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "Unknown error."];
                 break;
             case 6:
-                $this->errorMessages[] = ["code" => $e, "message" => "Missing a temporary folder."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "Missing a temporary folder."];
                 break;
             case 7:
-                $this->errorMessages[] = ["code" => $e, "message" => "Failed to write file to disk."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "Failed to write file to disk."];
                 break;
             case 8:
-                $this->errorMessages[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
+                $this->dangerAlerts[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
                 break;
         }
 
@@ -316,13 +411,13 @@ class ArtifactsTable extends Table
                 $dest = $dir . $data['name'];
                 $saveDataResult = move_uploaded_file($src, $dest);
                 if ($saveDataResult) {
-                    $this->infoMessages[] = ["code" => 0, "message" => "The file was moved to the destination folder."];
+                    $this->infoAlerts[] = ["code" => 0, "message" => "The file was moved to the destination folder."];
                 } else {
-                    $this->errorMessages[] = ["code" => 1, "message" => "Failed to move the file to the destination folder."];
+                    $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to move the file to the destination folder."];
                 }
             } else {
                 $saveDataResult = false;
-                $this->errorMessages[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+                $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to create the destination folder."];
             }
 
             //mime type
@@ -342,17 +437,17 @@ class ArtifactsTable extends Table
                 $dest = $dir . $data['name'];
                 $saveDataResult = file_put_contents($dest, $src);
                 if ($saveDataResult) {
-                    $this->infoMessages[] = ["code" => 0, "message" => "The file was saved to the destination folder."];
+                    $this->infoAlerts[] = ["code" => 0, "message" => "The file was saved to the destination folder."];
                 } else {
-                    $this->errorMessages[] = ["code" => 1, "message" => "Failed to save the file to the destination folder."];
+                    $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to save the file to the destination folder."];
                 }
             } else {
                 $saveDataResult = false;
-                $this->errorMessages[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+                $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to create the destination folder."];
             }
 
             //mime type
-            if (!$data['mime_type']) {
+            if (!isset($data['mime_type']) || empty($data['mime_type'])) {
                 $finfo = new finfo(FILEINFO_MIME);
                 $data['mime_type'] = explode(";", $finfo->buffer($data['blob']))[0];
             }
@@ -363,7 +458,7 @@ class ArtifactsTable extends Table
             }
         } else {
             //no blob data to save
-            $this->errorMessages[] = ["code" => 1, "message" => "No blob data to save."];
+            $this->dangerAlerts[] = ["code" => 1, "message" => "No blob data to save."];
             $saveDataResult = false;
         }
 
@@ -374,30 +469,49 @@ class ArtifactsTable extends Table
 
 
             if ($saveEntityResult) {
-                $this->infoMessages = ["code" => 0, "message" => "Entity saved."];
+                $this->infoAlerts = ["code" => 0, "message" => "Entity saved."];
 
-                $exif = $this->getCleanExifData($dest);
+                $exif = @$this->getCleanExifData($dest);
+                if (empty($exif)) {
+                    $exif = @getimagesize($dest);
+                }
+
+                if (empty($exif)) {
+                    $exif = [];
+                }
 
                 $artifactMetadata = [
                     'artifact_id' => $artifact->id,
                     'width' => 0,
                     'height' => 0,
                 ];
+
+                if (isset($exif['COMPUTED'])) {
+                    if (isset($exif['COMPUTED']['Width'])) {
+                        $artifactMetadata['width'] = $exif['COMPUTED']['Width'];
+                    }
+                    if (isset($exif['COMPUTED']['Height'])) {
+                        $artifactMetadata['height'] = $exif['COMPUTED']['Height'];
+                    }
+                } elseif (isset($exif[0]) && isset($exif[1])) {
+                    $artifactMetadata['width'] = $exif[0];
+                    $artifactMetadata['height'] = $exif[1];
+                }
+
                 $artifactMetadata = $this->ArtifactMetadata->newEntity($artifactMetadata);
                 $artifactMetadata->exif = $exif;
                 $this->ArtifactMetadata->save($artifactMetadata);
 
             } else {
-                debug($this->getErrorMessages());
-                $this->errorMessages[] = ["code" => 1, "message" => "Entity could not be saved."];
+                $this->dangerAlerts[] = ["code" => 1, "message" => "Entity could not be saved."];
             }
         } else {
             $saveEntityResult = false;
-            $this->errorMessages[] = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
+            $this->dangerAlerts[] = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
         }
 
         if ($saveDataResult && $saveEntityResult) {
-            return true;
+            return $artifact;
         } else {
             return false;
         }
@@ -430,25 +544,24 @@ class ArtifactsTable extends Table
      * Wrapper function to saveArtifactData() but where the actual image data needs to be magically created.
      * Used when an Artifact is required (e.g. to serve up an image) but the data does not exist yet.
      *
-     * @param array $data
+     * @param array $imageData
      * @param array $metadata
      * @return mixed \App\Model\Entity\Artifact|bool
      */
-    public function createArtifactOld(array $data = [], array $metadata = [])
+    public function createPlaceholderArtifact(array $imageData = [])
     {
-        //setup $data
-        $dataDefaults = [
-            'name' => '',
-            'type' => 'image/png',
-            'width' => 32,
-            'height' => 32,
+        //setup default $imageData
+        $imageDataDefaults = [
+            'width' => 64,
+            'height' => 64,
             'background' => '#808080',
+            'format' => 'png',
             'quality' => '90',
         ];
-        $data = array_merge($dataDefaults, $data);
+        $imageData = array_merge($imageDataDefaults, $imageData);
 
         //create a token
-        $token = sha1(json_encode($data));
+        $token = sha1(json_encode($imageData));
 
         //check if Artifact exists based on $token
         $artifact = $this->find('all')->where(['token' => $token])->first();
@@ -456,23 +569,23 @@ class ArtifactsTable extends Table
             return $artifact;
         }
 
-        //setup $metadata
+        //generate the placeholder image
+        $imageData['blob'] = $this->getImageResource($imageData);
+
+        //setup $fullData
         $activation = new FrozenTime();
         $expiration = new FrozenTime('+ ' . Configure::read('Settings.data_purge') . ' months');
-        $metadataDefaults = [
-            'name' => "{$data['width']}x{$data['height']}",
-            'description' => "Placeholder Image {$data['width']}px {$data['height']}px",
-            'mime_type' => $data['type'],
+        $metadata = [
+            'name' => "{$imageData['width']}x{$imageData['height']}.{$imageData['format']}",
+            'description' => "Placeholder Image {$imageData['width']}px {$imageData['height']}px",
             'activation' => $activation,
             'expiration' => $expiration,
             'auto_delete' => true,
             'token' => $token,
         ];
-        $metadata = array_merge($metadataDefaults, $metadata);
+        $fullData = array_merge($metadata, $imageData);
 
-        //generate the image and save
-        $data['blob'] = $this->getImageResource($data);
-        $result = $this->saveArtifact($data, $metadata);
+        $result = $this->createArtifact($fullData);
         return $result;
     }
 
@@ -480,7 +593,7 @@ class ArtifactsTable extends Table
      * Return an Intervention Image resource based on the settings
      *
      * @param array $settings
-     * @return \Intervention\Image\Image
+     * @return Image
      */
     public function getImageResource($settings = [])
     {
@@ -502,6 +615,7 @@ class ArtifactsTable extends Table
         $imageResource = $manager
             ->canvas($s['width'], $s['height'], $s['background'])
             ->encode($s['format'], $s['quality']);
+
         return $imageResource;
     }
 

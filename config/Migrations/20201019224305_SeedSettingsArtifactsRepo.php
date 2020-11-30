@@ -148,7 +148,85 @@ class SeedSettingsArtifactsRepo extends AbstractMigration
                 'html_select_type' => 'text',
                 'match_pattern' => null,
                 'is_masked' => false
-            ]
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Icon Size',
+                'description' => 'Size in pixels when delivering an Icon sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_icon',
+                'property_value' => '128',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Thumbnail Size',
+                'description' => 'Size in pixels when delivering a Thumbnail sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_thumbnail',
+                'property_value' => '256',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Preview Size',
+                'description' => 'Size in pixels when delivering a Preview sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_preview',
+                'property_value' => '512',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Low Resolution Size',
+                'description' => 'Size in pixels when delivering a Low Resolution sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_lr',
+                'property_value' => '1024',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Medium Resolution Size',
+                'description' => 'Size in pixels when delivering a Medium Resolution sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_mr',
+                'property_value' => '1600',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Medium Resolution Size',
+                'description' => 'Size in pixels when delivering a High Resolution sized image',
+                'property_group' => 'repository',
+                'property_key' => 'repo_size_hr',
+                'property_value' => '2400',
+                'selections' => '',
+                'html_select_type' => 'text',
+                'match_pattern' => null,
+                'is_masked' => false
+            ],
         ];
 
         if (!empty($data)) {
