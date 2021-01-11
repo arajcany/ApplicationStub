@@ -9,7 +9,7 @@
 SET app=%0
 SET lib=%~dp0
 
-php "%lib%cake.php" reset_password
+php "%lib%cake.php" ResetPassword
 
 echo.
 
