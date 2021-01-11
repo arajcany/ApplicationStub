@@ -11,6 +11,7 @@ SET lib=%~dp0
 
 
 cmd /C composer install --no-dev --no-scripts
+cmd /C composer dump-autoload
 
 echo.
 

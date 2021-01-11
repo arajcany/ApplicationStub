@@ -47,3 +47,4 @@ nbproject/*
 /bin/BackgroundServices/nssm.exe
 /bin/BackgroundServices/services_install.bat
 /bin/BackgroundServices/services_remove.bat
+/bin/BuildRelease_Test.bat
