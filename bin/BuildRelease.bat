@@ -20,6 +20,7 @@ php "%lib%cake.php" Releases build
 echo.
 
 cmd /C composer install --no-scripts
+cmd /C composer dump-autoload
 
 echo.
 
