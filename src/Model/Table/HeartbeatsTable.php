@@ -2,6 +2,7 @@
 
 namespace App\Model\Table;
 
+use App\Model\Entity\Heartbeat;
 use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\Query;
@@ -112,7 +113,109 @@ class HeartbeatsTable extends Table
 
         $options = array_merge($defaultOptions, $options);
 
+        $options['type'] = substr($options['type'], 0, 128);
+        $options['context'] = substr($options['context'], 0, 128);
+        $options['domain'] = substr($options['domain'], 0, 128);
+
         $heartbeat = $this->newEntity($options);
         return $this->save($heartbeat);
+    }
+
+    /**
+     * Purge Heartbeats based on the System PID
+     *
+     * @return int
+     */
+    public function purge()
+    {
+        $pid = getmypid();
+        $result = $this->deleteAll(['pid' => $pid]);
+
+        return $result;
+    }
+
+    /**
+     * Purge Pulses based on the System PID
+     *
+     * @return int
+     */
+    public function purgePulses()
+    {
+        $pid = getmypid();
+        $result = $this->deleteAll(['pid' => $pid, 'type' => 'pulse']);
+
+        return $result;
+    }
+
+    /**
+     * Find the last Heartbeats
+     *
+     * @param int $limit
+     * @return Query
+     */
+    public function findLastHeartbeats()
+    {
+        $cte = ';WITH cte AS ( SELECT *, ROW_NUMBER() OVER (PARTITION BY type ORDER BY created DESC) AS rn FROM Heartbeats )SELECT id FROM cte WHERE rn = 1';
+
+        $conn = $this->getConnection();
+        $results = $conn->execute($cte)->fetchAll('assoc');
+        $ids = [];
+        foreach ($results as $result) {
+            $ids[] = $result['id'];
+        }
+
+        $selectList = [
+            'created',
+            'type',
+            'pid',
+        ];
+
+        $types = $this->getHeartbeatTypes();
+
+        $query = $this->find('all')
+            ->select($selectList, true)
+            ->where(['type IN' => $types])
+            ->where(['id IN' => $ids])
+            ->orderAsc('type');
+
+        return $query;
+    }
+
+    /**
+     * Find the last pulse for the given Heartbeat
+     *
+     * @param Heartbeat $heartbeat
+     * @param int $limit
+     * @return Query
+     */
+    public function findPulsesForHeartbeat(Heartbeat $heartbeat, $limit = 10)
+    {
+        $query = $this->find('all')
+            ->where(['pid' => $heartbeat->pid])
+            ->where(['type' => 'pulse'])
+            ->limit($limit)
+            ->orderDesc('id');
+
+        return $query;
+    }
+
+    /**
+     * List out the Heartbeats
+     *
+     * @return array
+     */
+    public function getHeartbeatTypes()
+    {
+        $selectList = [
+            'type'
+        ];
+        $query = $this->find('list', ['keyField' => 'id', 'valueField' => 'type'])
+            ->select($selectList, true)
+            ->distinct(['type'])
+            ->where(['type !=' => 'pulse'])
+            ->group(['type'])
+            ->orderAsc('type');
+
+        return $query->toArray();
     }
 }

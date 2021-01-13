@@ -45,12 +45,19 @@
     <div class="col-12 ml-auto mr-auto">
         <div class="workers index large-9 medium-8 columns content">
             <h3><?= __('Installed Services') ?></h3>
+            <span class="float-right">
+            <?php
+            $startLink = $this->Html->link(__('Start All'), ['action' => 'start', 'all']);
+            $stopLink = $this->Html->link(__('Stop All'), ['action' => 'stop', 'all']);
+            $startStopLink = __("{0} | {1}", $startLink, $stopLink);
+            ?>
+            </span>
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>
                     <th scope="col">Name</th>
                     <th scope="col">State</th>
-                    <th scope="col" class="actions"><?= __('Actions') ?></th>
+                    <th scope="col" class="actions"><?= __('Actions') ?> (<?= $startStopLink ?>)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -60,8 +67,9 @@
                         <td><?= $service['state'] ?></td>
                         <td class="actions">
                             <?php
-                            if (1 == 2) {
-                                if ($service['state'] == 'RUNNING') {
+                            $showActions = true;
+                            if ($showActions) {
+                                if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
                                     echo $this->Html->link(__('Stop'), ['action' => 'stop', $service['name']]);
                                 } elseif ($service['state'] == 'STOPPED') {
                                     echo $this->Html->link(__('Start'), ['action' => 'start', $service['name']]);

@@ -7,6 +7,7 @@ use arajcany\ToolBox\I18n\TimeMaker;
 use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
 use Cake\Core\Configure;
+use Cake\Database\Driver\Sqlite;
 use Cake\Datasource\EntityInterface;
 use Cake\Filesystem\Folder;
 use Cake\I18n\FrozenTime;
@@ -308,21 +309,7 @@ class ArtifactsTable extends Table
 
         $timeObjCurrent = new FrozenTime();
 
-        $defaultData = [
-            'tmp_name' => null,
-            'blob' => null,
-            'error' => 0,
-            'name' => null,
-            'description' => null,
-            'type' => null,
-            'size' => null,
-            'activation' => (clone $timeObjCurrent),
-            'expiration' => (clone $timeObjCurrent)->addMonths(Configure::read("Settings.data_purge")),
-            'auto_delete' => true,
-            'token' => null,
-            'url' => null,
-            'unc' => null
-        ];
+        $defaultData = $this->getDefaultData();
 
         $data = array_merge($defaultData, $data);
 
@@ -409,6 +396,9 @@ class ArtifactsTable extends Table
 
             if ($fso) {
                 $dest = $dir . $data['name'];
+                if (!is_dir(pathinfo($dest, PATHINFO_DIRNAME))) {
+                    mkdir(pathinfo($dest, PATHINFO_DIRNAME), 0777, true);
+                }
                 $saveDataResult = move_uploaded_file($src, $dest);
                 if ($saveDataResult) {
                     $this->infoAlerts[] = ["code" => 0, "message" => "The file was moved to the destination folder."];
@@ -435,6 +425,9 @@ class ArtifactsTable extends Table
 
             if ($fso) {
                 $dest = $dir . $data['name'];
+                if (!is_dir(pathinfo($dest, PATHINFO_DIRNAME))) {
+                    mkdir(pathinfo($dest, PATHINFO_DIRNAME), 0777, true);
+                }
                 $saveDataResult = file_put_contents($dest, $src);
                 if ($saveDataResult) {
                     $this->infoAlerts[] = ["code" => 0, "message" => "The file was saved to the destination folder."];
@@ -515,6 +508,97 @@ class ArtifactsTable extends Table
         } else {
             return false;
         }
+    }
+
+    /**
+     * Convenience function, converts ImageResource to its stream
+     *
+     * @param mixed $name
+     * @param Image $imageResource
+     * @return Artifact
+     */
+    public function createArtifactFromImageResource($name, Image $imageResource)
+    {
+        if (!is_string($name)) {
+            $name = $this->serialiseName($name);
+            $token = $name;
+        } else {
+            $token = sha1($name);
+        }
+
+        $data = $this->getDefaultData();
+        $data['name'] = $name;
+        $data['token'] = $token;
+        $data['blob'] = $imageResource->stream();
+
+        return $this->createArtifact($data);
+    }
+
+    /**
+     * @param $artifactOrIdOrToken
+     * @param $params
+     * @return Artifact|array|EntityInterface|false|null
+     */
+    public function recompressImage($artifactOrIdOrToken, $params)
+    {
+        if ($artifactOrIdOrToken instanceof Artifact) {
+            $artifact = $artifactOrIdOrToken;
+        } else {
+            $query = $this->find('all');
+            if (is_numeric($artifactOrIdOrToken)) {
+                $query = $query->where(['id' => $artifactOrIdOrToken]);
+            } elseif (is_string($artifactOrIdOrToken)) {
+                $query = $query->where(['token' => $artifactOrIdOrToken]);
+            } else {
+                return false;
+            }
+
+            $artifact = $query->first();
+            if (!$artifact) {
+                return false;
+            }
+        }
+
+        if (!exif_imagetype($artifact->full_unc)) {
+            return false;
+        }
+
+        $defaultParams = [
+            'size' => 640,
+            'format' => 'jpg',
+            'quality' => 90,
+        ];
+
+        $params = array_merge($defaultParams, $params);
+
+        $im = new ImageManager();
+
+        try {
+            $image = $im->make($artifact->full_unc);
+        } catch (\Throwable $e) {
+            $image = $this->getImageResource();
+        }
+
+        $practicalScope = 1.1;
+        $widthInsideScope = ($image->getWidth()) * $practicalScope;
+        $heightInsideScope = ($image->getHeight()) * $practicalScope;
+
+        //abort if no sizing is required
+        if ($widthInsideScope < $params['size'] && $heightInsideScope < $params['size']) {
+            return $artifact;
+        }
+
+        $image
+            ->widen($params['size'], function ($constraint) {
+                $constraint->upsize();
+            })
+            ->heighten($params['size'], function ($constraint) {
+                $constraint->upsize();
+            })
+            ->encode($params['format'], $params['quality'])
+            ->save();
+
+        return $artifact;
     }
 
     /**
@@ -636,6 +720,73 @@ class ArtifactsTable extends Table
     }
 
     /**
+     * Wrapper function
+     *
+     * @param int $limit
+     * @return bool|mixed
+     */
+    public function deleteTopExpired($limit = 50)
+    {
+        $hardLimit = 500;
+        $finalLimit = min($limit, $hardLimit);
+
+        $currentDatetime = new FrozenTime();
+        $artifactsToDelete = $this->find('all')
+            ->where(['expiration <=' => $currentDatetime->format("Y-m-d H:i:s"), 'auto_delete' => true])
+            ->limit($finalLimit);
+
+        $counter = 0;
+        foreach ($artifactsToDelete->toArray() as $artifact) {
+            $result = $this->delete($artifact);
+            if ($result) {
+                $counter++;
+            }
+        }
+
+        return $counter;
+    }
+
+    /**
+     * Helps to keep the Artifacts table under control.
+     * Get specified number of random records and then checks each one for an object in the FS
+     * Deletes the Artifact record if no Artifact found.
+     *
+     * @param int $limit
+     * @return bool|mixed
+     */
+    public function deleteHasMissingArtifact($limit = 200)
+    {
+        $hardLimit = 500;
+        $finalLimit = min($limit, $hardLimit);
+
+        $dbDriver = ($this->getConnection())->getDriver();
+        if ($dbDriver instanceof Sqlite) {
+            $rndSQL = "id IN (SELECT id FROM artifacts ORDER BY RANDOM() LIMIT {$finalLimit})";
+        } else {
+            $rndSQL = "id IN (SELECT TOP ({$finalLimit}) id FROM artifacts TABLESAMPLE (1 PERCENT) ORDER BY NEWID())";
+        }
+
+        $artifactsToDelete = $this->find('all')
+            ->where([$rndSQL])
+            ->limit($finalLimit);
+
+        $counter = 0;
+        /**
+         * @var Artifact $artifact
+         */
+        foreach ($artifactsToDelete->toArray() as $artifact) {
+            if (!is_file($artifact->full_unc)) {
+                $result = $this->delete($artifact);
+                if ($result) {
+                    $counter++;
+                }
+            }
+        }
+
+        return $counter;
+    }
+
+    /**
      * Extract the extension from a MIME TYPE string
      *
      * @param string $mimeType
@@ -656,35 +807,35 @@ class ArtifactsTable extends Table
         }
     }
 
+
     /**
-     * Delete Artifacts that have been orphaned.
-     *
-     * @param null $seasonId
-     * @param null $franchiseId
-     * @param bool $cascade
+     * @param $stream
+     * @param null $sections
+     * @param false $arrays
+     * @param false $thumbnail
+     * @return array
      */
-    public function deleteOrphanedArtifacts($seasonId = null, $franchiseId = null, $cascade = true)
-    {
-        //todo: replace stub code
-    }
-
-
     private function getCleanExifData($stream, $sections = null, $arrays = false, $thumbnail = false)
     {
-        $exif = exif_read_data($stream, $sections, $arrays, $thumbnail);
+        $exif = @exif_read_data($stream, $sections, $arrays, $thumbnail);
 
         $allowedExifValues = $this->getAllowedExifValues();
 
         $exifClean = [];
-        foreach ($allowedExifValues as $allowedExifValue) {
-            if (isset($exif[$allowedExifValue])) {
-                $exifClean[$allowedExifValue] = $exif[$allowedExifValue];
+        if ($exif) {
+            foreach ($allowedExifValues as $allowedExifValue) {
+                if (isset($exif[$allowedExifValue])) {
+                    $exifClean[$allowedExifValue] = $exif[$allowedExifValue];
+                }
             }
         }
 
         return $exifClean;
     }
 
+    /**
+     * @return string[]
+     */
     private function getAllowedExifValues()
     {
         $exifValues = [
@@ -709,6 +860,53 @@ class ArtifactsTable extends Table
         ];
 
         return $exifValues;
+    }
+
+    /**
+     * @param mixed $name
+     * @return Query
+     */
+    public function findByName($name)
+    {
+        $name = $this->serialiseName($name);
+        return $this->find('all')->where(['name' => $name]);
+    }
+
+    /**
+     * @param $name
+     * @return string
+     */
+    public function serialiseName($name)
+    {
+        if (!is_string($name)) {
+            $name = sha1(json_encode($name));
+        }
+
+        return $name;
+    }
+
+    /**
+     * @return array
+     */
+    private function getDefaultData()
+    {
+        $timeObjCurrent = new FrozenTime();
+
+        return $defaultData = [
+            'tmp_name' => null,
+            'blob' => null,
+            'error' => 0,
+            'name' => null,
+            'description' => null,
+            'type' => null,
+            'size' => null,
+            'activation' => (clone $timeObjCurrent),
+            'expiration' => (clone $timeObjCurrent)->addMonths(Configure::read("Settings.data_purge")),
+            'auto_delete' => true,
+            'token' => null,
+            'url' => null,
+            'unc' => null
+        ];
     }
 
 

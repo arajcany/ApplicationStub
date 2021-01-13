@@ -45,6 +45,13 @@ class BackgroundServicesCommand extends Command
     {
         $parser = parent::buildOptionParser($parser);
 
+        $parser
+            ->addOption('heartbeat-name', [
+                'short' => 'h',
+                'help' => 'Name when logging a Heartbeat',
+                'default' => 'BackgroundServices',
+            ]);
+
         return $parser;
     }
 
@@ -88,9 +95,11 @@ class BackgroundServicesCommand extends Command
     {
         $io->out('Initiating an Errand Worker...');
 
+        $heartbeatName = $args->getOption('heartbeat-name');
+
         $hbOptions = [
-            'type' => 'BackgroundService',
-            'context' => 'errand start',
+            'type' => $heartbeatName,
+            'context' => 'Started Errand Worker',
         ];
         $this->Heartbeats->create($hbOptions);
 
@@ -117,26 +126,47 @@ class BackgroundServicesCommand extends Command
 
                 $errand = $this->runNextErrand($worker);
                 if ($errand) {
-                    $io->info(__("Completed Errand {0}:{1}.", $errand->id, $errand->name));
+                    $msg = __("Completed Errand {0}:{1}.", $errand->id, $errand->name);
+
+                    $io->info($msg);
+
+                    $hbOptions = [
+                        'type' => 'pulse',
+                        'context' => $msg,
+                    ];
+                    $this->Heartbeats->create($hbOptions);
                 }
 
                 $io->out(__("====End of Errand=============================================="));
                 $io->out($io->nl(3));
             } else {
                 //go to sleep for a bit because there is nothing to do
-                $sleep = $this->getSleepLength($sleep, 8);
-                $io->info(__("No errands, sleeping for {0} seconds.", $sleep));
+                $sleepTimeout = Configure::read('Settings.errand_worker_sleep');
+                $sleep = $this->getSleepLength($sleep, $sleepTimeout);
+
+                $msg = __("No errands, sleeping for {0} seconds.", $sleep);
+
+                $io->info($msg);
                 $worker->errand_name = __("Sleeping for {0} seconds.", $sleep);
                 $worker->errand_link = null;
                 $this->Workers->save($worker);
+
+                $hbOptions = [
+                    'type' => 'pulse',
+                    'context' => $msg,
+                ];
+                $this->Heartbeats->create($hbOptions);
+
                 sleep($sleep);
             }
 
             //refresh worker and check if deleted or been forced into retirement
             $worker = $this->Workers->refreshWorker($worker);
             if ($worker === false) {
+                $this->Heartbeats->purgePulses();
                 $io->abort(__("I have been deleted via the GUI...Bye!"), 3);
             } elseif ($worker->force_retirement) {
+                $this->Heartbeats->purgePulses();
                 $this->Workers->delete($worker);
                 $io->abort(__("Forced into early retirement...Bye!"), 4);
             }
@@ -150,6 +180,7 @@ class BackgroundServicesCommand extends Command
 
 
         //====Retire Worker===============================================================
+        $this->Heartbeats->purgePulses();
         $this->Workers->delete($worker);
         $io->abort(__("I made it to retirement...Bye!"), 4);
 
@@ -189,8 +220,15 @@ class BackgroundServicesCommand extends Command
         $parameters = $errand->parameters;
 
         try {
-            $Model = $this->loadModel($class);
-            $Model->$method(...$parameters);
+            //Switch between a Model and Fully Qualified class
+            if (strpos($class, "Table") !== false) {
+                $class = str_replace("Table", "", $class);
+                $Model = $this->loadModel($class);
+                $result = $Model->$method(...$parameters);
+            } else {
+                $Object = new $class();
+                $result = $Object->$method(...$parameters);
+            }
 
             $errand->completed = new FrozenTime('now');
             $errand->status = 'Completed';
@@ -242,7 +280,7 @@ class BackgroundServicesCommand extends Command
      */
     private function runNextMessage(\App\Model\Entity\Worker $worker)
     {
-
+        return 0;
     }
 
     /**
@@ -253,7 +291,7 @@ class BackgroundServicesCommand extends Command
      * @param float|int $rate
      * @return mixed
      */
-    public function getSleepLength($currentSleepLength = 1, $cap = 8, $rate = 1.5)
+    public function getSleepLength($currentSleepLength = 1, $cap = 8, $rate = 1.1)
     {
         if ($currentSleepLength <= 0) {
             $currentSleepLength = 1;

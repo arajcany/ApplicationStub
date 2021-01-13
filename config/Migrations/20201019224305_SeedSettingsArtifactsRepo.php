@@ -61,6 +61,32 @@ class SeedSettingsArtifactsRepo extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
+                'name' => 'Repository Data Purge Interval',
+                'description' => 'How often in minutes to purge the Artifacts table',
+                'property_group' => 'repository',
+                'property_key' => 'repo_purge_interval',
+                'property_value' => '10',
+                'selections' => '{"5":"5","6":"6","7":"7","8":"8","9":"9","10":"10","11":"11","12":"12","13":"13","14":"14","15":"15","20":"20","30":"30"}',
+                'html_select_type' => 'select',
+                'match_pattern' => null,
+                'is_masked' => null
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Repository Data Purge Limit',
+                'description' => 'How many threads as Background Services',
+                'property_group' => 'repository',
+                'property_key' => 'repo_purge_limit',
+                'property_value' => '1',
+                'selections' => '{"1":"1","2":"2","3":"3","4":"4","5":"5"}',
+                'html_select_type' => 'select',
+                'match_pattern' => null,
+                'is_masked' => null
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
                 'name' => 'Repository Artifact Serving',
                 'description' => 'How the Repository serves Artifacts - Static or Dynamic',
                 'property_group' => 'repository',
@@ -217,7 +243,7 @@ class SeedSettingsArtifactsRepo extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
-                'name' => 'Repository Medium Resolution Size',
+                'name' => 'Repository High Resolution Size',
                 'description' => 'Size in pixels when delivering a High Resolution sized image',
                 'property_group' => 'repository',
                 'property_key' => 'repo_size_hr',

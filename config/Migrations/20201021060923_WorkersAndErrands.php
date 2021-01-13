@@ -270,6 +270,19 @@ class WorkersAndErrands extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
+                'name' => 'Errand Worker Sleep Timeout',
+                'description' => 'How long to sleep for if there are no Errands to run',
+                'property_group' => 'errand_worker',
+                'property_key' => 'errand_worker_sleep',
+                'property_value' => '2',
+                'selections' => '{2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","10":"10","16":"16","32":"32"}',
+                'html_select_type' => 'select',
+                'match_pattern' => null,
+                'is_masked' => null
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
                 'name' => 'Message Worker Limit',
                 'description' => 'How many Message Workers can be booted at the one time',
                 'property_group' => 'message_worker',
@@ -315,6 +328,19 @@ class WorkersAndErrands extends AbstractMigration
                 'property_key' => 'message_retry_limit',
                 'property_value' => '4',
                 'selections' => '{"1":"1","2":"2","3":"3","4":"4","5":"5"}',
+                'html_select_type' => 'select',
+                'match_pattern' => null,
+                'is_masked' => null
+            ],
+            [
+                'created' => $currentDate,
+                'modified' => $currentDate,
+                'name' => 'Message Worker Sleep Timeout',
+                'description' => 'How long to sleep for if there are no Messages to run',
+                'property_group' => 'message_worker',
+                'property_key' => 'message_worker_sleep',
+                'property_value' => '2',
+                'selections' => '{2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9","10":"10","16":"16","32":"32"}',
                 'html_select_type' => 'select',
                 'match_pattern' => null,
                 'is_masked' => null
