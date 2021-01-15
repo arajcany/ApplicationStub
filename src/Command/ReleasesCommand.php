@@ -86,6 +86,8 @@ class ReleasesCommand extends Command
         }
 
         $this->BuildTasks = new BuildTasks();
+        $this->BuildTasks->setArgs($args);
+        $this->BuildTasks->setIo($io);
         $this->BuildTasks->build();
     }
 
