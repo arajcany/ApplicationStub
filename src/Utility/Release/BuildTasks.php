@@ -5,6 +5,9 @@ namespace App\Utility\Release;
 
 use arajcany\ToolBox\Utility\TextFormatter;
 use arajcany\ToolBox\Utility\ZipMaker;
+use Cake\Utility\Inflector;
+use Cake\Console\ConsoleIo;
+use Cake\Console\Arguments;
 
 /**
  * Class BuildTasks
@@ -13,6 +16,8 @@ use arajcany\ToolBox\Utility\ZipMaker;
  * This way, the ZIP can be built via CLI or Web request.
  *
  * @property string $buildFile
+ * @property ConsoleIo $io
+ * @property Arguments $args
  *
  * @package App\Utility\Release
  */
@@ -20,6 +25,8 @@ class BuildTasks
 {
     private $buildFile = null;
     private $log = [];
+    private $args = null;
+    private $io = null;
 
     /**
      * DefaultApplication constructor.
@@ -56,6 +63,23 @@ class BuildTasks
     }
 
     /**
+     * @param mixed $args
+     */
+    public function setArgs(Arguments $args)
+    {
+        $this->args = $args;
+    }
+
+    /**
+     * @param mixed $io
+     */
+    public function setIo(ConsoleIo $io)
+    {
+        $this->io = $io;
+    }
+
+
+    /**
      * Write to the log variable
      *
      * @param $data
@@ -64,6 +88,12 @@ class BuildTasks
     {
         if (is_object($data)) {
             $data = json_decode(json_encode($data));
+        }
+
+        if (is_cli()) {
+            if ($this->io) {
+                $this->io->out($data);
+            }
         }
 
         $this->log[] = $data;
@@ -76,7 +106,7 @@ class BuildTasks
      */
     public function build()
     {
-        $app_name = APP_NAME;
+        $app_name = Inflector::underscore(APP_NAME);
 
         $drive = explode(DS, ROOT);
         array_pop($drive);
@@ -104,6 +134,11 @@ class BuildTasks
             "src\\Controller\\ReleasesController.php",
             "src\\Command\\ReleasesCommand.php",
             "src\\Template\\Releases\\",
+            "bin\\BackgroundServices\\services_install.bat",
+            "bin\\BackgroundServices\\services_remove.bat",
+            "bin\\BuildReleases.bat",
+            "src\\Controller\\DevelopersController.php",
+            "src\\Template\\Developers\\",
         ];
 
         $fileList = $zm->makeFileList($baseDir, $ignoreFilesFolders);
@@ -140,6 +175,7 @@ class BuildTasks
         $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}.zip");
         $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipFileName}", $baseDir, $app_name);
         if ($zipResult) {
+            $this->writeToLog(__('Zip Directory: {0}', $drive));
             $this->writeToLog(__('Created {0}', $zipFileName));
             $return = true;
         } else {
