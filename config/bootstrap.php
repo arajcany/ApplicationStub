@@ -112,6 +112,8 @@ Configure::load('config_cache');
 Configure::load('config_logs_errors');
 Configure::load('config_csrf', 'default');
 
+require CONFIG . 'global_functions.php';
+
 /*
  * When debug = true the metadata cache should only last
  * for a short time.
