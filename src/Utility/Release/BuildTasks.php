@@ -135,7 +135,7 @@ class BuildTasks
             "src\\Controller\\ReleasesController.php",
             "src\\Command\\ReleasesCommand.php",
             "src\\Template\\Releases\\",
-            "bin\\BuildReleases.bat",
+            "bin\\BuildRelease.bat",
             "src\\Controller\\DevelopersController.php",
             "src\\Template\\Developers\\",
         ];
