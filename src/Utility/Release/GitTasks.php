@@ -133,4 +133,30 @@ class GitTasks
         return $commits;
     }
 
+    /**
+     * Get the files ignored by Git
+     *
+     * @return array
+     */
+    public function getIgnoredFiles()
+    {
+        $ignored = [];
+
+        $gitExeLocation = $this->getGitExe();
+
+        $cmd = __('"{0}" ls-files --others --ignored --exclude-standard ', $gitExeLocation);
+        $out = null;
+        $ret = null;
+        exec($cmd, $out, $ret);
+
+        if (is_array($out)) {
+            foreach ($out as $line) {
+                $line = str_replace("/", "\\", $line);
+                $ignored[] = $line;
+            }
+        }
+
+        return $ignored;
+    }
+
 }

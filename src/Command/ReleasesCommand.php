@@ -76,6 +76,7 @@ class ReleasesCommand extends Command
         $gitBranch = $this->GitTasks->getGitBranch();
         $gitCommits = $this->GitTasks->getCommitsSinceLastBuild();
         $gitModified = $this->GitTasks->getGitModified();
+        $gitIgnored = $this->GitTasks->getIgnoredFiles();
 
         if ($gitModified) {
             $io->out(__("Sorry, cannot create a release as the following files have not been committed."));
@@ -88,7 +89,11 @@ class ReleasesCommand extends Command
         $this->BuildTasks = new BuildTasks();
         $this->BuildTasks->setArgs($args);
         $this->BuildTasks->setIo($io);
-        $this->BuildTasks->build();
+
+        $buildOptions = [
+            'gitIgnored' => $gitIgnored
+        ];
+        $this->BuildTasks->build($buildOptions);
     }
 
 }

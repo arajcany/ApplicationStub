@@ -102,9 +102,10 @@ class BuildTasks
     /**
      * Builds the release ZIP file according to the parameters specified in $this->buildFile
      *
+     * @param array $options
      * @return bool
      */
-    public function build()
+    public function build($options = [])
     {
         $app_name = Inflector::underscore(APP_NAME);
 
@@ -134,12 +135,14 @@ class BuildTasks
             "src\\Controller\\ReleasesController.php",
             "src\\Command\\ReleasesCommand.php",
             "src\\Template\\Releases\\",
-            "bin\\BackgroundServices\\services_install.bat",
-            "bin\\BackgroundServices\\services_remove.bat",
             "bin\\BuildReleases.bat",
             "src\\Controller\\DevelopersController.php",
             "src\\Template\\Developers\\",
         ];
+
+        if (isset($options['gitIgnored'])) {
+            $ignoreFilesFolders = array_merge($ignoreFilesFolders, $options['gitIgnored']);
+        }
 
         $fileList = $zm->makeFileList($baseDir, $ignoreFilesFolders);
 
