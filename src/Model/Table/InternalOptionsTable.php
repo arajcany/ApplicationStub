@@ -180,7 +180,11 @@ class InternalOptionsTable extends Table
                 ->select(['id', 'option_key', 'option_value'])
                 ->orderAsc('id')
                 ->toArray();
-            Cache::write('internal_options', $options, 'query_results_app');
+            try {
+                Cache::write('internal_options', $options, 'query_results_app');
+            } catch (\Throwable $e) {
+                // Do not halt - not critical
+            }
         }
 
         $optionsList = [];
