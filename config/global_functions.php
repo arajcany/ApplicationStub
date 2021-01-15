@@ -11,7 +11,7 @@
  * @return array
  * @link http://www.php.net/manual/en/function.array-chunk.php#75022
  */
-function partition(Array $list, $p)
+function partition(array $list, $p)
 {
     $listlen = count($list);
     $partlen = floor($listlen / $p);
@@ -75,4 +75,63 @@ function asBool($val)
     }
 
     return boolval($val);
+}
+
+
+/**
+ * Convert value to a string.
+ *
+ * @param $val
+ * @return bool
+ */
+function asString($val)
+{
+    if (is_string($val)) {
+        return $val;
+    }
+
+    if ($val === null) {
+        return 'null';
+    }
+
+    if ($val === true) {
+        return 'true';
+    }
+
+    if ($val === false) {
+        return 'false';
+    }
+
+    return false;
+}
+
+
+/**
+ * Check if running in CLI mode. Slightly more reliable than the CakePHP defined constant
+ *
+ * @return bool
+ */
+function is_cli()
+{
+    if (defined('STDIN')) {
+        return true;
+    }
+
+    if (php_sapi_name() === 'cli') {
+        return true;
+    }
+
+    if (array_key_exists('SHELL', $_ENV)) {
+        return true;
+    }
+
+    if (empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0) {
+        return true;
+    }
+
+    if (!array_key_exists('REQUEST_METHOD', $_SERVER)) {
+        return true;
+    }
+
+    return false;
 }
