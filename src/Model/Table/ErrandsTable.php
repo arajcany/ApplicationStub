@@ -168,6 +168,11 @@ class ErrandsTable extends Table
             ->integer('errors_retry_limit')
             ->allowEmptyString('errors_retry_limit');
 
+        $validator
+            ->scalar('hash_sum')
+            ->maxLength('hash_sum', 50)
+            ->allowEmptyString('hash_sum');
+
         return $validator;
     }
 
@@ -195,8 +200,13 @@ class ErrandsTable extends Table
      */
     public function getReadyToRunCount()
     {
-        $errandQuery = $this->buildQueryForErrands();
-        $count = $errandQuery->count();
+        //prevent deadlocks
+        try {
+            $errandQuery = $this->buildQueryForErrands();
+            $count = $errandQuery->count();
+        } catch (\Throwable $e) {
+            $count = 0;
+        }
 
         return $count;
     }
@@ -206,35 +216,53 @@ class ErrandsTable extends Table
      */
     public function getNextErrand()
     {
-        //find and lock a row in one operation to prevent SQL race condition
-        $errandQuery = $this->buildQueryForErrandsRowLock();
-        $rnd = sha1(mt_rand(1, mt_getrandmax()));
-        $query = $this->query();
-        $res = $query->update()
-            ->set(['status' => $rnd])
-            ->where(['id' => $errandQuery])
-            ->rowCountAndClose();
+        /**
+         * @var \App\Model\Entity\Errand $errand
+         */
+
+        //prevent deadlocks
+        try {
+            //find and lock a row in one operation to prevent SQL race condition
+            $errandQuery = $this->buildQueryForErrandsRowLock();
+            $rnd = sha1(mt_rand(1, mt_getrandmax()));
+            $query = $this->query();
+            $res = $query->update()
+                ->set(['status' => $rnd])
+                ->where(['id' => $errandQuery])
+                ->rowCountAndClose();
+        } catch (\Throwable $e) {
+            return false;
+        }
 
         if ($res == 0) {
             //no errands to run
             return false;
         }
 
-        //now get the locked row
-        /**
-         * @var \App\Model\Entity\Errand $errand
-         */
-        $errand = $this->find('all')->where(['status' => $rnd])->first();
-        if ($errand) {
-            $timeObjCurrent = new FrozenTime();
-            $errand->started = $timeObjCurrent;
-            $errand->status = 'Allocated';
-            $errand->progress_bar = 0;
-            $this->save($errand);
-            return $errand;
-        } else {
-            return false;
+        $errandRetryLimit = Configure::read("Settings.errand_retry_limit");
+        $errandRetryLimit = max(1, $errandRetryLimit);
+        $errandRetry = 0;
+        while ($errandRetry < $errandRetryLimit) {
+            //prevent deadlocks
+            try {
+                //now get the locked row
+                $errand = $this->find('all')->where(['status' => $rnd])->first();
+                if ($errand) {
+                    $timeObjCurrent = new FrozenTime();
+                    $errand->started = $timeObjCurrent;
+                    $errand->status = 'Allocated';
+                    $errand->progress_bar = 0;
+                    $this->save($errand);
+                    return $errand;
+                } else {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                $errandRetry++;
+            }
         }
+
+        return false;
     }
 
     /**
@@ -357,6 +385,7 @@ class ErrandsTable extends Table
             'errors_thrown' => null,
             'errors_retry' => 0,
             'errors_retry_limit' => $errandRetryLimit,
+            'hash_sum' => null,
         ];
 
         $options = array_merge($defaultOptions, $options);
@@ -368,9 +397,29 @@ class ErrandsTable extends Table
         }
         $errand = $this->newEntity($options);
         $errand->parameters = $parameters;
-        $result = $this->save($errand);
 
-        return $result;
+        $hashSumParams = [
+            $errand->class,
+            $errand->method,
+            $errand->parameters,
+            $errand->priority,
+        ];
+        $hashSum = sha1(json_encode($hashSumParams));
+        $errand->hash_sum = $hashSum;
+
+
+        $queryIsHashExists = $this->find('all')
+            ->where(['hash_sum' => $hashSum])
+            ->where(['started IS NULL'])
+            ->count();
+
+        if (!$queryIsHashExists) {
+            $result = $this->save($errand);
+            return $result;
+        } else {
+            return false;
+        }
+
     }
 
 
@@ -381,17 +430,46 @@ class ErrandsTable extends Table
      */
     public function deleteDuplicates()
     {
+        $queryDelete = $this->deleteDuplicatesQuery();
+
+        $currentTime = time();
+        $futureTime = $currentTime + 10;
+        $rowCount = false;
+        while ($currentTime <= $futureTime && $rowCount === false) {
+            try {
+                $time_start = microtime(true);
+                $rowCount = $queryDelete->rowCountAndClose();
+                $time_end = microtime(true);
+                $time_total = $time_end - $time_start;
+            } catch (PDOException $e) {
+            }
+            $currentTime = time();
+        }
+
+        return $rowCount;
+    }
+
+
+    /**
+     * Delete duplicate Errands
+     *
+     * @return \Cake\Database\Query
+     */
+    public function deleteDuplicatesQuery()
+    {
         $utcDateString = (new FrozenTime())->setTimezone('UTC')->format('Y-m-d H:i:s');
 
         $conn = ConnectionManager::get('default');
 
+        $subTableToSelectFrom = $this->findSubTableForCompare();
+
         $queryDistinct = $conn->newQuery();
         $queryDistinct = $queryDistinct
             ->select(['MIN(id)'])
-            ->from('errands')
+            ->from(['Errands' => $subTableToSelectFrom])
             ->where(['started IS' => null, 'completed IS' => null])
             ->where(['activation <' => $utcDateString, 'expiration >' => $utcDateString])
-            ->group(['wait_for_link', 'class', 'method', 'parameters', 'priority']);
+            ->group(['class', 'method', 'parameters', 'priority']);
 
 
         $queryWaitForParent = $conn->newQuery();
@@ -408,22 +486,32 @@ class ErrandsTable extends Table
             ->where(["id NOT IN" => $queryWaitForParent])
             ->where(['started IS' => null, 'completed IS' => null]);
 
-        $currentTime = time();
-        $futureTime = $currentTime + 2;
-        $rowCount = false;
-        while ($currentTime <= $futureTime && $rowCount === false) {
-            try {
-                $time_start = microtime(true);
-                $rowCount = $queryDelete->rowCountAndClose();
-                $time_end = microtime(true);
-                $time_total = $time_end - $time_start;
-                $this->Auditor->logInfo(__("Deleted {0} rows in {1} seconds.", $rowCount, $time_total), 'errands-deleteDuplicates');
-            } catch (PDOException $e) {
-                $this->Auditor->logWarning($e->getMessage(), 'errands-deleteDuplicates');
-            }
-            $currentTime = time();
-        }
+        return $queryDelete;
+    }
 
-        return $rowCount;
+    /**
+     * Because the 'parameters' column is TEXT it cannot be directly used in a compare for SELECT DISTINCT queries.
+     * This creates a sub-table where 'parameters' are converted to nvarchar(1024)
+     *
+     * @return Query
+     */
+    public function findSubTableForCompare()
+    {
+        $selects = [
+            'id' => 'id',
+            'class' => 'class',
+            'method' => 'method',
+            'parameters' => 'convert(nvarchar(1024),parameters)',
+            'priority' => 'priority',
+            'started' => 'started',
+            'completed' => 'completed',
+            'activation' => 'activation',
+            'expiration' => 'expiration',
+        ];
+
+        $query = $this->find('all')
+            ->select($selects);
+
+        return $query;
     }
 }

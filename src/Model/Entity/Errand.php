@@ -31,6 +31,7 @@ use Cake\ORM\Entity;
  * @property string|null $errors_thrown
  * @property int|null $errors_retry
  * @property int|null $errors_retry_limit
+ * @property string|null $hash_sum
  */
 class Errand extends Entity
 {
@@ -68,5 +69,6 @@ class Errand extends Entity
         'errors_thrown' => true,
         'errors_retry' => true,
         'errors_retry_limit' => true,
+        'hash_sum' => true,
     ];
 }
