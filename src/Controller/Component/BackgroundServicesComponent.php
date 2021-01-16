@@ -145,19 +145,28 @@ class BackgroundServicesComponent extends Component
         $services = [];
         foreach ($foundServices as $service) {
             $service = str_replace("SERVICE_NAME: ", "", $service);
-            $cmd = __("sc.exe query {0} | find \"STATE\"", $service);
-            exec($cmd, $outServiceState, $ret2);
+
+            $cmd2 = __("sc.exe query {0} | find \"STATE\"", $service);
+            exec($cmd2, $outServiceState, $ret2);
             $outServiceState = explode(" ", $outServiceState[0]);
             $outServiceState = array_pop($outServiceState);
+
+            $cmd3 = __("sc.exe qc {0} | find \"START_TYPE\"", $service);
+            exec($cmd3, $outServiceStartType, $ret3);
+            $outServiceStartType = explode(" ", $outServiceStartType[0]);
+            $outServiceStartType = array_pop($outServiceStartType);
 
             $services[] =
                 [
                     'name' => $service,
                     'state' => $outServiceState,
+                    'start_type' => $outServiceStartType,
                 ];
 
             unset($outServiceState);
             unset($ret2);
+            unset($outServiceStartType);
+            unset($ret3);
         }
 
         return $services;

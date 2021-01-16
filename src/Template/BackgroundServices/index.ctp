@@ -6,6 +6,17 @@
 ?>
 
 <div class="row">
+    <div class="col-12 ml-auto mr-auto">
+        <?php
+        $opts = [
+            'class' => 'btn btn-secondary float-right',
+        ];
+        echo $this->Html->link(__('Back'), ['controller' => ''], $opts)
+        ?>
+    </div>
+</div>
+
+<div class="row mb-2">
     <div class="col-lg-12">
         <h1 class="page-header">
             <?= __('Background Services') ?>
@@ -56,22 +67,34 @@
                 <thead>
                 <tr>
                     <th scope="col">Name</th>
-                    <th scope="col">State</th>
+                    <th scope="col">Current State</th>
+                    <th scope="col">Startup Type</th>
                     <th scope="col" class="actions"><?= __('Actions') ?> (<?= $startStopLink ?>)</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($services as $service): ?>
+                    <?php
+                    /**
+                     * Service states:
+                     * RUNNING | PAUSED | STOPPED
+                     *
+                     * Service start types:
+                     * DEMAND_START | DISABLED | (DELAYED) | AUTO_START
+                     */
+                    ?>
+
                     <tr>
                         <td><?= $service['name'] ?></td>
                         <td><?= $service['state'] ?></td>
+                        <td><?= $service['start_type'] ?></td>
                         <td class="actions">
                             <?php
                             $showActions = true;
                             if ($showActions) {
                                 if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
                                     echo $this->Html->link(__('Stop'), ['action' => 'stop', $service['name']]);
-                                } elseif ($service['state'] == 'STOPPED') {
+                                } elseif ($service['state'] == 'STOPPED' && $service['start_type'] != 'DISABLED') {
                                     echo $this->Html->link(__('Start'), ['action' => 'start', $service['name']]);
                                 }
                             }

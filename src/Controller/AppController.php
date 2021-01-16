@@ -37,6 +37,7 @@ use Cake\Core\Configure;
  * @property \App\Model\Table\InternalOptionsTable $InternalOptions
  * @property \App\Model\Table\TrackLoginsTable $TrackLogins
  *
+ * @property \App\Controller\Component\FlashComponent $Flash
  * @property \TinyAuth\Controller\Component\AuthComponent $Auth
  * @property \TinyAuth\Controller\Component\AuthUserComponent $AuthUser
  * @property AppSettingsForUserComponent $AppSettingsForUser

@@ -19,7 +19,8 @@
         "josegonzalez/dotenv": "3.*",
         "mobiledetect/mobiledetectlib": "2.*",
         "robmorgan/phinx": "^0.10.7",
-        "ruafozy/mersenne-twister": "^1.3"
+        "ruafozy/mersenne-twister": "^1.3",
+      "ext-zip": "*"
     },
     "require-dev": {
         "cakephp/bake": "^1.1",
