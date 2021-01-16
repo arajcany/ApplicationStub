@@ -136,9 +136,10 @@ class GitTasks
     /**
      * Get the files ignored by Git
      *
+     * @param bool $removeVendorDirectoryFromList
      * @return array
      */
-    public function getIgnoredFiles()
+    public function getIgnoredFiles($removeVendorDirectoryFromList = true)
     {
         $ignored = [];
 
@@ -151,6 +152,10 @@ class GitTasks
 
         if (is_array($out)) {
             foreach ($out as $line) {
+                $isVendorDir = strpos($line, "vendor/") === 0 ? true : false;
+                if ($removeVendorDirectoryFromList && $isVendorDir) {
+                    continue;
+                }
                 $line = str_replace("/", "\\", $line);
                 $ignored[] = $line;
             }
