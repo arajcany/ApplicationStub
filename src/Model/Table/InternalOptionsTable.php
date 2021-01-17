@@ -9,7 +9,6 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 use mersenne_twister\twister;
-use phpseclib\Net\SFTP;
 
 /**
  * InternalOptions Model
@@ -361,6 +360,58 @@ class InternalOptionsTable extends Table
         }
 
         return $fieldsPopulated;
+    }
+
+    /**
+     * Convenience function to save the SFTP values for remote updates
+     *
+     * @param $vals
+     * @return bool
+     */
+    public function saveRemoteUpdate($vals)
+    {
+        $this->deleteAll(["option_key LIKE 'remote_update_%'"]);
+
+        $saveCount = 0;
+        $skippedCount = 0;
+        foreach ($vals as $val) {
+            if (strlen($val['option_value']) > 0) {
+                $ent = $this->newEntity($val);
+                if ($this->save($ent)) {
+                    $saveCount++;
+                }
+            } else {
+                $skippedCount++;
+            }
+        }
+
+        $this->saveOptionsToConfigure();
+        $this->encryptOptions();
+
+        if (count($vals) == ($saveCount + $skippedCount)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Convenience function to get the SFTP values for remote updates
+     *
+     * @return array
+     */
+    public function getRemoteUpdate()
+    {
+        $vals = [
+            'remote_update_sftp_host' => $this->getOption('remote_update_sftp_host'),
+            'remote_update_sftp_port' => $this->getOption('remote_update_sftp_port'),
+            'remote_update_sftp_username' => $this->getOption('remote_update_sftp_username'),
+            'remote_update_sftp_password' => $this->getOption('remote_update_sftp_password', true),
+            'remote_update_sftp_timeout' => $this->getOption('remote_update_sftp_timeout'),
+            'remote_update_sftp_path' => $this->getOption('remote_update_sftp_path'),
+        ];
+
+        return $vals;
     }
 
 }
