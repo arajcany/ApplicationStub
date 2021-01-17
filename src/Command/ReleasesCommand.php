@@ -141,7 +141,13 @@ class ReleasesCommand extends Command
             $buildOptions['remoteUpdateUnc'] = $uncRoundTripSettings;
         }
 
-        $this->BuildTasks->build($buildOptions);
+        $buildResult = $this->BuildTasks->build($buildOptions);
+
+        if ($buildResult) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
 }
