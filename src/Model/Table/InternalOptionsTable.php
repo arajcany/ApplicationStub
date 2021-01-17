@@ -403,6 +403,7 @@ class InternalOptionsTable extends Table
     public function getRemoteUpdate()
     {
         $vals = [
+            'remote_update_unc' => $this->getOption('remote_update_unc'),
             'remote_update_sftp_host' => $this->getOption('remote_update_sftp_host'),
             'remote_update_sftp_port' => $this->getOption('remote_update_sftp_port'),
             'remote_update_sftp_username' => $this->getOption('remote_update_sftp_username'),

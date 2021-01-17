@@ -8,6 +8,7 @@ use arajcany\ToolBox\Utility\ZipMaker;
 use Cake\Utility\Inflector;
 use Cake\Console\ConsoleIo;
 use Cake\Console\Arguments;
+use phpseclib\Net\SFTP;
 
 /**
  * Class BuildTasks
@@ -39,6 +40,22 @@ class BuildTasks
     }
 
     /**
+     * @param mixed $args
+     */
+    public function setArgs(Arguments $args)
+    {
+        $this->args = $args;
+    }
+
+    /**
+     * @param mixed $io
+     */
+    public function setIo(ConsoleIo $io)
+    {
+        $this->io = $io;
+    }
+
+    /**
      * @return string
      */
     public function getBuildFile(): string
@@ -61,23 +78,6 @@ class BuildTasks
     {
         return $this->log;
     }
-
-    /**
-     * @param mixed $args
-     */
-    public function setArgs(Arguments $args)
-    {
-        $this->args = $args;
-    }
-
-    /**
-     * @param mixed $io
-     */
-    public function setIo(ConsoleIo $io)
-    {
-        $this->io = $io;
-    }
-
 
     /**
      * Write to the log variable
@@ -108,6 +108,7 @@ class BuildTasks
     public function build($options = [])
     {
         $app_name = Inflector::underscore(APP_NAME);
+        $this->writeToLog(__("Building a release of {0}.", $app_name));
 
         $drive = explode(DS, ROOT);
         array_pop($drive);
@@ -115,7 +116,6 @@ class BuildTasks
         $drive = TextFormatter::makeEndsWith($drive, DS);
 
         $zm = new ZipMaker();
-        $this->writeToLog(__("Building a release of {0}.", $app_name));
 
         //----create a file list to zip---------------------------------
         $baseDir = ROOT;
@@ -171,19 +171,47 @@ class BuildTasks
             'internal' => "$app_name\\tmp\\cache\\clear_all.txt"
         ];
         //------------------------------------------------------------------------
+        $this->writeToLog(__("Compiled a list of {0} files to Zip.", count($fileList)));
 
 
         //----create the required zip files---------------------------------
+        $this->writeToLog(__('Zipping files to {0}', $drive));
         $date = date('Ymd_His');
         $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}.zip");
         $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipFileName}", $baseDir, $app_name);
         if ($zipResult) {
-            $this->writeToLog(__('Zip Directory: {0}', $drive));
-            $this->writeToLog(__('Created {0}', $zipFileName));
+            $this->writeToLog(__('Created {0}', "{$drive}{$zipFileName}"));
             $return = true;
         } else {
-            $this->writeToLog(__('Could not create {0}', $zipFileName));
+            $this->writeToLog(__('Could not create {0}', "{$drive}{$zipFileName}"));
             $return = false;
+        }
+        //------------------------------------------------------------------------
+
+
+        //----automatic upload to remote update site---------------------------------
+        if ($options['remoteUpdateUnc']) {
+            $this->writeToLog(__("Uploading Zip to Remote Update site via UNC"));
+            $copyResult = copy("{$drive}{$zipFileName}", "{$options['remoteUpdateUnc']['unc']}{$zipFileName}");
+            if ($copyResult) {
+                $this->writeToLog(__('Copied Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
+            } else {
+                $this->writeToLog(__('Failed to copy Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
+            }
+        } elseif ($options['remoteUpdateSftp']) {
+            $this->writeToLog(__("Uploading Zip to Remote Update site via SFTP"));
+            $SFTP = new SFTP($options['remoteUpdateSftp']['host'], $options['remoteUpdateSftp']['port'], $options['remoteUpdateSftp']['timeout']);
+            $SFTP->login($options['remoteUpdateSftp']['username'], $options['remoteUpdateSftp']['password']);
+            $SFTP->chdir($options['remoteUpdateSftp']['path']);
+
+            $copyResult = $SFTP->put($zipFileName, file_get_contents("{$drive}{$zipFileName}"));
+            if ($copyResult) {
+                $this->writeToLog(__('Uploaded Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
+            } else {
+                $this->writeToLog(__('Failed to upload Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
+            }
+        } else {
+            $this->writeToLog(__("No automatic upload as UNC or SFTP are not configured."));
         }
         //------------------------------------------------------------------------
 

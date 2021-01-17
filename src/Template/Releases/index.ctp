@@ -10,6 +10,7 @@
  * @var array $gitCommits
  * @var array $gitModified
  *
+ * @var string $remote_update_unc
  * @var string $remote_update_url
  * @var string $remote_update_sftp_host
  * @var string $remote_update_sftp_port
@@ -18,6 +19,8 @@
  * @var string $remote_update_sftp_timeout
  * @var string $remote_update_sftp_path
  * @var bool $isSFTP
+ * @var bool $isUNC
+ * @var array $remoteUpdateDebug
  *
  */
 
@@ -39,15 +42,16 @@
                     <strong>Remote Update Information</strong>
                 </div>
                 <div class="card-body">
-                    <p>
-                        <?php
-                        if ($isSFTP) {
-                            echo __("Connection to SFTP <strong>{0}@{1}:{2}</strong> established.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
-                        } else {
-                            echo __("Could not connect to SFTP <strong>{0}@{1}:{2}</strong>.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
-                        }
-                        ?>
-                    </p>
+                    <pre><?php
+                        echo __("Please run the following CMD in Terminal to build a release...");
+                        ?></pre>
+
+                    <code><?php
+                        echo __("{0}\bin\\BuildRelease.bat", ROOT);
+                        ?></code>
+
+                    <br>
+                    <br>
 
                     <p>
                         <?php
@@ -62,10 +66,30 @@
                     <p>
                         <?php
                         if ($isSFTP) {
-                            echo __("Releases will be automatically uploaded to the SFTP site.");
+                            echo __("Connection to SFTP <strong>{0}@{1}:{2}</strong> established.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
+                        } else {
+                            echo __("Could not connect to SFTP <strong>{0}@{1}:{2}</strong>.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
+                        }
+                        ?>
+                    </p>
+
+                    <p>
+                        <?php
+                        if ($isUNC) {
+                            echo __("Connection to UNC path <strong>{0}</strong> established.", $remote_update_unc);
+                        } else {
+                            echo __("Could not connect to UNC path <strong>{0}</strong>.", $remote_update_unc);
+                        }
+                        ?>
+                    </p>
+
+                    <p>
+                        <?php
+                        if ($isSFTP || $isUNC) {
+                            echo __("Releases will be automatically uploaded to the remote update site via SFTP or UNC.");
                             $text = __('Change Remote Update Settings');
                         } else {
-                            echo __("Please configure if you would like to automatically upload releases to the SFTP site.");
+                            echo __("Please configure if you would like to automatically upload releases to the remote update site via SFTP or UNC.");
                             $text = __('Configure Remote Update Settings');
                         }
                         ?>
@@ -84,16 +108,26 @@
                         ?>
                     </p>
 
-                    <br>
-                    <br>
+                    <?php
+                    if (!$isSFTP || !$isUNC) {
+                        ?>
+                        <div class="card pb-0">
+                            <div class="card-body">
+                                <?php
+                                echo __("Debugging information...");
+                                foreach ($remoteUpdateDebug as $item) {
+                                    $colour = str_replace(['error'], ['danger'], $item['element']);
+                                    echo __('<div class="alert alert-' . $colour . ' mt-3 mb-0">');
+                                    echo __($item['message']);
+                                    echo __('</div>');
+                                }
+                                ?>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
 
-                    <pre><?php
-                        echo __("Please run the following CMD in Terminal to build a release...");
-                        ?></pre>
-
-                    <code><?php
-                        echo __("{0}\bin\\BuildRelease.bat", ROOT);
-                        ?></code>
                 </div>
             </div>
         </div>

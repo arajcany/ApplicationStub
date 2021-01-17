@@ -8,6 +8,7 @@ use App\Utility\Release\BuildTasks;
 use App\Utility\Release\GitTasks;
 use arajcany\ToolBox\Utility\TextFormatter;
 use Cake\Event\Event;
+use Cake\Utility\Text;
 use phpseclib\Net\SFTP;
 use App\Utility\Install\Checker;
 
@@ -72,6 +73,7 @@ class ReleasesController extends AppController
         $this->set('gitCommits', $gitCommits);
         $this->set('gitModified', $gitModified);
 
+        $remote_update_unc = $this->InternalOptions->getOption('remote_update_unc');
         $remote_update_sftp_host = $this->InternalOptions->getOption('remote_update_sftp_host');
         $remote_update_sftp_port = $this->InternalOptions->getOption('remote_update_sftp_port');
         $remote_update_sftp_username = $this->InternalOptions->getOption('remote_update_sftp_username');
@@ -79,6 +81,7 @@ class ReleasesController extends AppController
         $remote_update_sftp_timeout = $this->InternalOptions->getOption('remote_update_sftp_timeout');
         $remote_update_sftp_path = $this->InternalOptions->getOption('remote_update_sftp_path');
 
+        $this->set(compact('remote_update_unc'));
         $this->set(compact('remote_update_sftp_host', 'remote_update_sftp_port', 'remote_update_sftp_username'));
         $this->set(compact('remote_update_sftp_password', 'remote_update_sftp_timeout', 'remote_update_sftp_path'));
 
@@ -96,9 +99,18 @@ class ReleasesController extends AppController
             'path' => $remote_update_sftp_path,
         ];
 
+        $uncRoundTripSettings = [
+            'url' => $remote_update_url,
+            'unc' => $remote_update_unc,
+        ];
+
         $Checker = new Checker();
         $isSFTP = $Checker->checkSftpSettings($sftpRoundTripSettings);
         $this->set('isSFTP', $isSFTP);
+        $isUNC = $Checker->checkUncSettings($uncRoundTripSettings);
+        $this->set('isUNC', $isUNC);
+
+        $this->set('remoteUpdateDebug', $Checker->getMessages());
 
         return null;
     }
@@ -107,13 +119,15 @@ class ReleasesController extends AppController
     {
         $setting = $this->Settings->findByPropertyKey('remote_update_url')->first();
 
+        $remote_update_unc = $this->InternalOptions->getOption('remote_update_unc');
         $remote_update_sftp_host = $this->InternalOptions->getOption('remote_update_sftp_host');
         $remote_update_sftp_port = $this->InternalOptions->getOption('remote_update_sftp_port');
         $remote_update_sftp_username = $this->InternalOptions->getOption('remote_update_sftp_username');
-        $remote_update_sftp_password = $this->InternalOptions->getOption('remote_update_sftp_password');
+        $remote_update_sftp_password = $this->InternalOptions->getOption('remote_update_sftp_password', true);
         $remote_update_sftp_timeout = $this->InternalOptions->getOption('remote_update_sftp_timeout');
         $remote_update_sftp_path = $this->InternalOptions->getOption('remote_update_sftp_path');
 
+        $this->set(compact('remote_update_unc'));
         $this->set(compact('remote_update_sftp_host', 'remote_update_sftp_port', 'remote_update_sftp_username'));
         $this->set(compact('remote_update_sftp_password', 'remote_update_sftp_timeout', 'remote_update_sftp_path'));
 
@@ -142,7 +156,10 @@ class ReleasesController extends AppController
                 $password_apply_mask = 0;
             }
 
+            $dataToSave['remote_update_unc'] = TextFormatter::makeEndsWith($dataToSave['remote_update_unc'], "\\");
+
             $values = [
+                ['option_key' => 'remote_update_unc', 'option_value' => $dataToSave['remote_update_unc'], 'is_masked' => 0, 'apply_mask' => 0,],
                 ['option_key' => 'remote_update_sftp_host', 'option_value' => $dataToSave['remote_update_sftp_host'], 'is_masked' => 0, 'apply_mask' => 0,],
                 ['option_key' => 'remote_update_sftp_port', 'option_value' => $dataToSave['remote_update_sftp_port'], 'is_masked' => 0, 'apply_mask' => 0,],
                 ['option_key' => 'remote_update_sftp_username', 'option_value' => $dataToSave['remote_update_sftp_username'], 'is_masked' => 0, 'apply_mask' => 0,],
@@ -152,10 +169,10 @@ class ReleasesController extends AppController
             ];
 
             if ($this->InternalOptions->saveRemoteUpdate($values)) {
-                $this->Flash->success(__('The application remote update SFTP Settings has been saved.'));
+                $this->Flash->success(__('The application remote update SFTP and UNC Settings has been saved.'));
                 $isRemoteUpdateSftp = true;
             } else {
-                $this->Flash->error(__('The application remote update SFTP Settings could not be saved. Please try again.'));
+                $this->Flash->error(__('The application remote update SFTP and UNC Settings could not be saved. Please try again.'));
                 $isRemoteUpdateSftp = false;
             }
 

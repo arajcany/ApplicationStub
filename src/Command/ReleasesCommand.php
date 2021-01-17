@@ -2,6 +2,9 @@
 
 namespace App\Command;
 
+use App\Model\Table\InternalOptionsTable;
+use App\Model\Table\SettingsTable;
+use App\Utility\Install\Checker;
 use App\Utility\Install\VersionControl;
 use App\Utility\Release\BuildTasks;
 use App\Utility\Release\GitTasks;
@@ -16,6 +19,8 @@ use Cake\Console\ConsoleOptionParser;
  * @property VersionControl $VersionControl
  * @property GitTasks $GitTasks
  * @property BuildTasks $BuildTasks
+ * @property InternalOptionsTable $InternalOptions
+ * @property SettingsTable $Settings
  */
 class ReleasesCommand extends Command
 {
@@ -29,6 +34,9 @@ class ReleasesCommand extends Command
 
         $this->GitTasks = new GitTasks();
         $this->VersionControl = new VersionControl();
+
+        $this->loadModel('InternalOptions');
+        $this->loadModel('Settings');
     }
 
 
@@ -90,9 +98,49 @@ class ReleasesCommand extends Command
         $this->BuildTasks->setArgs($args);
         $this->BuildTasks->setIo($io);
 
+        $remote_update_url = $this->Settings->findByPropertyKey('remote_update_url')->first();
+        $remote_update_url = $remote_update_url['property_value'];
+
+        $remote_update_unc = $this->InternalOptions->getOption('remote_update_unc');
+        $remote_update_sftp_host = $this->InternalOptions->getOption('remote_update_sftp_host');
+        $remote_update_sftp_port = $this->InternalOptions->getOption('remote_update_sftp_port');
+        $remote_update_sftp_username = $this->InternalOptions->getOption('remote_update_sftp_username');
+        $remote_update_sftp_password = $this->InternalOptions->getOption('remote_update_sftp_password', true);
+        $remote_update_sftp_timeout = $this->InternalOptions->getOption('remote_update_sftp_timeout');
+        $remote_update_sftp_path = $this->InternalOptions->getOption('remote_update_sftp_path');
+
         $buildOptions = [
-            'gitIgnored' => $gitIgnored
+            'gitIgnored' => $gitIgnored,
+            'remoteUpdateSftp' => null,
+            'remoteUpdateUnc' => null,
         ];
+
+        $sftpRoundTripSettings = [
+            'url' => $remote_update_url,
+            'host' => $remote_update_sftp_host,
+            'port' => $remote_update_sftp_port,
+            'username' => $remote_update_sftp_username,
+            'password' => $remote_update_sftp_password,
+            'timeout' => $remote_update_sftp_timeout,
+            'path' => $remote_update_sftp_path,
+        ];
+
+        $uncRoundTripSettings = [
+            'url' => $remote_update_url,
+            'unc' => $remote_update_unc,
+        ];
+
+        $Checker = new Checker();
+        $isSFTP = $Checker->checkSftpSettings($sftpRoundTripSettings);
+        if ($isSFTP) {
+            $buildOptions['remoteUpdateSftp'] = $sftpRoundTripSettings;
+        }
+
+        $isUNC = $Checker->checkUncSettings($uncRoundTripSettings);
+        if ($isUNC) {
+            $buildOptions['remoteUpdateUnc'] = $uncRoundTripSettings;
+        }
+
         $this->BuildTasks->build($buildOptions);
     }
 

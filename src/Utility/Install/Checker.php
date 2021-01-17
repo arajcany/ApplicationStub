@@ -104,6 +104,80 @@ class Checker
         return $return;
     }
 
+    public function checkUncSettings($settings)
+    {
+        $rnd = sha1(mt_rand(1000, 9999));
+        $repoUncPath = "{$settings['unc']}unc_test_{$rnd}";
+        $repoUncFile = "{$repoUncPath}\\{$rnd}.txt";
+        $phpCurrentUser = get_current_user();
+
+        $repoUrlPath = "{$settings['url']}unc_test_{$rnd}";
+        $repoUrlFile = "{$repoUrlPath}/{$rnd}.txt";
+
+        //create new directory
+        if (@!mkdir($repoUncPath, 0777, true)) {
+            $message = __("Cannot create the UNC path {0} as user {1}", $repoUncPath, $phpCurrentUser);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        //check the new directory
+        if (!is_dir($repoUncPath)) {
+            $message = __("Cannot access the UNC path {0} as user {1}", $repoUncPath, $phpCurrentUser);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        //check basic network connectivity
+        $isConn = NetworkConnection::checkUrlConnection($settings['url']);
+        if (!$isConn) {
+            $message = __("Cannot read from the URL path {0}", $settings['url']);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        //write to UNC then read from URL
+        $writeResult = @file_put_contents($repoUncFile, $rnd);
+        $arrContextOptions = [
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false,
+            ],
+        ];
+        $readResult = @file_get_contents($repoUrlFile, false, stream_context_create($arrContextOptions));
+        $deleteResultFile = @unlink($repoUncFile);
+        $deleteResultFolder = @rmdir($repoUncPath);
+
+        if ($writeResult == false) {
+            $message = __("Could not write to {0}.", $repoUncFile);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        if ($readResult == false) {
+            $message = __("Could not read {0}.", $repoUrlFile);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        if ($deleteResultFile == false) {
+            $message = __("Could not delete file {0}.", $repoUncFile);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        if ($deleteResultFolder == false) {
+            $message = __("Could not delete folder {0}.", $repoUncPath);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        //all passed so return true
+        $message = __("Repository UNC and URL paths confirmed {0} {1}.", $settings['unc'], $settings['url']);
+        $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'success']);
+        return true;
+    }
+
 
     /**
      * Round trip check of SFTP/URL.
