@@ -66,6 +66,14 @@ $user = $this->request->getSession()->read('Auth.User');
                             echo $this->Html->link($title, $url, $options)
                             ?>
                             <?php
+                            $title = 'Updates';
+                            $url = ['controller' => 'installers', 'action' => 'updates'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
+                            <?php
                             $title = 'Background Services';
                             $url = ['controller' => 'background-services', 'action' => 'index'];
                             $options = [

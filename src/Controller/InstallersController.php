@@ -61,7 +61,7 @@ class InstallersController extends AppController
      */
     public function index()
     {
-        return null;
+        return $this->redirect(['controller' => '']);
     }
 
 
