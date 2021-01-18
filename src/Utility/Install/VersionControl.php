@@ -232,33 +232,22 @@ class VersionControl
     /**
      * Display the versionHistory.json file in encrypted format
      *
-     * @param bool $encrypted
-     * @return array|bool|mixed|string
+     * @return false|array
      */
-    public function _getOnlineVersionHistoryHash($encrypted = true)
+    public function _getOnlineVersionHistoryHash()
     {
-        $sftp = $this->InternalOptions->getUpdateSftpSession();
-        if ($sftp === false) {
-            return false;
-        }
 
-        $fileList = $sftp->rawlist();
-        if (isset($fileList['versionHistory' . APP_NAME . '.hash'])) {
+        $remote_update_url = $this->Settings->getSetting('remote_update_url');
+        $versionHistoryHash = @file_get_contents($remote_update_url . "version_history_hash.txt");
 
-            $key = $this->InternalOptions->getKey();
-            $salt = $this->InternalOptions->getSalt();
-
-            $versionHistoryHash = $sftp->get('versionHistory' . APP_NAME . '.hash');
-
-            if ($encrypted == false) {
-                $versionHistoryHash = preg_replace("/\r|\n/", "", $versionHistoryHash);
-                $versionHistoryHash = base64_decode($versionHistoryHash);
-                $versionHistoryHash = Security::decrypt($versionHistoryHash, $key, $salt);
-                $versionHistoryHash = parse_ini_string($versionHistoryHash, true, INI_SCANNER_RAW);
+        if ($versionHistoryHash) {
+            $versionHistoryHash = \arajcany\ToolBox\Utility\Security\Security::decrypt64Url($versionHistoryHash);
+            $versionHistoryHash = @json_decode($versionHistoryHash, JSON_OBJECT_AS_ARRAY);
+            if (is_array($versionHistoryHash)) {
+                return $versionHistoryHash;
+            } else {
+                return false;
             }
-
-            return $versionHistoryHash;
-
         } else {
             return false;
         }

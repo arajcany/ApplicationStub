@@ -222,6 +222,7 @@ class BuildTasks
             if ($copyResult) {
                 $this->writeToLog(__('Copied Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
                 $newVersionData['installer_url'] = $options['remoteUpdateUnc']['url'] . $zipFileName;
+                $newVersionData['release_date'] = $date;
             } else {
                 $this->writeToLog(__('Failed to copy Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
             }
@@ -235,6 +236,7 @@ class BuildTasks
             if ($copyResult) {
                 $this->writeToLog(__('Uploaded Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
                 $newVersionData['installer_url'] = $options['remoteUpdateSftp']['url'] . $zipFileName;
+                $newVersionData['release_date'] = $date;
             } else {
                 $this->writeToLog(__('Failed to upload Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
             }

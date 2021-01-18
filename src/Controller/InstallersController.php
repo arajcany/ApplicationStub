@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Model\Entity\User;
 use App\Utility\Install\VersionControl;
+use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\ZipMaker;
 use Cake\Cache\Cache;
+use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Filesystem\File;
 use Cake\Mailer\MailerAwareTrait;
@@ -122,109 +124,6 @@ class InstallersController extends AppController
         $this->set('user', $user);
 
         return null;
-
-//        $this->viewBuilder()->setLayout('Interface\default\standalone-form');
-//
-//        $Checker = new Checker();
-//        $Builder = new Builder();
-//
-//        /*
-//         * Things to configure on first run
-//         * Configure the DB
-//         * Create an emergency email contact
-//         * Create a SuperAdmin account
-//         * Enter email server details
-//         */
-//
-//        //build Database if required
-//        $dbVersion = $Builder->buildDatabase();
-//        if (is_numeric($dbVersion) && DB_VERSION != $dbVersion) {
-//            $this->Flash->success(__("Database automatically upgraded to Version {0}", $dbVersion));
-//            return $this->redirect([]);
-//        }
-//        $isConnected = $Checker->checkDatabase();
-//        $this->set('isConnected', $isConnected);
-//
-//        //load Form contexts
-//        $settingsEmailForm = new SettingsEmailForm();
-//        $settingsSuperAdminForm = new SettingsSuperAdminForm();
-//        $settingsEmergencyEmailForm = new SettingsEmergencyEmailForm();
-//
-//        //update the configuration if requested
-//        if ($this->request->is(['patch', 'post', 'put'])) {
-//
-//            if ($this->request->getData('config_email') == true) {
-//                if ($settingsEmailForm->validate($this->request->getData())) {
-//                    $this->Installers->handleEmailForm();
-//                } else {
-//                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-//                        ['key' => 'settingsEmailForm']);
-//                }
-//            }
-//
-//            if ($this->request->getData('config_super_admin') == true) {
-//                $settingsSuperAdminForm->password_1 = $this->request->getData('password_1');
-//                $settingsSuperAdminForm->password_2 = $this->request->getData('password_2');
-//
-//                if ($settingsSuperAdminForm->validate($this->request->getData())) {
-//                    $this->Installers->handleSuperAdminForm();
-//                } else {
-//                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-//                        ['key' => 'settingsSuperAdminForm']);
-//                }
-//            }
-//
-//            if ($this->request->getData('config_emergency_email') == true) {
-//                if ($settingsEmergencyEmailForm->validate($this->request->getData())) {
-//                    $this->Installers->handleEmergencyEmailForm();
-//                } else {
-//                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-//                        ['key' => 'settingsEmergencyEmailForm']);
-//                }
-//            }
-//
-//        }//POST
-//
-//        $emailDetails = $this->Settings->getEmailDetails();
-//        $emailDetails['email_password'] = "****************";
-//        $this->set('emailDetails', $emailDetails);
-//        $this->set('settingsEmailForm', $settingsEmailForm);
-//        $isEmail = $Checker->checkEmailServer();
-//        $this->set('isEmail', $isEmail);
-//
-//        $superAdminDetails = $this->Users
-//            ->find('all')->matching(
-//                'Roles', function ($q) {
-//                return $q->where(['Roles.alias' => 'superadmin']);
-//            }
-//            )
-//            ->toArray();
-//        $this->set('superAdminDetails', $superAdminDetails);
-//        $this->set('settingsSuperAdminForm', $settingsSuperAdminForm);
-//        $isSuperAdmin = $Checker->checkSuperAdmin();;
-//        $this->set('isSuperAdmin', $isSuperAdmin);
-//
-//        $generalWorkerDetails = $this->Users->getGeneralWorkerUser();
-//        $mailWorkerDetails = $this->Users->getMailWorkerUser();
-//        $this->set('generalWorkerDetails', $generalWorkerDetails);
-//        $this->set('mailWorkerDetails', $mailWorkerDetails);
-//
-//        $emergencyEmailDetails = $this->Settings->getSetting('emergency_email');
-//        $this->set('emergencyEmailDetails', $emergencyEmailDetails);
-//        $this->set('settingsEmergencyEmailForm', $settingsEmergencyEmailForm);
-//        $isEmergencyEmail = $Checker->checkEmergencyEmail();
-//        $this->set('isEmergencyEmail', $isEmergencyEmail);
-//
-//        //if everything checks out redirect to the dashboard
-//        if ($isSuperAdmin && $isEmergencyEmail & $isEmail) {
-//            return $this->redirect(['controller' => 'login']);
-//        }
-//
-//        //set Flash Messages from the Checker and Builder
-//        $this->Flash->setMultiple($Checker->getMessages());
-//        $this->Flash->setMultiple($Builder->getMessages());
-//
-//        return null;
     }
 
 
@@ -385,14 +284,11 @@ class InstallersController extends AppController
      */
     public function updates()
     {
-        $sftp = $this->InternalOptions->getUpdateSftpSession();
-        if ($sftp === false) {
-            $this->Flash->error(__('Sorry, could not connect to the update server, please try again later.'));
-            return $this->redirect(['action' => 'index']);
-        }
-
-        $hash = $this->Version->_getOnlineVersionHistoryHash(false);
+        $hash = $this->Version->_getOnlineVersionHistoryHash();
+        $hash = array_reverse($hash);
         $this->set('versions', $hash);
+
+        $this->set('currentVersion', $this->Version->getCurrentVersionTag());
 
         return null;
     }
@@ -406,101 +302,87 @@ class InstallersController extends AppController
      */
     public function upgrade($version = null)
     {
-        if (is_file(ROOT . DS . 'bin' . DS . 'installer' . DS . 'stop_upgrade.txt')) {
-            $this->Flash->error(__('You are not allowed to Upgrade!'));
-            return $this->redirect(['action' => 'index']);
+        if (strtolower(Configure::read('mode')) !== 'uat' && strtolower(Configure::read('mode')) !== 'prod') {
+            //$this->Flash->error(__('You are not allowed to Upgrade!'));
+            //return $this->redirect(['action' => 'updates']);
         }
 
-        if (version_compare($version, APP_VERSION) < 0) {
-            $this->Flash->error(__('You cannot downgrade a version!'));
+        $version = Security::decrypt64Url($version);
+
+        if (!$version) {
+            $this->Flash->error(__('Sorry, invalid upgrade file.'));
             return $this->redirect(['action' => 'updates']);
-        }
-
-        $sftp = $this->InternalOptions->getUpdateSftpSession();
-        if ($sftp === false) {
-            $this->Flash->error(__('Sorry, could not connect to the update server, please try again later.'));
-            return $this->redirect(['action' => 'index']);
-        }
-
-        $hash = $this->Version->_getOnlineVersionHistoryHash(false);
-        $this->set('versions', $hash);
-
-        if (isset($hash[$version])) {
-            $zipFilePathName = APP_BACKUP_DIR . $version;
-            if (!is_file($zipFilePathName) || filesize($zipFilePathName) == 0) {
-                $zipFileContents = $sftp->get($hash[$version]['updater']);
-                if (strlen($zipFileContents) > 0) {
-                    file_put_contents($zipFilePathName, $zipFileContents);
-                    $this->Flash->info(__("Version ''{0}'' downloaded", $version));
-                } else {
-                    $this->Flash->error(__("Failed to download version ''{0}'' ", $version));
-                    return $this->redirect(['action' => 'updates']);
-                }
+        } else {
+            $zipFilePathName = TMP . pathinfo($version, PATHINFO_BASENAME);
+            $zipFileContents = @file_get_contents($version);
+            if ($zipFileContents) {
+                $this->Flash->success(__('Downloaded the upgrade file.'));
+                file_put_contents($zipFilePathName, $zipFileContents);
             } else {
-                $this->Flash->info(__("Using cached version of ''{0}'' ", $version));
+                $this->Flash->error(__('Sorry, could not download the upgrade file.'));
+                return $this->redirect(['action' => 'updates']);
             }
+        }
 
-            $baseExtractDir = ROOT . DS;
+        $baseExtractDir = ROOT . DS;
 
-            $zip = zip_open($zipFilePathName);
-            if ($zip) {
-                $countUpgraded = 0;
-                $countNotUpgraded = 0;
-                $countExtracted = 0;
-                $countNotExtracted = 0;
-                $safeList = [];
-                $notUpgradedList = [];
-                while ($zip_entry = zip_read($zip)) {
-                    $currentFilenameInZip = zip_entry_name($zip_entry);
-                    $currentFilenameInZipAsParts = explode("\\", $currentFilenameInZip);
-                    $zipStartOfPath = $currentFilenameInZipAsParts[0] . "\\";
+        $zip = zip_open($zipFilePathName);
+        if ($zip) {
+            $countUpgraded = 0;
+            $countNotUpgraded = 0;
+            $countExtracted = 0;
+            $countNotExtracted = 0;
+            $safeList = [];
+            $notUpgradedList = [];
+            while ($zip_entry = zip_read($zip)) {
+                $currentFilenameInZip = zip_entry_name($zip_entry);
+                $currentFilenameInZipAsParts = explode("\\", $currentFilenameInZip);
+                $zipStartOfPath = $currentFilenameInZipAsParts[0] . "\\";
 
-                    if (zip_entry_open($zip, $zip_entry)) {
-                        $countExtracted++;
-                        $contents = zip_entry_read($zip_entry, zip_entry_filesize($zip_entry));
-                        if (strlen($contents) >= 0) {
-                            if (count($currentFilenameInZipAsParts) >= 2) {
-                                $currentFileNameInZipTrimmed = str_replace($zipStartOfPath, "", $currentFilenameInZip);
-                                $putResult = (new File($baseExtractDir . $currentFileNameInZipTrimmed, true))->write($contents);
+                if (zip_entry_open($zip, $zip_entry)) {
+                    $countExtracted++;
+                    $contents = zip_entry_read($zip_entry, zip_entry_filesize($zip_entry));
+                    if (strlen($contents) >= 0) {
+                        if (count($currentFilenameInZipAsParts) >= 2) {
+                            $currentFileNameInZipTrimmed = str_replace($zipStartOfPath, "", $currentFilenameInZip);
+                            //$putResult = (new File($baseExtractDir . $currentFileNameInZipTrimmed, true))->write($contents);
+                            $putResult = false;
 
-                                if ($putResult !== false) {
-                                    $countUpgraded++;
-                                } else {
-                                    $countNotUpgraded++;
-                                    $notUpgradedList[] = $currentFileNameInZipTrimmed;
-                                }
-
-                                $safeList[] = $baseExtractDir . $currentFileNameInZipTrimmed;
+                            if ($putResult !== false) {
+                                $countUpgraded++;
                             } else {
                                 $countNotUpgraded++;
+                                $notUpgradedList[] = $currentFileNameInZipTrimmed;
                             }
+
+                            $safeList[] = $baseExtractDir . $currentFileNameInZipTrimmed;
+                        } else {
+                            $countNotUpgraded++;
                         }
-                        zip_entry_close($zip_entry);
-                    } else {
-                        $countNotExtracted++;
                     }
+                    zip_entry_close($zip_entry);
+                } else {
+                    $countNotExtracted++;
                 }
-                zip_close($zip);
-
-                $countRemoved = $this->removeUnusedFiles($safeList);
-
-                //clear the Cache
-                Cache::clearAll();
-
-                $msg = '';
-                $msg .= __('{0} files extracted, {1} files failed to extract. ', $countExtracted, $countNotExtracted);
-                $msg .= __('{0} files upgraded, {1} files failed to upgrade. ', $countUpgraded, $countNotUpgraded);
-                $msg .= __('{0} files removed. ', $countRemoved);
-                $msg = trim($msg);
-                $this->Flash->success($msg);
-                $this->Flash->success(__('Successfully upgraded to version {0}.', $version));
-                return $this->redirect(['controller' => 'installers', 'action' => 'checks']);
-            } else {
-                $this->Flash->error(__('Could not read the update package. Please try again.'));
-                return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
             }
+            zip_close($zip);
+
+            //$countRemoved = $this->removeUnusedFiles($safeList);
+            $countRemoved = 0;
+
+            //clear the Cache
+            Cache::clearAll();
+
+            $msg = '';
+            $msg .= __('{0} files extracted, {1} files failed to extract. ', $countExtracted, $countNotExtracted);
+            $msg .= __('{0} files upgraded, {1} files failed to upgrade. ', $countUpgraded, $countNotUpgraded);
+            $msg .= __('{0} files removed. ', $countRemoved);
+            $msg = trim($msg);
+            $this->Flash->success($msg);
+            $this->Flash->success(__('Successfully upgraded to version {0}.', $version));
+            return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         } else {
-            $this->Flash->error(__('Requested version does not exist, please choose from the list below.'));
+            $this->Flash->error(__('Could not read the update package. Please try again.'));
             return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         }
 
