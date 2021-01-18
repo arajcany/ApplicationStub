@@ -173,6 +173,10 @@ class BuildTasks
         $fileList = $zm->makeFileList($baseDir, $ignoreFilesFolders);
 
         $fileList[] = [
+            'external' => CONFIG . "version.json",
+            'internal' => "$app_name\\config\\version.json"
+        ];
+        $fileList[] = [
             'external' => CONFIG . "empty",
             'internal' => "$app_name\\logs\\empty"
         ];
