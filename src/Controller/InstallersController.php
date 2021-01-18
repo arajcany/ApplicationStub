@@ -310,7 +310,7 @@ class InstallersController extends AppController
         }
 
         $upgradeFile = Security::decrypt64Url($upgradeFile);
-        $versionHistory = $this->Version->getVersionHistoryJsn();
+        $versionHistory = $this->Version->_getOnlineVersionHistoryHash();
         $tag = 0;
         foreach ($versionHistory as $version) {
             if (isset($version['installer_url']) && $upgradeFile == $version['installer_url']) {

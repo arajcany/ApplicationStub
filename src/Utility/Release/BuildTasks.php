@@ -3,9 +3,11 @@
 
 namespace App\Utility\Release;
 
+use App\Model\Table\InternalOptionsTable;
 use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
 use arajcany\ToolBox\Utility\ZipMaker;
+use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use Cake\Console\ConsoleIo;
 use Cake\Console\Arguments;
@@ -173,6 +175,10 @@ class BuildTasks
         $fileList = $zm->makeFileList($baseDir, $ignoreFilesFolders);
 
         $fileList[] = [
+            'external' => CONFIG . "internal.sqlite",
+            'internal' => "$app_name\\config\\internal.sqlite"
+        ];
+        $fileList[] = [
             'external' => CONFIG . "version.json",
             'internal' => "$app_name\\config\\version.json"
         ];
@@ -208,6 +214,16 @@ class BuildTasks
         $this->writeToLog(__("Compiled a list of {0} files to Zip.", count($fileList)));
 
 
+        //----backup Internal DB---------------------------------
+        /**
+         * @var InternalOptionsTable $InternalOptions
+         */
+        copy(CONFIG . "internal.sqlite", CONFIG . "internal.bak.sqlite");
+        $InternalOptions = TableRegistry::getTableLocator()->get('InternalOptions');
+        $InternalOptions->deleteAll(["option_key LIKE 'remote_update_%'"]);
+        //------------------------------------------------------------------------
+
+
         //----create the required zip files---------------------------------
         $this->writeToLog(__('Zipping files to {0}', $drive));
         $date = date('Ymd_His');
@@ -220,6 +236,15 @@ class BuildTasks
             $this->writeToLog(__('Could not create {0}', "{$drive}{$zipFileName}"));
             $return = false;
         }
+        //------------------------------------------------------------------------
+
+
+        //----restore Internal DB---------------------------------
+        /**
+         * @var InternalOptionsTable $InternalOptions
+         */
+        copy(CONFIG . "internal.bak.sqlite", CONFIG . "internal.sqlite");
+        unlink(CONFIG . "internal.bak.sqlite");
         //------------------------------------------------------------------------
 
 
