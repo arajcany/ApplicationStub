@@ -52,9 +52,6 @@ class ReleasesController extends AppController
     {
         parent::beforeFilter($event);
 
-        $versionIni = $this->VersionControl->getVersionIni();
-        $this->set('versionIni', $versionIni);
-
         return null;
     }
 
