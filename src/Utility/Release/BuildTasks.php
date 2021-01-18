@@ -177,6 +177,10 @@ class BuildTasks
             'internal' => "$app_name\\config\\version.json"
         ];
         $fileList[] = [
+            'external' => CONFIG . "version_history.json",
+            'internal' => "$app_name\\config\\version_history.json"
+        ];
+        $fileList[] = [
             'external' => CONFIG . "empty",
             'internal' => "$app_name\\logs\\empty"
         ];

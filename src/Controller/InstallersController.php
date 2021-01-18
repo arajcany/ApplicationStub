@@ -302,9 +302,11 @@ class InstallersController extends AppController
      */
     public function upgrade($upgradeFile = null)
     {
+        $time_start = microtime(true);
+
         if (strtolower(Configure::read('mode')) !== 'uat' && strtolower(Configure::read('mode')) !== 'prod') {
-            //$this->Flash->error(__('You are not allowed to Upgrade!'));
-            //return $this->redirect(['action' => 'updates']);
+            $this->Flash->error(__('You are not allowed to Upgrade!'));
+            return $this->redirect(['action' => 'updates']);
         }
 
         $upgradeFile = Security::decrypt64Url($upgradeFile);
@@ -385,6 +387,11 @@ class InstallersController extends AppController
             $msg = trim($msg);
             $this->Flash->success($msg);
             $this->Flash->success(__('Successfully upgraded to version {0}.', $tag));
+
+            $time_end = microtime(true);
+            $time_total = round($time_end - $time_start);
+            $this->Flash->success(__('Upgrade took {0} seconds.', $time_total));
+
             return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         } else {
             $this->Flash->error(__('Could not read the update package. Please try again.'));
