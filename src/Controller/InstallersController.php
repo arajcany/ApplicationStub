@@ -297,24 +297,31 @@ class InstallersController extends AppController
     /**
      * Upgrade to the requested version
      *
-     * @param null $version
+     * @param null $upgradeFile
      * @return \Cake\Http\Response|\Cake\Http\Response|null
      */
-    public function upgrade($version = null)
+    public function upgrade($upgradeFile = null)
     {
         if (strtolower(Configure::read('mode')) !== 'uat' && strtolower(Configure::read('mode')) !== 'prod') {
             //$this->Flash->error(__('You are not allowed to Upgrade!'));
             //return $this->redirect(['action' => 'updates']);
         }
 
-        $version = Security::decrypt64Url($version);
+        $upgradeFile = Security::decrypt64Url($upgradeFile);
+        $versionHistory = $this->Version->getVersionHistoryJsn();
+        $tag = 0;
+        foreach ($versionHistory as $version) {
+            if (isset($version['installer_url']) && $upgradeFile == $version['installer_url']) {
+                $tag = $version['tag'];
+            }
+        }
 
-        if (!$version) {
+        if (!$upgradeFile) {
             $this->Flash->error(__('Sorry, invalid upgrade file.'));
             return $this->redirect(['action' => 'updates']);
         } else {
-            $zipFilePathName = TMP . pathinfo($version, PATHINFO_BASENAME);
-            $zipFileContents = @file_get_contents($version);
+            $zipFilePathName = TMP . pathinfo($upgradeFile, PATHINFO_BASENAME);
+            $zipFileContents = @file_get_contents($upgradeFile);
             if ($zipFileContents) {
                 $this->Flash->success(__('Downloaded the upgrade file.'));
                 file_put_contents($zipFilePathName, $zipFileContents);
@@ -345,8 +352,7 @@ class InstallersController extends AppController
                     if (strlen($contents) >= 0) {
                         if (count($currentFilenameInZipAsParts) >= 2) {
                             $currentFileNameInZipTrimmed = str_replace($zipStartOfPath, "", $currentFilenameInZip);
-                            //$putResult = (new File($baseExtractDir . $currentFileNameInZipTrimmed, true))->write($contents);
-                            $putResult = false;
+                            $putResult = (new File($baseExtractDir . $currentFileNameInZipTrimmed, true))->write($contents);
 
                             if ($putResult !== false) {
                                 $countUpgraded++;
@@ -367,11 +373,10 @@ class InstallersController extends AppController
             }
             zip_close($zip);
 
-            //$countRemoved = $this->removeUnusedFiles($safeList);
-            $countRemoved = 0;
+            $countRemoved = $this->removeUnusedFiles($safeList);
 
             //clear the Cache
-            Cache::clearAll();
+            //Cache::clearAll();
 
             $msg = '';
             $msg .= __('{0} files extracted, {1} files failed to extract. ', $countExtracted, $countNotExtracted);
@@ -379,7 +384,7 @@ class InstallersController extends AppController
             $msg .= __('{0} files removed. ', $countRemoved);
             $msg = trim($msg);
             $this->Flash->success($msg);
-            $this->Flash->success(__('Successfully upgraded to version {0}.', $version));
+            $this->Flash->success(__('Successfully upgraded to version {0}.', $tag));
             return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         } else {
             $this->Flash->error(__('Could not read the update package. Please try again.'));
