@@ -271,7 +271,7 @@ class InstallersController extends AppController
             $this->Flash->success(__('Could not clear the cache.'));
         }
 
-        $count = $this->BackgroundServices->start('all');
+        $count = $this->BackgroundServices->start('all', false);
         if ($count > 0) {
             $this->Flash->success(__('Started {0} Background Services.', $count));
         }
