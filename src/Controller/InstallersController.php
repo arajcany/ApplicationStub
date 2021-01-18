@@ -255,10 +255,6 @@ class InstallersController extends AppController
             $this->Flash->success($msg);
             $this->Flash->success(__('Successfully upgraded to version {0}.', $tag));
 
-            $time_end = microtime(true);
-            $time_total = round($time_end - $time_start);
-            $this->Flash->success(__('Upgrade took {0} seconds.', $time_total));
-
         } else {
             $this->Flash->error(__('Could not read the update package. Please try again.'));
         }
@@ -275,6 +271,10 @@ class InstallersController extends AppController
         if ($count > 0) {
             $this->Flash->success(__('Started {0} Background Services.', $count));
         }
+
+        $time_end = microtime(true);
+        $time_total = round($time_end - $time_start);
+        $this->Flash->success(__('Upgrade took {0} seconds.', $time_total));
 
         return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
     }
