@@ -9,6 +9,8 @@ use Cake\Utility\Inflector;
 
 /**
  * BackgroundServices component
+ *
+ * @property FlashComponent $Flash
  */
 class BackgroundServicesComponent extends Component
 {
@@ -19,6 +21,7 @@ class BackgroundServicesComponent extends Component
      */
     protected $_defaultConfig = [];
 
+    public $components = ['Flash'];
 
     public function createBackgroundServicesBatchFiles()
     {
@@ -170,6 +173,114 @@ class BackgroundServicesComponent extends Component
         }
 
         return $services;
+    }
+
+    /**
+     * @param $serviceName
+     * @param bool $verbose
+     * @return mixed
+     */
+    public function stop($serviceName, $verbose = true)
+    {
+        $services = $this->_getServices();
+
+        $serviceNamesCompiled = [];
+        $servicesRunning = [];
+        $servicesStopped = [];
+        foreach ($services as $service) {
+            $serviceNamesCompiled[] = $service['name'];
+
+            if ($service['state'] == 'RUNNING') {
+                $servicesRunning[] = $service['name'];
+            } elseif ($service['state'] == 'STOPPED') {
+                $servicesStopped[] = $service['name'];
+            }
+        }
+
+        if (strtolower($serviceName) == 'all') {
+            $servicesToActOn = $servicesRunning;
+        } elseif (in_array($serviceName, $serviceNamesCompiled)) {
+            $servicesToActOn = [$serviceName];
+        } else {
+            $servicesToActOn = [];
+            if ($verbose) {
+                $this->Flash->error(__('Sorry, could not find service {0}', $serviceName));
+            }
+        }
+
+        $counter = 0;
+        foreach ($servicesToActOn as $service) {
+            /**
+             * @var array $out
+             */
+            $cmd = __("net stop \"{0}\" 2>&1", $service);
+            exec($cmd, $out, $ret);
+
+            $out = implode(" ", $out);
+            if ($verbose) {
+                $this->Flash->smartFlash(__('{0}', $out));
+            }
+
+            if (strpos(strtolower($out), 'success') !== false) {
+                $counter++;
+            }
+        }
+
+        return $counter;
+    }
+
+    /**
+     * @param $serviceName
+     * @param bool $verbose
+     * @return mixed
+     */
+    public function start($serviceName, $verbose = true)
+    {
+        $services = $this->_getServices();
+
+        $serviceNamesCompiled = [];
+        $servicesRunning = [];
+        $servicesStopped = [];
+        foreach ($services as $service) {
+            $serviceNamesCompiled[] = $service['name'];
+
+            if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
+                $servicesRunning[] = $service['name'];
+            } elseif ($service['state'] == 'STOPPED' && $service['start_type'] != 'DISABLED') {
+                $servicesStopped[] = $service['name'];
+            }
+        }
+
+        if (strtolower($serviceName) == 'all') {
+            $servicesToActOn = $servicesStopped;
+        } elseif (in_array($serviceName, $serviceNamesCompiled)) {
+            $servicesToActOn = [$serviceName];
+        } else {
+            $servicesToActOn = [];
+            if ($verbose) {
+                $this->Flash->error(__('Sorry, could not find service {0}', $serviceName));
+            }
+        }
+
+        $counter = 0;
+        foreach ($servicesToActOn as $service) {
+            /**
+             * @var array $out
+             */
+            $cmd = __("net start \"{0}\" 2>&1", $service);
+            exec($cmd, $out, $ret);
+
+            $out = implode(" ", $out);
+            if ($verbose) {
+                $this->Flash->smartFlash(__('{0}', $out));
+            }
+
+            if (strpos(strtolower($out), 'success') !== false) {
+                $counter++;
+            }
+        }
+
+        return $counter;
     }
 
 }

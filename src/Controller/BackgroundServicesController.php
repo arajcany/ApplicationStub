@@ -172,40 +172,7 @@ class BackgroundServicesController extends AppController
      */
     public function stop($serviceName)
     {
-        $services = $this->BackgroundServices->_getServices();
-
-        $serviceNamesCompiled = [];
-        $servicesRunning = [];
-        $servicesStopped = [];
-        foreach ($services as $service) {
-            $serviceNamesCompiled[] = $service['name'];
-
-            if ($service['state'] == 'RUNNING') {
-                $servicesRunning[] = $service['name'];
-            } elseif ($service['state'] == 'STOPPED') {
-                $servicesStopped[] = $service['name'];
-            }
-        }
-
-        if (strtolower($serviceName) == 'all') {
-            $servicesToActOn = $servicesRunning;
-        } elseif (in_array($serviceName, $serviceNamesCompiled)) {
-            $servicesToActOn = [$serviceName];
-        } else {
-            $servicesToActOn = [];
-            $this->Flash->error(__('Sorry, could not find service {0}', $serviceName));
-        }
-
-        foreach ($servicesToActOn as $service) {
-            /**
-             * @var array $out
-             */
-            $cmd = __("net stop \"{0}\" 2>&1", $service);
-            exec($cmd, $out, $ret);
-
-            $out = implode(" ", $out);
-            $this->Flash->smartFlash(__('{0}', $out));
-        }
+        $this->BackgroundServices->stop($serviceName);
 
         return $this->redirect(['action' => 'index']);
     }
@@ -216,43 +183,9 @@ class BackgroundServicesController extends AppController
      */
     public function start($serviceName)
     {
-        $services = $this->BackgroundServices->_getServices();
-
-        $serviceNamesCompiled = [];
-        $servicesRunning = [];
-        $servicesStopped = [];
-        foreach ($services as $service) {
-            $serviceNamesCompiled[] = $service['name'];
-
-            if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
-                $servicesRunning[] = $service['name'];
-            } elseif ($service['state'] == 'STOPPED' && $service['start_type'] != 'DISABLED') {
-                $servicesStopped[] = $service['name'];
-            }
-        }
-
-        if (strtolower($serviceName) == 'all') {
-            $servicesToActOn = $servicesStopped;
-        } elseif (in_array($serviceName, $serviceNamesCompiled)) {
-            $servicesToActOn = [$serviceName];
-        } else {
-            $servicesToActOn = [];
-            $this->Flash->error(__('Sorry, could not find service {0}', $serviceName));
-        }
-
-        foreach ($servicesToActOn as $service) {
-            /**
-             * @var array $out
-             */
-            $cmd = __("net start \"{0}\" 2>&1", $service);
-            exec($cmd, $out, $ret);
-
-            $out = implode(" ", $out);
-            $this->Flash->smartFlash(__('{0}', $out));
-        }
+        $this->BackgroundServices->start($serviceName);
 
         return $this->redirect(['action' => 'index']);
     }
-
 
 }

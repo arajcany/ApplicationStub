@@ -150,16 +150,24 @@ class Application extends BaseApplication
      */
     private function clearCache()
     {
-        $clearCacheSignalFile = \CACHE . "clear.txt";
+        $clearCacheSignalFile = CACHE . "clear.txt";
         if (is_file($clearCacheSignalFile)) {
-            \Cake\Cache\Cache::clear();
-            unlink($clearCacheSignalFile);
+            try {
+                \Cake\Cache\Cache::clear();
+                unlink($clearCacheSignalFile);
+            } catch (\Throwable $exception) {
+
+            }
         }
 
-        $clearCacheSignalFile = \CACHE . "clear_all.txt";
+        $clearCacheSignalFile = CACHE . "clear_all.txt";
         if (is_file($clearCacheSignalFile)) {
-            \Cake\Cache\Cache::clearAll();
-            unlink($clearCacheSignalFile);
+            try {
+                \Cake\Cache\Cache::clearAll();
+                unlink($clearCacheSignalFile);
+            } catch (\Throwable $exception) {
+
+            }
         }
     }
 

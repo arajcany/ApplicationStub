@@ -7,6 +7,7 @@ use App\Model\Table\ArtifactsTable;
 use App\Model\Table\ErrandsTable;
 use App\Model\Table\WorkersTable;
 use arajcany\ToolBox\Utility\Security\Security;
+use Cake\Cache\Cache;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -80,6 +81,21 @@ class DevelopersController extends AppController
 
         $artifact = $this->Artifacts->createPlaceholderArtifact($options);
         $toDebug['$errand'] = $artifact;
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
+    public function cache()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+        $toDebug['Cache1'] = Cache::read('first_run');
+        $toDebug['Cache2'] = Cache::read('setttings');
+        $toDebug['Cache3'] = Cache::read('internal_options');
+        $toDebug['clear'] = $this->clearCache();
+
 
         $this->set('toDebug', $toDebug);
     }

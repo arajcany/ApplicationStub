@@ -1,4 +1,8 @@
 <?php
+/**
+ * @var App\View\AppView $this
+ * @var array $version
+ */
 
 use Cake\Core\Configure;
 
@@ -14,7 +18,8 @@ if (isset($io['company_name']) && !empty(trim($io['company_name']))) {
 ?>
     <footer class="footer">
         <div class="container-fluid">
-            <span class="text-muted">&copy; <?= date("Y") ?> <?= $guiText ?></span>
+            <span class="text-muted float-left">&copy; <?= date("Y") ?> <?= $guiText ?></span>
+            <span class="text-muted float-right"><?= __("Version {0}", $version['tag']) ?></span>
         </div>
     </footer>
 <?php

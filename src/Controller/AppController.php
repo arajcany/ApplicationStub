@@ -16,6 +16,7 @@
 namespace App\Controller;
 
 use App\Controller\Component\AppSettingsForUserComponent;
+use Cake\Cache\Cache;
 use Cake\Controller\Controller;
 use Cake\Controller\Exception\SecurityException;
 use Cake\Http\Exception\UnauthorizedException;
@@ -211,6 +212,10 @@ class AppController extends Controller
             }
         }
 
+        $version = file_get_contents(CONFIG . 'version.json');
+        $version = json_decode($version, JSON_OBJECT_AS_ARRAY);
+        $this->set('version', $version);
+
     }
 
 
@@ -231,5 +236,19 @@ class AppController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Clear the Cache
+     */
+    public function clearCache()
+    {
+        try {
+            $result = Cache::clearAll();
+        } catch (\Throwable $exception) {
+            $result = false;
+        }
+
+        return $result;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Controller\Component\BackgroundServicesComponent;
 use App\Model\Entity\User;
 use App\Utility\Install\VersionControl;
 use arajcany\ToolBox\Utility\Security\Security;
@@ -20,6 +21,7 @@ use Exception;
  * @property \App\Model\Table\UsersTable $Users
  * @property \App\Model\Table\SettingsTable $Settings
  * @property \App\Utility\Install\VersionControl $Version
+ * @property BackgroundServicesComponent $BackgroundServices
  */
 class InstallersController extends AppController
 {
@@ -29,6 +31,7 @@ class InstallersController extends AppController
     public $Version;
     public $Installers;
     public $Settings;
+    public $BackgroundServices;
 
 
     /**
@@ -43,6 +46,8 @@ class InstallersController extends AppController
 
         $this->Version = new VersionControl();
         $this->Users = TableRegistry::getTableLocator()->get('Users');
+
+        $this->loadComponent('BackgroundServices');
 
         return null;
     }
@@ -128,156 +133,16 @@ class InstallersController extends AppController
 
 
     /**
-     * Perform system checks. Essentially the same as Configure but with more Settings exposed.
+     * TODO Perform system checks.
+     *
      * This action is behind AUTH/ACL controlled.
      *
      * @return \Cake\Http\Response|null
      */
     public function checks()
     {
-        $this->Users = $this->loadModel('Users');
 
-        $Checker = new Checker();
-        $Builder = new Builder();
-
-        //encrypt Internal Options
-        $this->InternalOptions->encryptOptions();
-
-        //build Database if required
-        $dbVersion = $Builder->buildDatabase();
-        if (is_numeric($dbVersion) && DB_VERSION != $dbVersion) {
-            $this->Flash->success(__("Database automatically upgraded to Version {0}", $dbVersion));
-            return $this->redirect([]);
-        }
-        $isConnected = $Checker->checkDatabase();
-        $this->set('isConnected', $isConnected);
-
-        //load Form contexts
-        $settingsEmailForm = new SettingsEmailForm();
-        $settingsSuperAdminForm = new SettingsSuperAdminForm();
-        $settingsEmergencyEmailForm = new SettingsEmergencyEmailForm();
-        $settingsCompanyDetailsForm = new SettingsCompanyDetailsForm();
-        $settingsScheduledTasksForm = new SettingsScheduledTasksForm();
-        $settingsRepositoryForm = new SettingsRepositoryForm();
-
-        //update the configuration if requested
-        if ($this->request->is(['patch', 'post', 'put'])) {
-
-            if ($this->request->getData('config_email') == true) {
-                if ($settingsEmailForm->validate($this->request->getData())) {
-                    $this->Installers->handleEmailForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsEmailForm']);
-                }
-            }
-
-            if ($this->request->getData('config_super_admin') == true) {
-                $settingsSuperAdminForm->password_1 = $this->request->getData('password_1');
-                $settingsSuperAdminForm->password_2 = $this->request->getData('password_2');
-
-                if ($settingsSuperAdminForm->validate($this->request->getData())) {
-                    $this->Installers->handleSuperAdminForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsSuperAdminForm']);
-                }
-            }
-
-            if ($this->request->getData('config_emergency_email') == true) {
-                if ($settingsEmergencyEmailForm->validate($this->request->getData())) {
-                    $this->Installers->handleEmergencyEmailForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsEmergencyEmailForm']);
-                }
-            }
-
-            if ($this->request->getData('config_company_details') == true) {
-                if ($settingsCompanyDetailsForm->validate($this->request->getData())) {
-                    $this->Installers->handleCompanyDetailsForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsCompanyDetailsForm']);
-                }
-            }
-
-            if ($this->request->getData('config_scheduled_tasks') == true) {
-                if ($settingsScheduledTasksForm->validate($this->request->getData())) {
-                    $this->Installers->handleScheduledTasksForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsScheduledTasksForm']);
-                }
-            }
-
-            if ($this->request->getData('config_repo_sftp') == true) {
-                if ($settingsRepositoryForm->validate($this->request->getData())) {
-                    $this->Installers->handleRepositoryForm();
-                } else {
-                    $this->Flash->error(__('Sorry we encountered an error, please check the data you entered'),
-                        ['key' => 'settingsRepositoryForm']);
-                }
-            }
-
-        }//POST
-
-        $emailDetails = $this->Settings->getEmailDetails();
-        $emailDetails['email_password'] = "****************";
-        $this->set('emailDetails', $emailDetails);
-        $this->set('settingsEmailForm', $settingsEmailForm);
-        $isEmail = $Checker->checkEmailServer();
-        $this->set('isEmail', $isEmail);
-
-        $superAdminDetails = $this->Users
-            ->find('all')->matching(
-                'Roles', function ($q) {
-                return $q->where(['Roles.alias' => 'superadmin']);
-            }
-            )
-            ->toArray();
-        $this->set('superAdminDetails', $superAdminDetails);
-        $this->set('settingsSuperAdminForm', $settingsSuperAdminForm);
-        $isSuperAdmin = $Checker->checkSuperAdmin();;
-        $this->set('isSuperAdmin', $isSuperAdmin);
-
-        $emergencyEmailDetails = $this->Settings->getSetting('emergency_email');
-        $this->set('emergencyEmailDetails', $emergencyEmailDetails);
-        $this->set('settingsEmergencyEmailForm', $settingsEmergencyEmailForm);
-        $isEmergencyEmail = $Checker->checkEmergencyEmail();
-        $this->set('isEmergencyEmail', $isEmergencyEmail);
-
-        $companyDetails = $this->Settings->getCompanyDetails();
-        $this->set('companyDetails', $companyDetails);
-        $this->set('settingsCompanyDetailsForm', $settingsCompanyDetailsForm);
-        $isCompanyDetails = $Checker->checkCompanyDetails();
-        $this->set('isCompanyDetails', $isCompanyDetails);
-
-        $this->set('settingsScheduledTasksForm', $settingsScheduledTasksForm);
-        $isScheduledTasks = $Checker->checkScheduledTasks();
-        $this->set('isScheduledTasks', $isScheduledTasks);
-
-        $repoSftpDetails = $this->Settings->getRepoDetails();
-        $repoSftpDetails['repo_sftp_password'] = "****************";
-        $this->set('repoSftpDetails', $repoSftpDetails);
-        $this->set('optionsMode', $this->Settings->getSettingSelections('repo_mode'));
-        $this->set('optionsPurge', $this->Settings->getSettingSelections('repo_purge'));
-        $this->set('settingsRepositoryForm', $settingsRepositoryForm);
-        $isRepositoryForm = $Checker->checkRepoSftpSettings();
-        $this->set('isRepositoryForm', $isRepositoryForm);
-
-        $generalWorkerDetails = $this->Users->getGeneralWorkerUser();
-        $mailWorkerDetails = $this->Users->getMailWorkerUser();
-        $this->set('generalWorkerDetails', $generalWorkerDetails);
-        $this->set('mailWorkerDetails', $mailWorkerDetails);
-
-        //set Flash Messages from the Checker and Builder
-        $this->Flash->setMultiple($Checker->getMessages());
-        $this->Flash->setMultiple($Builder->getMessages());
-
-        return null;
     }
-
 
     /**
      * Display a list of Updates
@@ -335,6 +200,11 @@ class InstallersController extends AppController
 
         $baseExtractDir = ROOT . DS;
 
+        $count = $this->BackgroundServices->stop('all', false);
+        if ($count > 0) {
+            $this->Flash->success(__('Stopped {0} Background Services.', $count));
+        }
+
         $zip = zip_open($zipFilePathName);
         if ($zip) {
             $countUpgraded = 0;
@@ -377,9 +247,6 @@ class InstallersController extends AppController
 
             $countRemoved = $this->removeUnusedFiles($safeList);
 
-            //clear the Cache
-            //Cache::clearAll();
-
             $msg = '';
             $msg .= __('{0} files extracted, {1} files failed to extract. ', $countExtracted, $countNotExtracted);
             $msg .= __('{0} files upgraded, {1} files failed to upgrade. ', $countUpgraded, $countNotUpgraded);
@@ -392,12 +259,24 @@ class InstallersController extends AppController
             $time_total = round($time_end - $time_start);
             $this->Flash->success(__('Upgrade took {0} seconds.', $time_total));
 
-            return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         } else {
             $this->Flash->error(__('Could not read the update package. Please try again.'));
-            return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
         }
 
+        //clear the Cache
+        try {
+            Cache::clearAll();
+            $this->Flash->success(__('Cache cleared.'));
+        } catch (\Throwable $exception) {
+            $this->Flash->success(__('Could not clear the cache.'));
+        }
+
+        $count = $this->BackgroundServices->start('all');
+        if ($count > 0) {
+            $this->Flash->success(__('Started {0} Background Services.', $count));
+        }
+
+        return $this->redirect(['controller' => 'installers', 'action' => 'updates']);
     }
 
     /**
@@ -413,6 +292,7 @@ class InstallersController extends AppController
         $baseDir = ROOT;
         $ignoreFilesFolders = [
             "config\\app.php",
+            "bin\\BackgroundServices\\nssm.exe",
             "logs\\",
             "tmp\\",
         ];
