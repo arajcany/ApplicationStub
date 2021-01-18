@@ -15,7 +15,9 @@ cmd /C composer dump-autoload
 
 echo.
 
+php "%lib%cake.php" Releases debug_off
 php "%lib%cake.php" Releases build
+php "%lib%cake.php" Releases debug_on
 
 echo.
 

@@ -68,6 +68,14 @@ class ReleasesCommand extends Command
             return $this->build($args, $io);
         }
 
+        if (strtolower($args->getArgumentAt(0)) == 'debug_off') {
+            return $this->debugOff($args, $io);
+        }
+
+        if (strtolower($args->getArgumentAt(0)) == 'debugOn') {
+            return $this->debugOn($args, $io);
+        }
+
         return 1;
     }
 
@@ -79,7 +87,7 @@ class ReleasesCommand extends Command
      * @param ConsoleIo $io
      * @return int
      */
-    function build(Arguments $args, ConsoleIo $io)
+    private function build(Arguments $args, ConsoleIo $io)
     {
         $gitBranch = $this->GitTasks->getGitBranch();
         $gitCommits = $this->GitTasks->getCommitsSinceLastBuild();
@@ -149,5 +157,32 @@ class ReleasesCommand extends Command
             return 1;
         }
     }
+
+    /**
+     * @param Arguments $args
+     * @param ConsoleIo $io
+     * @return int
+     */
+    private function debugOff(Arguments $args, ConsoleIo $io)
+    {
+        $this->BuildTasks = new BuildTasks();
+        $this->BuildTasks->setArgs($args);
+        $this->BuildTasks->setIo($io);
+        return $this->BuildTasks->debugOff();
+    }
+
+    /**
+     * @param Arguments $args
+     * @param ConsoleIo $io
+     * @return int
+     */
+    private function debugOn(Arguments $args, ConsoleIo $io)
+    {
+        $this->BuildTasks = new BuildTasks();
+        $this->BuildTasks->setArgs($args);
+        $this->BuildTasks->setIo($io);
+        return $this->BuildTasks->debugOn();
+    }
+
 
 }

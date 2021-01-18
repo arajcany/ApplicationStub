@@ -11,6 +11,7 @@ use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use Cake\Console\ConsoleIo;
 use Cake\Console\Arguments;
+use Composer\Config;
 use phpseclib\Net\SFTP;
 use App\Utility\Install\VersionControl;
 
@@ -101,6 +102,40 @@ class BuildTasks
         }
 
         $this->log[] = $data;
+    }
+
+    /**
+     * @return int
+     */
+    public function debugOff()
+    {
+        $contents = file_get_contents(CONFIG . 'app.php');
+        $contents = str_replace("filter_var(env('DEBUG', true)", "filter_var(env('DEBUG', false)", $contents);
+        $result = file_put_contents(CONFIG . 'app.php', $contents);
+        if ($result) {
+            $this->io->out("Debugging turned off.");
+            return 0;
+        } else {
+            $this->io->out("Failed to turn Debugging turned off.");
+            return 1;
+        }
+    }
+
+    /**
+     * @return int
+     */
+    public function debugOn()
+    {
+        $contents = file_get_contents(CONFIG . 'app.php');
+        $contents = str_replace("filter_var(env('DEBUG', false)", "filter_var(env('DEBUG', true)", $contents);
+        $result = file_put_contents(CONFIG . 'app.php', $contents);
+        if ($result) {
+            $this->io->out("Debugging turned on.");
+            return 0;
+        } else {
+            $this->io->out("Failed to turn Debugging turned on.");
+            return 1;
+        }
     }
 
     /**
