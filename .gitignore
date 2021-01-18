@@ -44,6 +44,9 @@ nbproject/*
 /config/internal.sqlite
 /config/internal_dev.sqlite
 /config/version.ini
+/config/version.json
+/config/version_history.json
+/config/version_history_hash.txt
 /bin/BackgroundServices/nssm.exe
 /bin/BackgroundServices/services_install.bat
 /bin/BackgroundServices/services_remove.bat

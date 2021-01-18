@@ -32,312 +32,158 @@ class VersionControl
     }
 
     /**
-     * Full path and filename of the version.ini file
+     * Full path and filename of the version.json file
      *
      * @return string
      */
-    public function getVersionIniFullPath()
+    public function getVersionJsnFullPath()
     {
-        return CONFIG . 'version.ini';
+        return CONFIG . 'version.json';
     }
 
     /**
-     * Full path and filename of the version.ini file
+     * Full path and filename of the version.json file
      *
      * @return string
      */
     public function getVersionIniFilename()
     {
-        return 'version';
+        return pathinfo($this->getVersionJsnFullPath(), PATHINFO_FILENAME);
     }
 
     /**
-     * Return the contents of version.ini in array format.
-     * If version.ini doe not exist, default is created and returned.
+     * Full path and filename of the version.json file
+     *
+     * @return string
+     */
+    public function getVersionHistoryJsnFullPath()
+    {
+        return CONFIG . 'version_history.json';
+    }
+
+    /**
+     * Full path and filename of the version.json file
+     *
+     * @return string
+     */
+    public function getVersionHistoryJsnFilename()
+    {
+        return pathinfo($this->getVersionHistoryJsnFullPath(), PATHINFO_FILENAME);
+    }
+
+    /**
+     * Return the contents of version.json in array format.
+     * If version.json doe not exist, default is created and returned.
      *
      * @return array
      */
-    public function getVersionIni()
+    public function getVersionJsn()
     {
-        $fileToRead = $this->getVersionIniFullPath();
+        $fileToRead = $this->getVersionJsnFullPath();
         if (is_file($fileToRead)) {
-            $versionIni = $this->IniConfig->read($this->getVersionIniFilename());
+            $versionData = json_decode(file_get_contents($fileToRead), JSON_OBJECT_AS_ARRAY);;
         } else {
-            $versionIni = $this->getDefaultVersionIni();
-            $this->putVersionIni($versionIni);
+            $versionData = $this->getDefaultVersionJsn();
+            $this->putVersionJsn($versionData);
         }
 
-        $versionIni = Hash::expand($versionIni);
-
-        return $versionIni;
+        return $versionData;
     }
 
     /**
-     * Write the version.ini file
+     * Write the version.json file
      *
      * Should call $this->validateIni($data) to validate $data first
      *
      * @param array $data
      * @return bool
      */
-    public function putVersionIni($data = [])
+    public function putVersionJsn($data = [])
     {
-        $versionIniFormat = $this->getDefaultVersionIni();
-        $data = array_merge($versionIniFormat, $data);
-        $data = Hash::flatten($data);
-
-        $fileToWrite = $this->getVersionIniFullPath();
-
-        $result = [];
-        foreach ($data as $k2 => $v) {
-            $result[] = "$k2 = " . $this->toIniValue($v);
-        }
-
-        $contents = trim(implode("\n", $result)) . "\n";
-        return file_put_contents($fileToWrite, $contents) > 0;
+        $fileToWrite = $this->getVersionJsnFullPath();
+        return file_put_contents($fileToWrite, json_encode($data, JSON_PRETTY_PRINT));
     }
 
     /**
-     * Format of the version.ini
+     * Return the contents of version_history.json in array format.
+     * If version_history.json doe not exist, default is created and returned.
      *
      * @return array
      */
-    private function getDefaultVersionIni()
+    public function getVersionHistoryJsn()
+    {
+        $fileToRead = $this->getVersionHistoryJsnFullPath();
+        if (is_file($fileToRead)) {
+            $versionData = json_decode(file_get_contents($fileToRead), JSON_OBJECT_AS_ARRAY);;
+        } else {
+            $versionData = [$this->getDefaultVersionJsn()];
+            $this->putVersionHistoryJsn($versionData);
+        }
+
+        return $versionData;
+    }
+
+    /**
+     * Write the version_history.json file
+     *
+     * Should call $this->validateIni($data) to validate $data first
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function putVersionHistoryJsn($data = [])
+    {
+        $fileToWrite = $this->getVersionHistoryJsnFullPath();
+        return file_put_contents($fileToWrite, json_encode($data, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Return the contents of version_history.json in hashed TXT format.
+     *
+     * @return string
+     */
+    public function getVersionHistoryHashtxt()
+    {
+        $versionData = $this->getVersionHistoryJsn();
+        $versionData = json_encode($versionData);
+        $versionData = \arajcany\ToolBox\Utility\Security\Security::encrypt64Url($versionData);
+
+        return $versionData;
+    }
+
+    /**
+     * Format of the version.json
+     *
+     * @return array
+     */
+    public function getDefaultVersionJsn()
     {
         return [
             'name' => APP_NAME,
-            'tag' => '0.0.1',
+            'tag' => '0.0.0',
             'desc' => APP_DESC,
             'codename' => '',
         ];
     }
 
     /**
-     * Validate if the passed in array can be successfully written as an INI file
+     * Get the current version tag
      *
-     * @param array $ini
-     * @return bool
+     * @return string
      */
-    public function validateIni($ini)
+    public function getCurrentVersionTag()
     {
-        $hashedData = Hash::flatten($ini);
-
-        $values = array_values($hashedData);
-        if (!$this->isValidIniValue($values)) {
-            return false;
-        }
-
-        $keys = array_keys($hashedData);
-        if (!$this->isValidIniKey($keys)) {
-            return false;
-        }
-
-        return true;
+        $version = $this->getVersionJsn();
+        return $version['tag'];
     }
 
-    /**
-     * Check if a Key passes
-     *
-     * @param $keyToCheck
-     * @return bool
-     */
-    public function isValidIniKey($keyToCheck)
-    {
-        $specialCharacters = $this->getIniSpecialCharacters();
-
-        if (is_string($keyToCheck)) {
-            $keys = [$keyToCheck];
-        } elseif (is_array($keyToCheck)) {
-            $keys = $keyToCheck;
-        } else {
-            return false;
-        }
-
-        foreach ($keys as $key) {
-            foreach ($specialCharacters as $specialCharacter) {
-                //contains
-                if ($key !== str_replace($specialCharacter, '', $key)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     /**
-     * Check if a Value passes
+     * Sort the Version History
      *
-     * @param $valueToCheck
-     * @return bool
-     */
-    public function isValidIniValue($valueToCheck)
-    {
-        $reservedWords = $this->getIniReservedWords();
-
-        if (is_string($valueToCheck)) {
-            $values = [$valueToCheck];
-        } elseif (is_array($valueToCheck)) {
-            $values = $valueToCheck;
-        } else {
-            return false;
-        }
-
-        foreach ($values as $value) {
-            foreach ($reservedWords as $reservedWord) {
-                //in sentence
-                if ($value !== str_replace(" " . $reservedWord . " ", '', $value)) {
-                    return false;
-                }
-
-                //startsWith
-                if (TextFormatter::startsWith($value, $reservedWord . " ")) {
-                    return false;
-                }
-
-                //endsWith
-                if (TextFormatter::endsWith($value, " " . $reservedWord)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Converts a value into the ini equivalent
-     *
-     * @param mixed $value Value to export.
-     * @return string String value for ini file.
-     */
-    protected function toIniValue($value)
-    {
-        if ($value === null) {
-            return 'null';
-        }
-        if ($value === true) {
-            return 'true';
-        }
-        if ($value === false) {
-            return 'false';
-        }
-
-        return (string)$value;
-    }
-
-    /**
-     * Returns an array of reserved words.
-     *
-     * From php.net
-     * Note: There are reserved words which must not be used as keys for ini files.
-     * These include: null, yes, no, true, false, on, off, none.
-     * Values null, off, no and false result in "",
-     * and values on, yes and true result in "1",
-     * unless INI_SCANNER_TYPED mode is used (as of PHP 5.6.1).
-     * Characters ?{}|&~!()^" must not be used anywhere in the key
-     * and have a special meaning in the value.
-     *
-     *
-     * e.g. the following is OK
-     * foo = true
-     * bar = off
-     *
-     * e.g. the following is not OK
-     * foo = it is true that this will fail
-     * bar = turn the kettle off
-     *
+     * @param $unsorted
      * @return array
      */
-    public function getIniReservedWords()
-    {
-        return ["null", "yes", "no", "true", "false", "on", "off", "none"];
-    }
-
-    /**
-     * Returns an array of special characaters
-     *
-     * See note above.
-     *
-     * @return array
-     */
-    public function getIniSpecialCharacters()
-    {
-        return str_split('?{}|&~!()^"');
-    }
-
-    /**
-     * Wrapper function to get the versionHistory.ini as array format
-     *
-     * @return array|bool|string
-     */
-    public function _getLocalVersionHistoryIni()
-    {
-        $versionHistoryIni = $this->_getLocalVersionHistoryHash(false);
-        $versionHistoryIni = parse_ini_string($versionHistoryIni, true, INI_SCANNER_RAW);
-        $versionHistoryIni = $this->sortVersionHistoryArray($versionHistoryIni);
-
-        return $versionHistoryIni;
-    }
-
-
-    /**
-     * Display the versionHistory.ini file in encrypted format
-     *
-     * This will only return a result in the DEV environment as the
-     * versionHistory.ini is removed in the PROD releases.
-     *
-     * @param bool $encrypted
-     * @return bool|string
-     */
-    public function _getLocalVersionHistoryHash($encrypted = true)
-    {
-        $key = $this->InternalOptions->getKey();
-        $salt = $this->InternalOptions->getSalt();
-
-        $fileToRead = ROOT . DS . "bin" . DS . "installer" . DS . 'versionHistory.ini';
-        if (is_file($fileToRead)) {
-            $hash = file_get_contents($fileToRead);
-            if ($encrypted !== false) {
-                $hash = base64_encode(Security::encrypt($hash, $key, $salt));
-                $hash = Text::wrap($hash, ['width' => 72, 'wordWrap' => false]);
-            }
-        } else {
-            $hash = '';
-        }
-
-        return $hash;
-    }
-
-
-    public function _putLocalVersionHistoryHash(array $data)
-    {
-        $fileToWrite = ROOT . DS . "bin" . DS . "installer" . DS . 'versionHistory.ini';
-
-        $data = $this->sortVersionHistoryArray($data);
-
-        $result = [];
-        foreach ($data as $k => $value) {
-            $isSection = false;
-            if ($k[0] !== '[') {
-                $result[] = "[$k]";
-                $isSection = true;
-            }
-            if (is_array($value)) {
-                $kValues = Hash::flatten($value, '.');
-                foreach ($kValues as $k2 => $v) {
-                    $result[] = "$k2 = " . $this->toIniValue($v);
-                }
-            }
-            if ($isSection) {
-                $result[] = '';
-            }
-        }
-        $contents = trim(implode("\n", $result)) . "\r\n";
-        return file_put_contents($fileToWrite, $contents) > 0;
-    }
-
-
     public function sortVersionHistoryArray($unsorted)
     {
         $keys = array_keys($unsorted);
@@ -384,7 +230,7 @@ class VersionControl
 
 
     /**
-     * Display the versionHistory.ini file in encrypted format
+     * Display the versionHistory.json file in encrypted format
      *
      * @param bool $encrypted
      * @return array|bool|mixed|string

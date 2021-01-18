@@ -3,12 +3,14 @@
 
 namespace App\Utility\Release;
 
+use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
 use arajcany\ToolBox\Utility\ZipMaker;
 use Cake\Utility\Inflector;
 use Cake\Console\ConsoleIo;
 use Cake\Console\Arguments;
 use phpseclib\Net\SFTP;
+use App\Utility\Install\VersionControl;
 
 /**
  * Class BuildTasks
@@ -108,7 +110,31 @@ class BuildTasks
     public function build($options = [])
     {
         $app_name = Inflector::underscore(APP_NAME);
-        $this->writeToLog(__("Building a release of {0}.", $app_name));
+
+        $VC = new VersionControl();
+        $versionHistoryData = $VC->getVersionHistoryJsn();
+        $newVersionData = $VC->getDefaultVersionJsn();
+        $currentTag = $VC->getCurrentVersionTag();
+
+        $sampleMajor = $VC->incrementVersion($currentTag, 'major');
+        $sampleMinor = $VC->incrementVersion($currentTag, 'minor');
+        $samplePatch = $VC->incrementVersion($currentTag, 'patch');
+
+        $this->io->out(__('Major Build => {0}', $sampleMajor));
+        $this->io->out(__('Minor Build => {0}', $sampleMinor));
+        $this->io->out(__('Patch Build => {0}', $samplePatch));
+
+        $tagUpgrade = $this->io->askChoice('Is this a Major, Minor or Patch Build?', ['Major', 'Minor', 'Patch'], 'Patch');
+        $desc = $this->io->ask('Please type out a description for this release.');
+        $codename = $this->io->ask('Please type out a codename for this release (optional).');
+
+        $newVersionData['tag'] = $VC->incrementVersion($currentTag, strtolower($tagUpgrade));
+        $newVersionData['desc'] = $desc;
+        $newVersionData['codename'] = $codename;
+
+        $VC->putVersionJsn($newVersionData);
+
+        $this->writeToLog(__("Building {0} version {1}.", APP_NAME, $newVersionData['tag']));
 
         $drive = explode(DS, ROOT);
         array_pop($drive);
@@ -177,7 +203,7 @@ class BuildTasks
         //----create the required zip files---------------------------------
         $this->writeToLog(__('Zipping files to {0}', $drive));
         $date = date('Ymd_His');
-        $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}.zip");
+        $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}_v{$newVersionData['tag']}.zip");
         $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipFileName}", $baseDir, $app_name);
         if ($zipResult) {
             $this->writeToLog(__('Created {0}', "{$drive}{$zipFileName}"));
@@ -195,6 +221,7 @@ class BuildTasks
             $copyResult = copy("{$drive}{$zipFileName}", "{$options['remoteUpdateUnc']['unc']}{$zipFileName}");
             if ($copyResult) {
                 $this->writeToLog(__('Copied Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
+                $newVersionData['installer_url'] = $options['remoteUpdateUnc']['url'] . $zipFileName;
             } else {
                 $this->writeToLog(__('Failed to copy Zip to {0}', "{$options['remoteUpdateUnc']['unc']}{$zipFileName}"));
             }
@@ -207,11 +234,32 @@ class BuildTasks
             $copyResult = $SFTP->put($zipFileName, file_get_contents("{$drive}{$zipFileName}"));
             if ($copyResult) {
                 $this->writeToLog(__('Uploaded Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
+                $newVersionData['installer_url'] = $options['remoteUpdateSftp']['url'] . $zipFileName;
             } else {
                 $this->writeToLog(__('Failed to upload Zip to sftp://{0}', "{$options['remoteUpdateSftp']['host']}"));
             }
         } else {
             $this->writeToLog(__("No automatic upload as UNC or SFTP are not configured."));
+        }
+        //------------------------------------------------------------------------
+
+
+        //----save version history---------------------------------
+        $versionHistoryData[] = $newVersionData;
+        $VC->putVersionHistoryJsn($versionHistoryData);
+        $versionHistoryHashData = $VC->getVersionHistoryHashtxt();
+
+        if ($options['remoteUpdateUnc']) {
+            $this->writeToLog(__("Uploading Version History Hash to Remote Update site via UNC"));
+            file_put_contents("{$options['remoteUpdateUnc']['unc']}version_history_hash.txt", $versionHistoryHashData);
+        } elseif ($options['remoteUpdateSftp']) {
+            $this->writeToLog(__("Uploading Version History Hash to Remote Update site via SFTP"));
+            $SFTP = new SFTP($options['remoteUpdateSftp']['host'], $options['remoteUpdateSftp']['port'], $options['remoteUpdateSftp']['timeout']);
+            $SFTP->login($options['remoteUpdateSftp']['username'], $options['remoteUpdateSftp']['password']);
+            $SFTP->chdir($options['remoteUpdateSftp']['path']);
+            $SFTP->put('version_history_hash.txt', $versionHistoryHashData);
+        } else {
+            $this->writeToLog(__("No automatic uploading of Version History Hash as UNC or SFTP are not configured."));
         }
         //------------------------------------------------------------------------
 
