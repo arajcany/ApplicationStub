@@ -15,3 +15,7 @@ bin\cake bake controller Workers
 bin\cake bake template Errands
 bin\cake bake template Workers
 
+bin\cake bake model TrackHits
+bin\cake bake controller TrackHits
+bin\cake bake template TrackHits
+

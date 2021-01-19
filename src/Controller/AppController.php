@@ -37,6 +37,7 @@ use Cake\Core\Configure;
  * @property \App\Model\Table\RolesTable $Roles
  * @property \App\Model\Table\InternalOptionsTable $InternalOptions
  * @property \App\Model\Table\TrackLoginsTable $TrackLogins
+ * @property \App\Model\Table\TrackHitsTable $TrackHits
  *
  * @property \App\Controller\Component\FlashComponent $Flash
  * @property \TinyAuth\Controller\Component\AuthComponent $Auth
@@ -53,6 +54,9 @@ class AppController extends Controller
     public $Roles;
     public $InternalOptions;
     public $TrackLogins;
+    public $TrackHits;
+    public $timeStartup;
+    public $timeShutdown;
 
     /**
      * Initialization hook method.
@@ -66,6 +70,8 @@ class AppController extends Controller
      */
     public function initialize()
     {
+        $this->timeStartup = microtime(true);
+
         parent::initialize();
 
         $this->loadModel('Settings');
@@ -73,6 +79,7 @@ class AppController extends Controller
         $this->loadModel('Roles');
         $this->loadModel('InternalOptions');
         $this->loadModel('TrackLogins');
+        $this->loadModel('TrackHits');
 
         $this->loadComponent('RequestHandler', [
             'enableBeforeRedirect' => false,
@@ -250,5 +257,24 @@ class AppController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * @return Response|void|null
+     */
+    public function shutdownProcess()
+    {
+        parent::shutdownProcess();
+
+        $this->timeShutdown = microtime(true);
+        $execution_time = ($this->timeShutdown - $this->timeStartup);
+
+        if (Configure::read('Settings.hit_tracking_enabled')) {
+            $passed = $this->request->getUri();
+            $otherData = [
+                'app_execution_time' => $execution_time,
+            ];
+            $this->TrackHits->trackHit($passed, $otherData);
+        }
     }
 }
