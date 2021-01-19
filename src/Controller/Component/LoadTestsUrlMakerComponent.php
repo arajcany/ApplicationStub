@@ -31,7 +31,7 @@ class LoadTestsUrlMakerComponent extends Component
     {
         $newUrl = $url;
 
-        //replace random integers
+        //replace with random integers
         $var = 'rnd_int';
         $defaultMin = 0;
         $defaultMax = PHP_INT_MAX;
@@ -56,12 +56,46 @@ class LoadTestsUrlMakerComponent extends Component
                 }
                 $randomNumber = mt_rand($min, $max);
             } else {
-                $randomNumber = mt_rand();
+                $randomNumber = mt_rand($defaultMin, $defaultMax);
             }
             $newUrl = str_replace($toReplace, $randomNumber, $newUrl);
         }
 
-        //replace random words
+        //replace with random integers
+        $var = 'rnd_pad_int';
+        $defaultMin = 0;
+        $defaultMax = 999999;
+        $matches = $this->findMatches($url, "{" . $var, "}");
+        foreach ($matches[0] as $k => $toReplace) {
+            if ($params = $matches[1][$k]) {
+                $params = trim($params, ":");
+                $re = '/\d+/';
+                preg_match_all($re, $params, $numbers);
+                if (!isset($numbers[0])) {
+                    $min = $defaultMin;
+                    $max = $defaultMax;
+                } elseif (count($numbers[0]) == 1) {
+                    $min = $numbers[0][0];
+                    $max = $defaultMax;
+                } elseif (count($numbers[0]) >= 1) {
+                    $min = $numbers[0][0];
+                    $max = $numbers[0][1];
+                } else {
+                    $min = $defaultMin;
+                    $max = $defaultMax;
+                }
+                $randomNumber = mt_rand($min, $max);
+                $paddingLength = strlen($max . "");
+            } else {
+                $randomNumber = mt_rand($defaultMin, $defaultMax);
+                $paddingLength = strlen($defaultMax . "");
+            }
+
+            $randomNumber = str_pad($randomNumber, $paddingLength, 0, STR_PAD_LEFT);
+            $newUrl = str_replace($toReplace, $randomNumber, $newUrl);
+        }
+
+        //replace with random words
         $var = 'rnd_word';
         $defaultMin = 1;
         $defaultMax = 5;

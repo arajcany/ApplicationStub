@@ -33,7 +33,7 @@
 
 <div class="row mb-5">
     <div class="col-lg-4 ml-auto mr-auto">
-        <div class="form large-9 medium-8 columns content border pt-1 pb-1 pl-3 pr-3">
+        <div class="form large-9 medium-8 columns content border pt-1 pb-3 pl-3 pr-3">
             <?php
             $formOpts = [
             ];
@@ -90,6 +90,7 @@
                 echo $this->Form->control('timespan', $timespanOptions);
                 ?>
 
+                <?= $this->Html->link(__('Cancel'), ['controller' => 'load-tests'], ['class' => 'btn btn-secondary float-left']) ?>
                 <?= $this->Form->button(__('Submit'), ['class' => 'btn btn-primary float-right']) ?>
                 <?= $this->Form->end() ?>
             </fieldset>
@@ -121,7 +122,7 @@
         foreach ($finalUrls as $k => $imageUrl) {
             ?>
             <span id="feedback-<?= $k ?>" class="text-center default">
-                <?= $k ?>
+                <?= $k + 1 ?>
             </span>
             <?php
         }
@@ -130,23 +131,45 @@
 </div>
 
 <div class="row mt-5">
-    <div class="col-12 mb-2 text-center">
-        <?php
-        echo __("Here is the list or URLs that will be called...");
-        echo "<textarea rows=\"6\" cols=\"150\" >";
-        foreach ($finalUrls as $k => $imageUrl) {
-            echo $imageUrl . "\n";
-        }
-        echo "</textarea>";
-        ?>
+    <div class="col-12 ml-auto mr-auto">
+        <div class="chart">
+            <h3><?= __("Performance Graph") ?></h3>
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12 ml-auto mr-auto">
+        <div class="urls">
+            <?php
+            echo __("Here is the list of URLs that will be called...");
+            echo "<textarea rows=\"6\" cols=\"150\" >";
+            foreach ($finalUrls as $k => $imageUrl) {
+                echo $imageUrl . "\n";
+            }
+            echo "</textarea>";
+            ?>
+        </div>
     </div>
 </div>
 
 <?php
 $this->start('viewCustomScripts');
 ?>
-<script>
 
+<?php
+echo $this->Html->script('https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js');
+
+$data = [];
+$labels = [];
+foreach (range(1, $hits) as $k => $v) {
+    $labels[] = $k + 1;
+    $data[] = 0;
+}
+?>
+
+<script>
     $(document).ready(function ($) {
         var i;
         var urlCount = <?= $hits ?>;
@@ -157,7 +180,7 @@ $this->start('viewCustomScripts');
         var clearTimeoutValues = [];
 
 
-        function pingImageUrl(targetUrl, timeout, counter) {
+        function pingPerformanceUrl(targetUrl, timeout, counter) {
             //console.log(timeout + ' | ' + targetUrl);
             $('#feedback-' + counter).addClass('running');
 
@@ -179,13 +202,14 @@ $this->start('viewCustomScripts');
                     var seconds = (time / 1000).toFixed(1);
 
                     $('#feedback-' + counter).addClass('success').html(seconds + "s");
+                    updateChartData(myBar, counter, seconds);
                 },
                 error: function (e) {
                     console.log(e);
 
                     //Calculate the difference in milliseconds then convert to secs rounded.
                     var time = performance.now() - this.startTime;
-                    var seconds = (time / 1000).toFixed(1);
+                    var seconds = (time / 1000).toFixed(2);
 
                     $('#feedback-' + counter).addClass('error').html(seconds);
                 }
@@ -200,10 +224,10 @@ $this->start('viewCustomScripts');
 
             $('#feedback-').removeClass('running').removeClass('error').removeClass('success');
 
-            for (i = 1; i <= urlCount; i++) {
+            for (i = 0; i < urlCount; i++) {
                 currentUrl = imageUrls[i];
                 currentTimeout = delayMatrix[i];
-                clearTimeoutValue = setTimeout(pingImageUrl, currentTimeout, currentUrl, currentTimeout, i)
+                clearTimeoutValue = setTimeout(pingPerformanceUrl, currentTimeout, currentUrl, currentTimeout, i)
                 clearTimeoutValues.push(clearTimeoutValue);
             }
         });
@@ -215,7 +239,6 @@ $this->start('viewCustomScripts');
                 clearTimeout(clearTimeoutValues[i]);
             }
             clearTimeoutValues = [];
-
         });
 
         $('#test-clear').on('click', function () {
@@ -223,8 +246,64 @@ $this->start('viewCustomScripts');
 
             $('[id^="feedback-"]').removeClass('running').removeClass('error').removeClass('success');
 
+            for (i = 0; i < urlCount; i++) {
+                $('#feedback-' + i).html(i);
+                updateChartData(myBar, i, 0);
+            }
         });
 
+
+        var barChartData = {
+            labels: <?=  json_encode($labels) ?>,
+            datasets: [{
+                label: '<?= $hits ?> Hits Over <?= $timespan ?> Seconds',
+                borderWidth: 1,
+                data: <?=  json_encode($data) ?>
+            }]
+        };
+
+        var ctx = document.getElementById('canvas').getContext('2d');
+        window.myBar = new Chart(ctx, {
+            type: 'bar',
+            data: barChartData,
+            options: {
+                responsive: true,
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Application Framework Response Times'
+                },
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Application Response Time'
+                        },
+                        ticks: {
+                            suggestedMin: 0,
+                            suggestedMax: 1
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Hit Number'
+                        },
+                        ticks: {
+                            min: 0,
+                        }
+                    }]
+
+                }
+            }
+        });
+
+        function updateChartData(chart, index, newValue) {
+            myBar.data.datasets[0].data[index] = newValue;
+            chart.update();
+        }
 
     });
 

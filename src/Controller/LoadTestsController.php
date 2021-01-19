@@ -4,20 +4,25 @@ namespace App\Controller;
 
 use App\Controller\AppController;
 use App\Controller\Component\LoadTestsUrlMakerComponent;
+use App\Model\Table\ArtifactsTable;
+use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Cake\Utility\Security;
 use Exception;
+use Intervention\Image\ImageManager;
 
 /**
  * LoadTests Controller
  * @property LoadTestsUrlMakerComponent $LoadTestsUrlMaker
+ * @property ArtifactsTable $Artifacts
  *
  */
 class LoadTestsController extends AppController
 {
+    public $Artifacts;
 
     /**
      * Initialize method
@@ -30,6 +35,7 @@ class LoadTestsController extends AppController
         parent::initialize();
 
         $this->loadComponent('LoadTestsUrlMaker');
+        $this->loadModel('Artifacts');
 
         return null;
     }
@@ -66,7 +72,7 @@ class LoadTestsController extends AppController
      * @param null $hits
      * @return void
      */
-    public function cakePerformance($timespan = null, $hits = null)
+    public function applicationPerformance($timespan = null, $hits = null)
     {
         $timespanDefault = 5;
         $hitsDefault = 100;
@@ -89,7 +95,6 @@ class LoadTestsController extends AppController
         }
 
         $urlRoot = str_replace(Router::url(null, false), '', Router::url(null, true));
-
         $urlFolder = "/load-tests/splat";
 
         $finalUrls = [];
@@ -100,6 +105,7 @@ class LoadTestsController extends AppController
             $delayMatrix[$counter] = mt_rand(1, $timespan * 1000);
             $arrayKeys[] = $counter;
         }
+        $finalUrls = array_values($finalUrls);
         asort($delayMatrix);
         $delayMatrix = array_combine($arrayKeys, $delayMatrix);
 
@@ -121,7 +127,12 @@ class LoadTestsController extends AppController
     {
         $timespanDefault = 5;
         $hitsDefault = 100;
-        $urlDefault = "https://www.example.com/{rnd_int:1-20}/{rnd_word:1-5}";
+
+        $urlRoot = str_replace(Router::url(null, false), '', Router::url(null, true));
+        $urlFolder = "/load-tests/image";
+
+        $urlDefault = "{$urlRoot}{$urlFolder}/RandomInteger-{rnd_int:1-20}/RandomIntegerPadded-{rnd_pad_int:56-5600}/{rnd_word:1-5}";
+        $urlDefault = "{$urlRoot}{$urlFolder}/{rnd_int:400-500}/auto/auto/{rnd_word:1}.jpg";
 
         if ($this->request->is('post')) {
             if ($this->request->getData('timespan')) {
@@ -155,13 +166,14 @@ class LoadTestsController extends AppController
             if (strpos($url, "?") !== false) {
                 $qs = '';
             } else {
-                $qs = "?r=" . sha1(Security::randomBytes(1024));
+                $qs = "?r=" . substr(sha1(Security::randomBytes(1024)), 0, 8);
             }
 
             $finalUrls[$counter] = $urlRoot . $qs;
             $delayMatrix[$counter] = mt_rand(1, $timespan * 1000);
             $arrayKeys[] = $counter;
         }
+        $finalUrls = array_values($finalUrls);
         asort($delayMatrix);
         $delayMatrix = array_combine($arrayKeys, $delayMatrix);
 
@@ -193,5 +205,97 @@ class LoadTestsController extends AppController
 
         return $this->response;
     }
+
+    public function image($size = 'auto', $format = 'auto', $quality = 'auto', $namePlaceholder = null)
+    {
+        //----Size----------------------------------------------
+        $allowedSizes = [
+            'icon',
+            'thumbnail',
+            'preview',
+            'lr',
+            'mr',
+            'hr',
+        ];
+
+        $size = strtolower($size);
+
+        if ($size == 'auto') {
+            $size = 'preview';
+        }
+
+        if (is_numeric($size)) {
+            $sizePixels = intval($size);
+            $sizePixels = min($sizePixels, Configure::read('Settings.repo_size_hr'));
+        } else {
+            if (!in_array($size, $allowedSizes)) {
+                $size = 'preview';
+            }
+            $sizePixels = Configure::read('Settings.repo_size_' . $size);
+        }
+
+        $settings = [
+            'width' => 64,
+            'height' => 64,
+            'background' => '#808080',
+            'format' => 'png',
+            'quality' => '90',
+        ];
+
+
+        //----Format----------------------------------------------
+        $allowedFormats = [
+            'jpeg',
+            'jpg',
+            'png',
+        ];
+
+        $format = strtolower($format);
+
+        if ($format == 'auto') {
+            $format = 'jpg';
+        }
+
+        if (!in_array($format, $allowedFormats)) {
+            $format = 'jpg';
+        }
+
+        if ($format == 'jpeg') {
+            $format = 'jpg';
+        }
+
+
+        //----Quality----------------------------------------------
+        $quality = strtolower($quality);
+
+        if ($quality == 'auto') {
+            $quality = 90;
+        } elseif (!is_numeric($quality)) {
+            $quality = 90;
+        } else {
+            $quality = intval($quality);
+        }
+
+        //----Generate Image----------------------------------------------
+        if ($sizePixels) {
+            $settings['width'] = $sizePixels;
+        }
+        if ($sizePixels) {
+            $settings['height'] = $sizePixels;
+        }
+        if ($format) {
+            $settings['format'] = $format;
+        }
+        if ($quality) {
+            $settings['quality'] = $quality;
+        }
+
+        $imgRes = $this->Artifacts->getImageResource($settings);
+        $this->response = $this->response->withType($imgRes->mime());
+        $this->response = $this->response->withStringBody($imgRes->stream());
+
+        return $this->response;
+    }
+
 
 }

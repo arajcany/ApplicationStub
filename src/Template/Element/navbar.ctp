@@ -97,6 +97,14 @@ $user = $this->request->getSession()->read('Auth.User');
                             ];
                             echo $this->Html->link($title, $url, $options)
                             ?>
+                            <?php
+                            $title = 'Load Tests';
+                            $url = ['controller' => 'load-tests', 'action' => 'index'];
+                            $options = [
+                                'class' => "dropdown-item"
+                            ];
+                            echo $this->Html->link($title, $url, $options)
+                            ?>
                         </div>
                     </li>
 
