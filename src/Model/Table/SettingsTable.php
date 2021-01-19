@@ -2,6 +2,7 @@
 
 namespace App\Model\Table;
 
+use arajcany\ToolBox\Utility\Security\Security;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
@@ -129,7 +130,11 @@ class SettingsTable extends Table
                 ->orderAsc('property_group')
                 ->orderAsc('id')
                 ->toArray();
-            Cache::write('settings', $settings, 'query_results_app');
+            try {
+                Cache::write('settings', $settings, 'query_results_app');
+            } catch (\Throwable $e) {
+                // Do not halt - not critical
+            }
         }
 
         $settingsList = [];
@@ -173,14 +178,18 @@ class SettingsTable extends Table
     /**
      * Convenience Method to get a value based on the passed in key
      *
-     * @param $settingKey
+     * @param string $settingKey
+     * @param bool $decrypt
      * @return bool
      */
-    public function getSetting($settingKey)
+    public function getSetting($settingKey, $decrypt = false)
     {
         //try to get the value from Configure first
         $configValue = Configure::read("Settings.{$settingKey}");
         if ($configValue !== null) {
+            if ($decrypt == true) {
+                $configValue = Security::decrypt64($configValue);
+            }
             return $configValue;
         }
 
@@ -192,6 +201,9 @@ class SettingsTable extends Table
 
         if (isset($value[0]->property_value)) {
             $value = $value[0]->property_value;
+            if ($decrypt == true) {
+                $value = Security::decrypt64($value);
+            }
         } else {
             $value = false;
         }

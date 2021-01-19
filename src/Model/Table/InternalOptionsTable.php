@@ -192,7 +192,21 @@ class InternalOptionsTable extends Table
          * @var \App\Model\Entity\InternalOption $option
          */
         foreach ($options as $option) {
-            $optionsList[$option->option_key] = $option->option_value;
+            $value = $option->option_value;
+
+            if ($value === 'false') {
+                $value = false;
+            }
+
+            if ($value === 'true') {
+                $value = true;
+            }
+
+            if ($value === 'null') {
+                $value = null;
+            }
+
+            $optionsList[$option->option_key] = $value;
         }
 
         $optionsList['key'] = $this->getKey();
@@ -216,8 +230,13 @@ class InternalOptionsTable extends Table
      */
     public function getKey()
     {
+        $hk = Configure::read("InternalOptions.hk");
+        if (empty($hk)) {
+            $hk = ($this->findByOptionKey('hk')->first())->option_value;
+        }
+
         $twst = new twister();
-        $int = $this->getOption('hk');
+        $int = $hk;
         $sec = '';
         $counter = range(0, 10);
         foreach ($counter as $k => $v) {
@@ -237,8 +256,13 @@ class InternalOptionsTable extends Table
      */
     public function getSalt()
     {
+        $hs = Configure::read("InternalOptions.hs");
+        if (empty($hs)) {
+            $hs = ($this->findByOptionKey('hs')->first())->option_value;
+        }
+
         $twst = new twister();
-        $int = $this->getOption('hs');
+        $int = $hs;
         $sec = '';
         $counter = range(0, 10);
         foreach ($counter as $k => $v) {
@@ -254,8 +278,8 @@ class InternalOptionsTable extends Table
     /**
      * Convenience Method to get a value based on the passed in key
      *
-     * @param $optionKey
-     * @param $decrypt
+     * @param string $optionKey
+     * @param bool $decrypt
      * @return bool|string
      */
     public function getOption($optionKey, $decrypt = false)
@@ -269,6 +293,9 @@ class InternalOptionsTable extends Table
             return $configValue;
         }
 
+        //update the Configure values
+        $this->saveOptionsToConfigure(false);
+
         //fallback to reading from DB
         $value = $this->findByOptionKey($optionKey)->toArray();
 
@@ -279,6 +306,18 @@ class InternalOptionsTable extends Table
             }
         } else {
             $value = false;
+        }
+
+        if ($value === 'false') {
+            $value = false;
+        }
+
+        if ($value === 'true') {
+            $value = true;
+        }
+
+        if ($value === 'null') {
+            $value = null;
         }
 
         return $value;
