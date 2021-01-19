@@ -162,7 +162,15 @@ class BuildTasks
         $this->io->out(__('Patch Build => {0}', $samplePatch));
 
         $tagUpgrade = $this->io->askChoice('Is this a Major, Minor or Patch Build?', ['Major', 'Minor', 'Patch'], 'Patch');
-        $desc = $this->io->ask('Please type out a description for this release.');
+
+        $desc = false;
+        while (!$desc) {
+            $desc = $this->io->ask('Please type out a description for this release.');
+            if (strlen($desc) == 0) {
+                $desc = false;
+            }
+        }
+
         $codename = $this->io->ask('Please type out a codename for this release (optional).');
 
         $newVersionData['tag'] = $VC->incrementVersion($currentTag, strtolower($tagUpgrade));
