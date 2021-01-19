@@ -206,7 +206,7 @@ foreach (range(1, $hits) as $k => $v) {
 
                     //Calculate the difference in milliseconds then convert to secs rounded.
                     var time = performance.now() - this.startTime;
-                    var seconds = (time / 1000).toFixed(1);
+                    var seconds = (time / 1000).toFixed(2);
 
                     $('#feedback-' + counter).addClass('success').html(seconds + "s");
                     updateChartData(myBar, counter, seconds);
