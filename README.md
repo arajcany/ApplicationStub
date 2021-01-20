@@ -1,5 +1,5 @@
 # Application Stub
-Stub Application for testing plugins and concepts
+Application stub code for testing packages and concepts.
 
 
 Build a project from this repo:
