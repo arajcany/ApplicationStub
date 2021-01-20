@@ -2,7 +2,16 @@
 /**
  * @var \App\View\AppView $this
  * @var array $services
+ * @var Query|Heartbeat[] $heartbeats
+ * @var HeartbeatsTable $HeartbeatsTable
  */
+
+use App\Model\Entity\Heartbeat;
+use App\Model\Table\HeartbeatsTable;
+use Cake\ORM\Query;
+use Cake\ORM\TableRegistry;
+
+$HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
 ?>
 
 <div class="row">
@@ -52,7 +61,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row mb-5">
     <div class="col-12 ml-auto mr-auto">
         <div class="workers index large-9 medium-8 columns content">
             <h3><?= __('Installed Services') ?></h3>
@@ -105,6 +114,60 @@
                 </tbody>
             </table>
 
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-lg-12 mb-5">
+        <div class="workers index large-9 medium-8 columns content">
+            <h3><?= __('Service Monitoring') ?></h3>
+            <div class="card">
+                <div class="card-header">
+                    <?php
+                    $pulseLimit = 5;
+                    ?>
+                    <strong><?php echo __("Heartbeats with last {0} Pulses", $pulseLimit) ?></strong>
+                </div>
+                <div class="card-body">
+
+                    <?php
+                    foreach ($heartbeats as $heartbeat) {
+                        /**
+                         * @var Heartbeat[] $pulses
+                         */
+                        $pulses = $HeartbeatsTable->findPulsesForHeartbeat($heartbeat, $pulseLimit);
+                        ?>
+                        <p>
+                            <?php
+                            echo $heartbeat->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ);
+                            echo " - ";
+                            echo "<strong>" . $heartbeat->type . "</strong>";
+                            echo " - ";
+                            echo $heartbeat->created->timeAgoInWords();
+                            echo '<br>';
+                            $pulseCounter = 0;
+                            foreach ($pulses as $pulse) {
+                                echo " - ";
+                                echo $pulse->created->timeAgoInWords();
+                                echo " - ";
+                                echo $pulse->context;
+                                echo '<br>';
+                                $pulseCounter++;
+                            }
+                            if (!$pulseCounter) {
+                                echo " - No Pulse";
+                                echo '<br>';
+                            }
+                            ?>
+                        </p>
+                        <?php
+                    }
+                    ?>
+
+
+                </div>
+            </div>
         </div>
     </div>
 </div>
