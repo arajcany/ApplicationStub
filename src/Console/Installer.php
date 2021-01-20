@@ -31,6 +31,12 @@ use Exception;
  */
 class Installer
 {
+    static $defaultVendorName;
+    static $defaultAppName;
+    static $defaultAppDescription;
+    static $validatedVendorName;
+    static $validatedAppName;
+    static $validatedAppDescription;
 
     /**
      * An array of directories to be made writable
@@ -91,6 +97,105 @@ class Installer
         if (class_exists($class)) {
             $class::customizeCodeceptionBinary($event);
         }
+
+        static::removeReferencesToApplicationStub($rootDir, $io);
+    }
+
+    /**
+     * Remove references to 'Application Stub'.
+     *
+     * @param string $rootDir The application's root directory.
+     * @param \Composer\IO\IOInterface $io IO interface to write to console.
+     * @return void
+     * @throws Exception
+     */
+    public static function removeReferencesToApplicationStub($rootDir, $io)
+    {
+        $defaultVendorName = static::$defaultVendorName;
+        $defaultAppName = static::$defaultAppName;
+        $defaultAppDescription = static::$defaultAppDescription;
+        $validatedVendorName = static::$defaultVendorName;
+        $validatedAppName = static::$validatedAppName;
+        $validatedAppDescription = static::$validatedAppDescription;
+
+        //remove references in the .gitignore file that stop the committing of Version History files
+        if ($io->isInteractive()) {
+            $validator = function ($arg) {
+                if (in_array($arg, ['Y', 'y', 'N', 'n'])) {
+                    return $arg;
+                }
+                throw new Exception('This is not a valid answer. Please choose Y or n.');
+            };
+            $question = "<info>It is recommended that you commit the Version Histories when building a Releases. Would you like to automatically commit Version Histories? (Default to N)<info> <comment>[Y,N]</comment>:";
+            $commitVersionHistories = $io->askAndValidate(
+                $question,
+                $validator,
+                4,
+                'N'
+            );
+
+            if (in_array($commitVersionHistories, ['Y', 'y'])) {
+                $files = [
+                    $rootDir . "/.gitignore"
+                ];
+                $references = [
+                    '/config/version.ini',
+                    '/config/version.json',
+                    '/config/version_history.json',
+                    '/config/version_history_hash.txt',
+                ];
+                $lineEndings = ["\r\n", "\r", "\n", ""];
+                foreach ($files as $file) {
+                    $contentsOriginal = file_get_contents($file);
+                    $contentsNew = $contentsOriginal;
+                    foreach ($references as $reference) {
+                        foreach ($lineEndings as $lineEnding) {
+                            $referenceWithLineEnding = $reference . $lineEnding;
+                            $contentsNew = str_replace($referenceWithLineEnding, "", $contentsNew);
+                        }
+                    }
+                    if ($contentsOriginal != $contentsNew) {
+                        $result = file_put_contents($file, $contentsNew);
+                        if ($result) {
+                            $io->write('The .gitignore file was updated.');
+                        }
+                    }
+                }
+            }
+        }//.gitignore
+
+
+        //----remove references to Application Stub------------------------------------------------
+        $files = [
+            $rootDir . '/src/Template/Element/navbar.ctp',
+            $rootDir . '/src/Template/Pages/home.ctp',
+            $rootDir . '/config/Migrations/20190702030303_SeedSettingsEmail.php',
+        ];
+        $referencesIn = [
+            'Application Stub',
+            'ApplicationStub',
+            'application-stub',
+            'application_stub',
+        ];
+        $referencesOut = [
+            ucwords(Inflector::humanize((Inflector::underscore($validatedAppName)))),
+            Inflector::humanize($validatedAppName),
+            Inflector::dasherize($validatedAppName),
+            Inflector::underscore($validatedAppName),
+        ];
+        foreach ($files as $file) {
+            $contentsOriginal = file_get_contents($file);
+            $contentsNew = $contentsOriginal;
+            $contentsNew = str_replace($referencesIn, $referencesOut, $contentsNew);
+            if ($contentsOriginal != $contentsNew) {
+                $result = file_put_contents($file, $contentsNew);
+                if ($result) {
+                    $io->write("The file `{$file}` was updated.");
+                }
+            }
+        }
+        //---------------------------------------------------------------------------------------
+
     }
 
     /**
@@ -116,6 +221,10 @@ class Installer
         $defaultVendorName = explode("/", $composerJson['name'])[0];
         $defaultAppName = explode("/", $composerJson['name'])[1];
         $defaultAppDescription = $composerJson['description'];
+
+        static::$defaultVendorName = $defaultVendorName;
+        static::$defaultAppName = $defaultAppName;
+        static::$defaultAppDescription = $defaultAppDescription;
 
         //VendorName
         $validator = function ($arg) use ($defaultVendorName) {
@@ -170,6 +279,10 @@ class Installer
             5,
             'Y'
         );
+
+        static::$validatedVendorName = $validatedVendorName;
+        static::$validatedAppName = $validatedAppName;
+        static::$validatedAppDescription = $validatedAppDescription;
 
         $io->write("Vendor: " . $validatedVendorName);
         $io->write("App Name: " . $validatedAppName);
