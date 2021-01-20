@@ -196,6 +196,17 @@ class Installer
         }
         //---------------------------------------------------------------------------------------
 
+
+        //----new README.md----------------------------------------------------------------------
+        $appName = ucwords(Inflector::humanize((Inflector::underscore($validatedAppName))));
+        $readmeFile = $rootDir . "/README.md";
+        $readmeContents = "# {$appName}\r\n{$validatedAppDescription} \r\n\r\nFor more information refer to:  \r\nhttps://github.com/{$validatedVendorName}/{$validatedAppName}\r\n";
+        $result = file_put_contents($readmeFile, $readmeContents);
+        if ($result) {
+            $io->write("The README.md file was updated.");
+        }
+        //---------------------------------------------------------------------------------------
+
     }
 
     /**
