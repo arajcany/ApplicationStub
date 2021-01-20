@@ -1,5 +1,5 @@
 <?php
-//place Application Stub configuration here...
+//place application configuration here...
 return [
 
 ];
