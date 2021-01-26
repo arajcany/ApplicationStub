@@ -73,7 +73,7 @@ class WorkersController extends AppController
         if ($this->request->is(['post'])) {
             if (is_numeric($id)) {
                 $id = intval($id);
-                $result = $this->Workers->retire($id);
+                $result = $this->Workers->retireWorker($id);
                 if ($result === 0) {
                     $this->Flash->warning(__("Could not flag WorkerID {0} to retire.", $id));
                 } elseif ($result === 1) {
@@ -86,7 +86,7 @@ class WorkersController extends AppController
 
         if ($this->request->is(['get'])) {
             if ($id === 'all') {
-                $result = $this->Workers->retireAll();
+                $result = $this->Workers->retireAllWorkers();
                 if ($result === 0) {
                     $this->Flash->info(__("No Workers to retire."));
                 } elseif ($result === 1) {
@@ -111,7 +111,7 @@ class WorkersController extends AppController
     public function clean()
     {
         if ($this->request->is(['get'])) {
-            $result = $this->Workers->clean();
+            $result = $this->Workers->purge();
             if ($result === false) {
                 $this->Flash->warning(__("There was an issue with cleaning out the Workers."));
             } elseif ($result === 0) {

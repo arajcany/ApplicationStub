@@ -48,9 +48,9 @@ class ArtifactsDeleterCommand extends Command
         $parser = parent::buildOptionParser($parser);
 
         $parser
-            ->addOption('heartbeat-name', [
+            ->addOption('heartbeat-context', [
                 'short' => 'h',
-                'help' => 'Name when logging a Heartbeat',
+                'help' => 'Context when logging a Heartbeat',
                 'default' => 'ArtifactDeleter',
             ])
             ->addOption('delay', [
@@ -78,17 +78,17 @@ class ArtifactsDeleterCommand extends Command
             sleep($delay);
         }
 
-        $heartbeatName = $args->getOption('heartbeat-name');
+        $heartbeatContext = $args->getOption('heartbeat-context');
 
         $startTime = new FrozenTime();
 
         $io->out('Initiating Artifact Deleter.');
 
         $hbOptions = [
-            'type' => $heartbeatName,
-            'context' => 'Started Deletion',
+            'context' => $heartbeatContext,
+            'name' => 'Started Artifact Deletion Service',
         ];
-        $this->Heartbeats->create($hbOptions);
+        $this->Heartbeats->createHeartbeat($hbOptions);
 
         //===Expired Artifacts===========================================================
         $expiredDeletionCount = 0;
@@ -102,10 +102,10 @@ class ArtifactsDeleterCommand extends Command
         $io->out(__("Completed {0} deletions in {1} seconds.", $expiredDeletionCount, $timeDiff));
 
         $hbOptions = [
-            'type' => 'pulse',
-            'context' => __("Completed {0} deletions (expired Artifacts) in {1} seconds.", $expiredDeletionCount, $timeDiff)
+            'context' => $heartbeatContext,
+            'name' => __("Completed {0} deletions (expired Artifacts) in {1} seconds.", $expiredDeletionCount, $timeDiff)
         ];
-        $this->Heartbeats->create($hbOptions);
+        $this->Heartbeats->createPulse($hbOptions);
         //===============================================================================
 
 
@@ -121,10 +121,10 @@ class ArtifactsDeleterCommand extends Command
         $io->out(__("Completed {0} deletions in {1} seconds.", $missingDeletionCount, $timeDiff));
 
         $hbOptions = [
-            'type' => 'pulse',
-            'context' => __("Completed {0} deletions (missing Artifacts) in {1} seconds.", $missingDeletionCount, $timeDiff)
+            'context' => $heartbeatContext,
+            'name' => __("Completed {0} deletions (missing Artifacts) in {1} seconds.", $missingDeletionCount, $timeDiff)
         ];
-        $this->Heartbeats->create($hbOptions);
+        $this->Heartbeats->createPulse($hbOptions);
         //===============================================================================
 
         //sleep until the artifactDeleter interval timer is up or if already exceeded quit now

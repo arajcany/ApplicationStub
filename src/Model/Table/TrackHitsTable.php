@@ -201,6 +201,17 @@ class TrackHitsTable extends Table
         $hit->query = substr($query, 0, 255);
         $hit->response_time = round($data['app_execution_time'], 10);
 
-        $this->save($hit);
+        $tryCounter = 0;
+        $tryLimit = 5;
+        $isSaved = false;
+        while ($tryCounter < $tryLimit & !$isSaved) {
+            try {
+                $isSaved = $this->save($hit);
+            } catch (\Throwable $exception) {
+                //do nothing, non critical error
+            }
+
+            $tryCounter++;
+        }
     }
 }

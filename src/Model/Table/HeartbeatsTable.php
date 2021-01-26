@@ -88,6 +88,16 @@ class HeartbeatsTable extends Table
             ->integer('pid')
             ->allowEmptyString('pid');
 
+        $validator
+            ->scalar('name')
+            ->maxLength('name', 128)
+            ->allowEmptyString('name');
+
+        $validator
+            ->scalar('description')
+            ->maxLength('description', 128)
+            ->allowEmptyString('description');
+
         return $validator;
     }
 
@@ -96,6 +106,7 @@ class HeartbeatsTable extends Table
      *
      * @param array $options
      * @return \App\Model\Entity\Heartbeat|false
+     * @deprecatd Use createPulse() and createHeartbeat() instead
      */
     public function create(array $options)
     {
@@ -122,20 +133,145 @@ class HeartbeatsTable extends Table
     }
 
     /**
-     * Purge Heartbeats based on the System PID
+     * Wrapper function
+     *
+     * @param array $options
+     * @return mixed
+     */
+    public function createHeartbeat(array $options)
+    {
+        $options['type'] = 'heartbeat';
+        return $this->_createHeartbeatOrPulse($options);
+    }
+
+    /**
+     * Wrapper function
+     *
+     * @param array $options
+     * @return mixed
+     */
+    public function createPulse(array $options)
+    {
+        $options['type'] = 'pulse';
+        return $this->_createHeartbeatOrPulse($options);
+    }
+
+    /**
+     * Create a heartbeat or pulse.
+     *
+     * @param array $options
+     * @return \App\Model\Entity\Heartbeat|false
+     */
+    public function _createHeartbeatOrPulse(array $options)
+    {
+        $expiration = new FrozenTime('+ ' . Configure::read('Settings.audit_purge') . ' months');
+
+        $defaultOptions = [
+            'expiration' => $expiration,
+            'auto_delete' => true,
+            'server' => gethostname(),
+            'pid' => getmypid(),
+            'type' => '',
+            'context' => '',
+            'domain' => parse_url(Router::url("/", true), PHP_URL_HOST),
+            'name' => '',
+            'description' => '',
+        ];
+
+        $options = array_merge($defaultOptions, $options);
+
+        $options['type'] = substr($options['type'], 0, 128);
+        $options['context'] = substr($options['context'], 0, 128);
+        $options['domain'] = substr($options['domain'], 0, 128);
+        $options['name'] = substr($options['name'], 0, 128);
+        $options['description'] = substr($options['description'], 0, 128);
+
+        $heartbeat = $this->newEntity($options);
+        return $this->save($heartbeat);
+    }
+
+    /**
+     * Find Heartbeats
+     *
+     * @param null $pid
+     * @param null $limit
+     * @return Query
+     */
+    public function findHeartbeats($pid = null, $limit = null)
+    {
+        if (!$pid) {
+            $pid = getmypid();
+        }
+
+        $query = $this->find('all')
+            ->where(['pid' => $pid])
+            ->where(['type IN' => ['heartbeats']])
+            ->orderAsc('id')
+            ->limit($limit);
+
+        return $query;
+    }
+
+    /**
+     * Find Pulses
+     *
+     * @param null $pid
+     * @param null $limit
+     * @return Query
+     */
+    public function findPulses($pid = null, $limit = null)
+    {
+        if (!$pid) {
+            $pid = getmypid();
+        }
+
+        $query = $this->find('all')
+            ->where(['pid' => $pid])
+            ->where(['type IN' => ['pulses']])
+            ->orderAsc('id')
+            ->limit($limit);
+
+        return $query;
+    }
+
+    /**
+     * Find Heartbeats and Pulses
+     *
+     * @param null $pid
+     * @param null $limit
+     * @return Query
+     */
+    public function findHeartbeatsAndPulses($pid = null, $limit = null)
+    {
+        if (!$pid) {
+            $pid = getmypid();
+        }
+
+        $query = $this->find('all')
+            ->where(['pid' => $pid])
+            ->where(['type IN' => ['heartbeats', 'pulses']])
+            ->orderAsc('id')
+            ->limit($limit);
+
+        return $query;
+    }
+
+    /**
+     * Purge Heartbeats based on the System PID.
+     * This will also purge Pulses that belong to the Heartbeat
      *
      * @return int
      */
-    public function purge()
+    public function purgeHeartbeats()
     {
         $pid = getmypid();
-        $result = $this->deleteAll(['pid' => $pid]);
+        $result = $this->deleteAll(['pid' => $pid, ['OR' => ['type /*is pulse*/' => 'pulse', 'type /*is heartbeat*/' => 'heartbeat']]]);
 
         return $result;
     }
 
     /**
-     * Purge Pulses based on the System PID
+     * Purge Pulses based on the System PID.
      *
      * @return int
      */
@@ -151,11 +287,11 @@ class HeartbeatsTable extends Table
      * Find the last Heartbeats
      *
      * @param int $limit
-     * @return Query
+     * @return
      */
     public function findLastHeartbeats()
     {
-        $cte = ';WITH cte AS ( SELECT *, ROW_NUMBER() OVER (PARTITION BY type ORDER BY created DESC) AS rn FROM Heartbeats )SELECT id FROM cte WHERE rn = 1';
+        $cte = ";WITH cte AS ( SELECT *, ROW_NUMBER() OVER (PARTITION BY context ORDER BY created DESC) AS rn FROM Heartbeats Where type = 'heartbeat' )SELECT * FROM cte WHERE rn = 1";
 
         $conn = $this->getConnection();
         $results = $conn->execute($cte)->fetchAll('assoc');
@@ -166,17 +302,22 @@ class HeartbeatsTable extends Table
 
         $selectList = [
             'created',
-            'type',
+            'context',
             'pid',
         ];
 
-        $types = $this->getHeartbeatTypes();
+        if (empty($ids)) {
+            //return a Query that will give an empty result
+            return $this->find('all')->where(['id' => 0]);
+        }
+
+        $contexts = $this->getHeartbeatContexts();
 
         $query = $this->find('all')
             ->select($selectList, true)
-            ->where(['type IN' => $types])
+            ->where(['context IN' => $contexts])
             ->where(['id IN' => $ids])
-            ->orderAsc('type');
+            ->orderAsc('context');
 
         return $query;
     }
@@ -215,6 +356,26 @@ class HeartbeatsTable extends Table
             ->where(['type !=' => 'pulse'])
             ->group(['type'])
             ->orderAsc('type');
+
+        return $query->toArray();
+    }
+
+    /**
+     * List out the Heartbeats
+     *
+     * @return array
+     */
+    public function getHeartbeatContexts()
+    {
+        $selectList = [
+            'context'
+        ];
+        $query = $this->find('list', ['keyField' => 'id', 'valueField' => 'context'])
+            ->select($selectList, true)
+            ->distinct(['context'])
+            ->where(['type !=' => 'pulse'])
+            ->group(['context'])
+            ->orderAsc('context');
 
         return $query->toArray();
     }

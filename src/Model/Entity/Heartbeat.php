@@ -15,6 +15,8 @@ use Cake\ORM\Entity;
  * @property string|null $type
  * @property string|null $context
  * @property int|null $pid
+ * @property string|null $name
+ * @property string|null $description
  */
 class Heartbeat extends Entity
 {
@@ -36,5 +38,7 @@ class Heartbeat extends Entity
         'type' => true,
         'context' => true,
         'pid' => true,
+        'name' => true,
+        'description' => true,
     ];
 }

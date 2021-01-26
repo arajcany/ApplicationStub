@@ -101,4 +101,17 @@ class DevelopersController extends AppController
     }
 
 
+    public function workers()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+        //$toDebug['heartbeats'] = $this->Workers->find('all')->limit(5)->contain(['heartbeats'])->toArray();
+        $toDebug['heartbeats'] = $this->Workers->findHeartbeats()->toArray();
+        $toDebug['pulses'] = sqld($this->Workers->findPulses(0));
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
 }

@@ -46,9 +46,9 @@ class BackgroundServicesCommand extends Command
         $parser = parent::buildOptionParser($parser);
 
         $parser
-            ->addOption('heartbeat-name', [
+            ->addOption('heartbeat-context', [
                 'short' => 'h',
-                'help' => 'Name when logging a Heartbeat',
+                'help' => 'Context when logging a Heartbeat',
                 'default' => 'BackgroundServices',
             ]);
 
@@ -95,20 +95,23 @@ class BackgroundServicesCommand extends Command
     {
         $io->out('Initiating an Errand Worker...');
 
-        $heartbeatName = $args->getOption('heartbeat-name');
-
-        $hbOptions = [
-            'type' => $heartbeatName,
-            'context' => 'Started Errand Worker',
-        ];
-        $this->Heartbeats->create($hbOptions);
+        $heartbeatContext = $args->getOption('heartbeat-context');
 
         //====Create a Worker=============================================================
-        $worker = $this->Workers->getWorker('errand');
+        $worker = $this->Workers->createWorker('errand');
         if (!$worker) {
             $io->abort(__("Failed to initiate a Worker...Bye!"), 2);
         }
-        $io->info(__("Created Worker {0} under PID {1}.", $worker->name, $worker->pid), 3);
+        $msg = __("Created Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+        $io->info($msg, 3);
+
+        $hbOptions = [
+            'context' => $heartbeatContext,
+            'name' => 'Started Errand Service',
+            'description' => $msg,
+        ];
+        $this->Workers->createHeartbeat($worker, $hbOptions);
+        //================================================================================
 
 
         //====Start Daily Grind=============================================================
@@ -131,31 +134,30 @@ class BackgroundServicesCommand extends Command
                     $io->info($msg);
 
                     $hbOptions = [
-                        'type' => 'pulse',
-                        'context' => $msg,
+                        'context' => $heartbeatContext,
+                        'name' => $msg,
                     ];
-                    $this->Heartbeats->create($hbOptions);
+                    $this->Workers->createPulse(null, $hbOptions);
                 }
 
-                $io->out(__("====End of Errand=============================================="));
-                $io->out($io->nl(3));
+                $io->out(__("====End of Errand=============================================="), 3);
             } else {
                 //go to sleep for a bit because there is nothing to do
                 $sleepTimeout = Configure::read('Settings.errand_worker_sleep');
                 $sleep = $this->getSleepLength($sleep, $sleepTimeout);
 
                 $msg = __("No errands, sleeping for {0} seconds.", $sleep);
-
                 $io->info($msg);
-                $worker->errand_name = __("Sleeping for {0} seconds.", $sleep);
+
+                $worker->errand_name = $msg;
                 $worker->errand_link = null;
                 $this->Workers->save($worker);
 
                 $hbOptions = [
-                    'type' => 'pulse',
-                    'context' => $msg,
+                    'context' => $heartbeatContext,
+                    'name' => $msg,
                 ];
-                $this->Heartbeats->create($hbOptions);
+                $this->Workers->createPulse(null, $hbOptions);
 
                 sleep($sleep);
             }
@@ -163,26 +165,50 @@ class BackgroundServicesCommand extends Command
             //refresh worker and check if deleted or been forced into retirement
             $worker = $this->Workers->refreshWorker($worker);
             if ($worker === false) {
+                $msg = __("PID {0} was deleted in the GUI. Shutting down the Errand Service", getmypid());
+                $hbOptions = [
+                    'context' => $heartbeatContext,
+                    'name' => 'Deleted Errand Service',
+                    'description' => $msg,
+                ];
+                $this->Workers->createHeartbeat(null, $hbOptions);
+
                 $this->Heartbeats->purgePulses();
-                $io->abort(__("I have been deleted via the GUI...Bye!"), 3);
+                $io->abort($msg, 3);
             } elseif ($worker->force_retirement) {
+                $msg = __("Forced retirement for Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+                $hbOptions = [
+                    'context' => $heartbeatContext,
+                    'name' => 'Forced Retirement of Errand Service',
+                    'description' => $msg,
+                ];
+                $this->Workers->createHeartbeat($worker, $hbOptions);
+
                 $this->Heartbeats->purgePulses();
                 $this->Workers->delete($worker);
-                $io->abort(__("Forced into early retirement...Bye!"), 4);
+                $io->abort($msg, 4);
             }
 
             //update the current time object and counter
             $timeObjCurrent = new FrozenTime();
             $counter++;
         }
-        $io->out($io->nl(1));
         //====End Daily Grind===============================================================
 
 
         //====Retire Worker===============================================================
+        $msg = __("Retiring Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+        $hbOptions = [
+            'context' => $heartbeatContext,
+            'name' => 'Retiring Errand Service',
+            'description' => $msg,
+        ];
+        $this->Workers->createHeartbeat($worker, $hbOptions);
+
         $this->Heartbeats->purgePulses();
         $this->Workers->delete($worker);
-        $io->abort(__("I made it to retirement...Bye!"), 4);
+        $io->abort($msg, 4);
+        //================================================================================
 
         return 0;
     }

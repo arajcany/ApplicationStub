@@ -132,36 +132,39 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                 <div class="card-body">
 
                     <?php
-                    foreach ($heartbeats as $heartbeat) {
-                        /**
-                         * @var Heartbeat[] $pulses
-                         */
-                        $pulses = $HeartbeatsTable->findPulsesForHeartbeat($heartbeat, $pulseLimit);
-                        ?>
-                        <p>
-                            <?php
-                            echo $heartbeat->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ);
-                            echo " - ";
-                            echo "<strong>" . $heartbeat->type . "</strong>";
-                            echo " - ";
-                            echo $heartbeat->created->timeAgoInWords();
-                            echo '<br>';
-                            $pulseCounter = 0;
-                            foreach ($pulses as $pulse) {
-                                echo " - ";
-                                echo $pulse->created->timeAgoInWords();
-                                echo " - ";
-                                echo $pulse->context;
-                                echo '<br>';
-                                $pulseCounter++;
-                            }
-                            if (!$pulseCounter) {
-                                echo " - No Pulse";
-                                echo '<br>';
-                            }
+                    if ($heartbeats) {
+                        foreach ($heartbeats as $heartbeat) {
+                            /**
+                             * @var Heartbeat[] $pulses
+                             */
+                            $pulses = $HeartbeatsTable->findPulsesForHeartbeat($heartbeat, $pulseLimit);
                             ?>
-                        </p>
-                        <?php
+                            <p>
+                                <?php
+                                echo "<strong>" . $heartbeat->context . "</strong>";
+                                echo " - started ";
+                                echo $heartbeat->created->timeAgoInWords();
+                                echo " (";
+                                echo $heartbeat->created->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ);
+                                echo ")";
+                                echo '<br>';
+                                $pulseCounter = 0;
+                                foreach ($pulses as $pulse) {
+                                    echo " - ";
+                                    echo $pulse->created->timeAgoInWords();
+                                    echo " - ";
+                                    echo $pulse->name;
+                                    echo '<br>';
+                                    $pulseCounter++;
+                                }
+                                if (!$pulseCounter) {
+                                    echo " - No Pulse";
+                                    echo '<br>';
+                                }
+                                ?>
+                            </p>
+                            <?php
+                        }
                     }
                     ?>
 

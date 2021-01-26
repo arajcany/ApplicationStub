@@ -61,7 +61,7 @@ class BackgroundServicesComponent extends Component
                 $counterPadded = str_pad($counter, 2, '0', STR_PAD_LEFT);
                 $serviceName = Inflector::camelize(APP_NAME) . "_{$workerType}Worker_" . $counterPadded;
                 $serviceDescription = "{$workerType} Worker for " . APP_NAME;
-                $parameters = __("-f \"{0}cake.php\" BackgroundServices errand -h {1}", $binDirectory, $serviceName);
+                $parameters = __("-f \"{0}cake.php\" BackgroundServices {2} -h {1}", $binDirectory, $serviceName, $workerTypeLowerCased);
                 $commands[] = __("\"{0}\" install \"{1}\" \"{2}\"", $nssm, $serviceName, $phpExe);
                 if (strlen($username) > 0 && strlen($password) > 0) {
                     $commands[] = __("\"{0}\" set \"{1}\" ObjectName {2} {3}", $nssm, $serviceName, $username, $password);

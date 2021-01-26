@@ -15,6 +15,8 @@ use PDOException;
 /**
  * Workers Model
  *
+ * @property \App\Model\Table\HeartbeatsTable&\Cake\ORM\Association\HasMany $Heartbeats
+ *
  * @method Worker get($primaryKey, $options = [])
  * @method Worker newEntity($data = null, array $options = [])
  * @method Worker[] newEntities(array $data, array $options = [])
@@ -43,6 +45,18 @@ class WorkersTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->hasMany('Heartbeats')
+            ->setProperty('heartbeats')
+            ->setConditions(['type' => 'heartbeat'])
+            ->setForeignKey('pid')
+            ->setBindingKey('pid');
+
+        $this->hasMany('Pulses', ['className' => 'Heartbeats'])
+            ->setProperty('pulses')
+            ->setConditions(['type' => 'pulse'])
+            ->setForeignKey('pid')
+            ->setBindingKey('pid');
     }
 
     /**
@@ -110,12 +124,69 @@ class WorkersTable extends Table
     }
 
     /**
+     * Find a Worker based on passed in Entity/ID or default to current System ProcessID
+     *
+     * @param null|int|Worker $idOrEntity
+     * @param int|bool $containHeartbeats
+     * @param int|bool $containPulses
+     * @return array|Query
+     */
+    public function findWorker($idOrEntity = null, $containHeartbeats = null, $containPulses = null)
+    {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+        }
+
+        //base Query
+        $query = $this->find('all')
+            ->limit(1)
+            ->orderDesc('id')
+            ->where([$key => $value]);
+
+        //contain Heartbeats
+        if ($containHeartbeats === true) {
+            $query = $query
+                ->contain(['heartbeats' => function ($q) use ($containHeartbeats) {
+                    return $q->orderAsc('id');
+                }]);
+        } elseif (is_numeric($containHeartbeats)) {
+            $query = $query
+                ->contain(['heartbeats' => function ($q) use ($containHeartbeats) {
+                    return $q->orderAsc('id');
+                }]);
+        }
+
+        //contain Pulses
+        if ($containPulses === true) {
+            $query = $query
+                ->contain(['pulses' => function ($q) use ($containPulses) {
+                    return $q->orderAsc('id')->limit($containPulses);
+                }]);
+        } elseif (is_numeric($containPulses)) {
+            $query = $query
+                ->contain(['pulses' => function ($q) use ($containPulses) {
+                    return $q->orderAsc('id')->limit($containPulses);
+                }]);
+        }
+
+        return $query;
+    }
+
+    /**
      * Create a Worker and return the Entity
      *
      * @param string $type
      * @return Worker|bool
      */
-    public function getWorker($type = 'errand')
+    public function createWorker($type = 'errand')
     {
         $allowed = ['errand', 'message'];
 
@@ -157,19 +228,34 @@ class WorkersTable extends Table
      * Refresh picks up on changes to a Worker Entity.
      * Outside processes can alter Worker properties such as retirement/termination date.
      *
-     * @param Worker $worker
+     * @param Worker|int|null $idOrEntity
      * @return Worker|bool
      */
-    public function refreshWorker(Worker $worker)
+    public function refreshWorker($idOrEntity = null)
     {
-        //in case the Worker has been deleted in the GUI.
-        $check = $this->exists(['id' => $worker->id]);
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+        }
 
-        if ($check) {
-            /**
-             * @var Worker $worker
-             */
-            $worker = $this->find('all')->where(['id' => $worker->id])->first();
+        //base Query
+        /**
+         * @var Worker|array|null $worker
+         */
+        $worker = $this->find('all')
+            ->limit(1)
+            ->orderDesc('id')
+            ->where([$key => $value])
+            ->first();
+
+        if ($worker) {
             return $worker;
         } else {
             return false;
@@ -177,44 +263,225 @@ class WorkersTable extends Table
     }
 
     /**
-     * Flag all Workers to retire
+     * Wrapper function
+     *
+     * @param Worker|int|null $idOrEntity
+     * @param array $options
+     * @return \App\Model\Entity\Heartbeat|false
      */
-    public function retireAll()
+    public function createHeartbeat($idOrEntity = null, $options = null)
     {
-        $query = $this->getConnection()->newQuery();
-        $query->update($this->getTable())
-            ->set(['force_retirement' => 1]);
-
-        return $query->rowCountAndClose();
+        $options['type'] = 'heartbeat';
+        return $this->_createHeartbeatOrPulse($idOrEntity, $options);
     }
+
+    /**
+     * Wrapper function
+     *
+     * @param Worker|int|null $idOrEntity
+     * @param array $options
+     * @return \App\Model\Entity\Heartbeat|false
+     */
+    public function createPulse($idOrEntity = null, $options = null)
+    {
+        $options['type'] = 'pulse';
+        return $this->_createHeartbeatOrPulse($idOrEntity, $options);
+    }
+
+    /**
+     * Refresh picks up on changes to a Worker Entity.
+     * Outside processes can alter Worker properties such as retirement/termination date.
+     *
+     * @param Worker|int|null $idOrEntity
+     * @param array $options
+     * @return \App\Model\Entity\Heartbeat|false
+     */
+    public function _createHeartbeatOrPulse($idOrEntity = null, $options = [])
+    {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+            $pid = null;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+            $pid = $idOrEntity->pid;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+            $pid = getmypid();
+        }
+
+        if (!$pid) {
+            /**
+             * @var Worker|array|null $worker
+             */
+            $worker = $this->find('all')
+                ->limit(1)
+                ->orderDesc('id')
+                ->where([$key => $value])
+                ->first();
+
+            if ($worker) {
+                $pid = $worker->pid;
+            } else {
+                $pid = -1;
+            }
+        }
+
+        $options['pid'] = $pid;
+        return $this->Heartbeats->_createHeartbeatOrPulse($options);
+    }
+
 
     /**
      * Flag a Worker to retire
+     *
+     * @param Worker|int|null $idOrEntity
+     * @return int
      */
-    public function retire($id)
+    public function retireWorker($idOrEntity = null)
     {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+        }
+
         $query = $this->getConnection()->newQuery();
         $query->update($this->getTable())
             ->set(['force_retirement' => 1])
-            ->where(['id' => $id]);
+            ->where([$key => $value]);
 
         return $query->rowCountAndClose();
     }
 
+    /**
+     * Find Heartbeats
+     *
+     * @param Worker|int|null $idOrEntity
+     * @return Query
+     */
+    public function findHeartbeats($idOrEntity = null)
+    {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+            $pid = null;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+            $pid = $idOrEntity->pid;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+            $pid = getmypid();
+        }
+
+        if (!$pid) {
+            /**
+             * @var Worker|array|null $worker
+             */
+            $worker = $this->find('all')
+                ->limit(1)
+                ->orderDesc('id')
+                ->where([$key => $value])
+                ->first();
+
+            if ($worker) {
+                $pid = $worker->pid;
+            } else {
+                $pid = -1;
+            }
+        }
+
+        return $this->Heartbeats->findHeartbeats($pid);
+    }
 
     /**
-     * Clean out DB of Workers that are dead AND past termination date
+     * Find Heartbeats
      *
-     * @return bool|int
+     * @param Worker|int|null $idOrEntity
+     * @return Query
      */
-    public function clean()
+    public function findPulses($idOrEntity = null)
+    {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+            $pid = null;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+            $pid = $idOrEntity->pid;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+            $pid = getmypid();
+        }
+
+        if (!$pid) {
+            /**
+             * @var Worker|array|null $worker
+             */
+            $worker = $this->find('all')
+                ->limit(1)
+                ->orderDesc('id')
+                ->where([$key => $value])
+                ->first();
+
+            if ($worker) {
+                $pid = $worker->pid;
+            } else {
+                $pid = -1;
+            }
+        }
+
+        return $this->Heartbeats->findPulses($pid);
+    }
+
+    /**
+     * Flag all Workers to retire
+     *
+     * @return int
+     */
+    public function retireAllWorkers()
+    {
+        $query = $this->getConnection()->newQuery();
+        $query = $query->update($this->getTable())
+            ->set(['force_retirement' => 1]);
+
+        try {
+            $result = $query->rowCountAndClose();
+        } catch (\Throwable $exception) {
+            $result = 0;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Clean out DB of Workers that are past termination date
+     *
+     * @return int
+     */
+    public function purge()
     {
         //clean out workers that are past termination date
         $timeObjCurrent = new FrozenTime();
         $query = $this->getConnection()->newQuery();
-        $query->delete($this->getTable());
+        $query = $query->delete($this->getTable());
 
-        $query->where(
+        $query = $query->where(
             [
                 'AND' => [
                     ['termination_date <=' => $timeObjCurrent->format("Y-m-d H:i:s")]
@@ -222,7 +489,13 @@ class WorkersTable extends Table
             ]
         );
 
-        return  $query->rowCountAndClose();
+        try {
+            $result = $query->rowCountAndClose();
+        } catch (\Throwable $exception) {
+            $result = 0;
+        }
+
+        return $result;
     }
 
 
