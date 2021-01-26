@@ -14,7 +14,7 @@ use Cake\ORM\Entity;
  * @property string|null $port
  * @property string|null $path
  * @property string|null $query
- * @property float|null $response_time
+ * @property float|null $app_execution_time
  * @property string $data
  */
 class TrackHit extends Entity
@@ -36,7 +36,7 @@ class TrackHit extends Entity
         'port' => true,
         'path' => true,
         'query' => true,
-        'response_time' => true,
+        'app_execution_time' => true,
         'data' => true,
     ];
 }

@@ -101,8 +101,8 @@ class TrackHitsTable extends Table
             ->allowEmptyString('query');
 
         $validator
-            ->decimal('response_time')
-            ->allowEmptyString('response_time');
+            ->decimal('app_execution_time')
+            ->allowEmptyString('app_execution_time');
 
         $validator
             ->scalar('data')
@@ -199,7 +199,7 @@ class TrackHitsTable extends Table
         $hit->port = substr($port, 0, 10);
         $hit->path = substr($path, 0, 255);
         $hit->query = substr($query, 0, 255);
-        $hit->response_time = round($data['app_execution_time'], 10);
+        $hit->app_execution_time = round($data['app_execution_time'], 10);
 
         $tryCounter = 0;
         $tryLimit = 5;
