@@ -190,7 +190,7 @@ class BackgroundServicesComponent extends Component
         foreach ($services as $service) {
             $serviceNamesCompiled[] = $service['name'];
 
-            if ($service['state'] == 'RUNNING') {
+            if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
                 $servicesRunning[] = $service['name'];
             } elseif ($service['state'] == 'STOPPED') {
                 $servicesStopped[] = $service['name'];

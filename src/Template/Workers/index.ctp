@@ -2,11 +2,19 @@
 /**
  * @var AppView $this
  * @var \App\Model\Entity\Worker[]|CollectionInterface $workers
+ * @var array $services
+ * @var Query|Heartbeat[] $heartbeats
+ * @var HeartbeatsTable $HeartbeatsTable
  */
 
+use App\Model\Entity\Heartbeat;
+use App\Model\Table\HeartbeatsTable;
 use App\View\AppView;
 use Cake\Collection\CollectionInterface;
+use Cake\ORM\Query;
+use Cake\ORM\TableRegistry;
 
+$HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
 ?>
 
 <div class="row">
@@ -14,6 +22,35 @@ use Cake\Collection\CollectionInterface;
         <h1 class="page-header">
             <?= __('Workers') ?>
         </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-5">
+        <div class="workers index large-9 medium-8 columns content">
+            <div class="card">
+                <div class="card-header">
+                    <strong><?= __('Important Information') ?></strong>
+                </div>
+                <div class="card-body">
+                    <?php
+                    $options = [
+                        'class' => ""
+                    ];
+                    $link = $this->Html->link(
+                        __('Background Services'),
+                        ['controller' => 'background-services',],
+                        $options
+                    )
+                    ?>
+                    <p>
+                        Workers act as the 'middle-men' to <?= $link ?>.
+                        Workers report on the status of Background Services and can be used to gracefully recycle or
+                        shutdown Background Services.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -31,12 +68,13 @@ use Cake\Collection\CollectionInterface;
                             'class' => "btn btn-primary"
                         ];
                         echo $this->Html->link(
-                            __('Retire all Workers'),
+                            __('Recycle'),
                             ['action' => 'retire', 'all'],
                             $options
                         )
                         ?>
-                        This will shutdown Workers gracefully by raising a retirement flag in the DB for each Worker.
+                        Workers will gracefully stop/restart Background Services after the current Errand they are
+                        running has completed.
                     </p>
                     <p>
                         <?php
@@ -44,12 +82,13 @@ use Cake\Collection\CollectionInterface;
                             'class' => "btn btn-primary"
                         ];
                         echo $this->Html->link(
-                            __('Clean out Workers'),
-                            ['action' => 'clean'],
+                            __('Shutdown'),
+                            ['action' => 'stop', 'all'],
                             $options
                         )
                         ?>
-                        Clean out DB of Workers that are past termination date.
+                        Workers will gracefully stop Background Services after the current Errand they are
+                        running has completed.
                     </p>
                 </div>
             </div>
@@ -60,7 +99,7 @@ use Cake\Collection\CollectionInterface;
 <div class="row">
     <div class="col-12 ml-auto mr-auto">
         <div class="workers index large-9 medium-8 columns content">
-            <h3><?= __('Workers') ?></h3>
+            <h3><?= __('Active Workers') ?></h3>
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>
@@ -89,7 +128,6 @@ use Cake\Collection\CollectionInterface;
                         <td><?= h($worker->retirement_date->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
                         <td><?= $this->Number->format($worker->pid) ?></td>
                         <td class="actions">
-                            <?= $this->Html->link(__('View'), ['action' => 'view', $worker->id]) ?>
                             <?= $this->Form->postLink(__('Retire'), ['action' => 'retire', $worker->id], ['confirm' => __('Are you sure you want to retire {0}?', $worker->name)]) ?>
                         </td>
                     </tr>

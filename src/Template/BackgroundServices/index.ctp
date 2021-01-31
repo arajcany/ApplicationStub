@@ -38,6 +38,35 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
         <div class="workers index large-9 medium-8 columns content">
             <div class="card">
                 <div class="card-header">
+                    <strong><?= __('Important Information') ?></strong>
+                </div>
+                <div class="card-body">
+                    <?php
+                    $options = [
+                        'class' => ""
+                    ];
+                    $link = $this->Html->link(
+                        __('Workers'),
+                        ['controller' => 'workers',],
+                        $options
+                    )
+                    ?>
+                    <p>
+                        Interacting with the Background Services on this page may have unintended side-effects.<br>
+                        Killing a Background Services should be used as a last resort.
+                        Consider using <?= $link ?> to gracefully recycle or stop Background Services.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-5">
+        <div class="workers index large-9 medium-8 columns content">
+            <div class="card">
+                <div class="card-header">
                     <strong>Choose a Task</strong>
                 </div>
                 <div class="card-body">
@@ -54,7 +83,32 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                         ?>
                         Create batch files that can be used to install/remove the Windows Services.
                     </p>
-
+                    <p>
+                        <?php
+                        $options = [
+                            'class' => "btn btn-primary"
+                        ];
+                        echo $this->Html->link(
+                            __('Start'),
+                            ['action' => 'start', 'all'],
+                            $options
+                        )
+                        ?>
+                        Start all Background Services that are currently STOPPED or PAUSED.
+                    </p>
+                    <p>
+                        <?php
+                        $options = [
+                            'class' => "btn btn-primary"
+                        ];
+                        echo $this->Html->link(
+                            __('Kill'),
+                            ['action' => 'stop', 'all'],
+                            $options
+                        )
+                        ?>
+                        Kill all Background Services. If any Errands are being run, they will fail to complete.
+                    </p>
                 </div>
             </div>
         </div>
@@ -64,21 +118,14 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
 <div class="row mb-5">
     <div class="col-12 ml-auto mr-auto">
         <div class="workers index large-9 medium-8 columns content">
-            <h3><?= __('Installed Services') ?></h3>
-            <span class="float-right">
-            <?php
-            $startLink = $this->Html->link(__('Start All'), ['action' => 'start', 'all']);
-            $stopLink = $this->Html->link(__('Stop All'), ['action' => 'stop', 'all']);
-            $startStopLink = __("{0} | {1}", $startLink, $stopLink);
-            ?>
-            </span>
+            <h3><?= __('Installed Background Services') ?></h3>
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Current State</th>
                     <th scope="col">Startup Type</th>
-                    <th scope="col" class="actions"><?= __('Actions') ?> (<?= $startStopLink ?>)</th>
+                    <th scope="col" class="actions"><?= __('Actions') ?> </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -102,7 +149,7 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                             $showActions = true;
                             if ($showActions) {
                                 if ($service['state'] == 'RUNNING' || $service['state'] == 'PAUSED') {
-                                    echo $this->Html->link(__('Stop'), ['action' => 'stop', $service['name']]);
+                                    echo $this->Html->link(__('Kill'), ['action' => 'stop', $service['name']]);
                                 } elseif ($service['state'] == 'STOPPED' && $service['start_type'] != 'DISABLED') {
                                     echo $this->Html->link(__('Start'), ['action' => 'start', $service['name']]);
                                 }

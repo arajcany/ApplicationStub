@@ -20,7 +20,12 @@ class WorkersController extends AppController
      */
     public function index()
     {
+        $this->Workers->purge();
+
         $workers = $this->paginate($this->Workers);
+
+        $heartbeats = $this->Workers->Heartbeats->findLastHeartbeats();
+        $this->set('heartbeats', $heartbeats);
 
         $this->set(compact('workers'));
     }
