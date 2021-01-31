@@ -131,7 +131,6 @@ class LoadTestsController extends AppController
         $urlRoot = str_replace(Router::url(null, false), '', Router::url(null, true));
         $urlFolder = "/load-tests/image";
 
-        $urlDefault = "{$urlRoot}{$urlFolder}/RandomInteger-{rnd_int:1-20}/RandomIntegerPadded-{rnd_pad_int:56-5600}/{rnd_word:1-5}";
         $urlDefault = "{$urlRoot}{$urlFolder}/{rnd_int:400-500}/auto/auto/{rnd_word:1}.jpg";
 
         if ($this->request->is('post')) {
@@ -161,7 +160,7 @@ class LoadTestsController extends AppController
         $delayMatrix = [];
         $arrayKeys = [];
         foreach (range(1, $hits) as $counter) {
-            $urlRoot = $this->LoadTestsUrlMaker->insertVariables($url);
+            $urlVariable = $this->LoadTestsUrlMaker->insertVariables($url);
 
             if (strpos($url, "?") !== false) {
                 $qs = '';
@@ -169,7 +168,7 @@ class LoadTestsController extends AppController
                 $qs = "?r=" . substr(sha1(Security::randomBytes(1024)), 0, 8);
             }
 
-            $finalUrls[$counter] = $urlRoot . $qs;
+            $finalUrls[$counter] = $urlVariable . $qs;
             $delayMatrix[$counter] = mt_rand(1, $timespan * 1000);
             $arrayKeys[] = $counter;
         }
@@ -179,6 +178,7 @@ class LoadTestsController extends AppController
 
         $this->set('hits', $hits);
         $this->set('timespan', $timespan);
+        $this->set('urlRoot', $urlRoot);
         $this->set('url', $url);
         $this->set('finalUrls', $finalUrls);
         $this->set('delayMatrix', $delayMatrix);

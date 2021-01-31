@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var int $hits
  * @var int $timespan
+ * @var string $urlRoot
  * @var string $url
  * @var array $finalUrls
  * @var array $delayMatrix
@@ -56,6 +57,10 @@
             <?= $this->Form->create(null, $formOpts) ?>
             <fieldset>
                 <legend><?= __('Test Parameters') ?></legend>
+                <p> Check out some
+                    <?= $this->Html->link(__('Example URLs'), ['#'], ['type' => 'button', 'class' => '', 'data-toggle' => 'modal', 'data-target' => "#exampleUrlModal"]) ?>
+                </p>
+
                 <?php
                 $hitsOptions = $defaultOptions;
                 $hitsOptions['options'] = [
@@ -318,4 +323,49 @@ foreach (range(1, $hits) as $k => $v) {
 <?php
 $this->end();
 ?>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleUrlModal" tabindex="-1" role="dialog" aria-labelledby="exampleUrlModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleUrlModalLabel">Example URLs</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <span class="lead">About Custom URLs</span>
+                <p>You can use almost any valid URL. Type a base URL and the selected number requests will be sent to
+                    the url. A querystring will be added to the url to prevent browser caching.</p>
+
+
+                <span class="lead">Syntax</span>
+                <p class="mb-1">The URL can contain special keywords that are replaced with data:</p>
+                <code>{rnd_int:1-10} Will be replaced by a random integer inclusive of 1 to 10</code><br>
+                <code>{rnd_int:5000-7000} Will be replaced by a random integer inclusive of 5000 to 7000</code><br>
+                <code>{rnd_pad_int:1-1000} Will be replaced by a random integer inclusive of 0001 to 1000</code><br>
+                <code>{rnd_word:5-7} Will be replaced by 5 to 7 random words</code><br>
+                <p class="mt-1">You can use multiple keyword replacements in a URL.</p>
+
+                <span class="lead">Example URLs</span>
+                <p class="mb-0">
+                    Test IIS/Apache Performance - bypasses the framework by calling as static test text file.
+                </p>
+                <code><?= $urlRoot ?>/webroot/load-tests/static.txt</code>
+
+                <p class="mt-3 mb-0">
+                    Test Image Performance - generates dynamic image on the fly.
+                </p>
+                <code class="mb-3"><?= $urlRoot ?>/load-tests/image/{rnd_int:400-500}/auto/auto/{rnd_word:1}.jpg</code>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
