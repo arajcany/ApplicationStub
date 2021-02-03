@@ -73,7 +73,7 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                     <p>
                         <?php
                         $options = [
-                            'class' => "btn btn-primary"
+                            'class' => "btn btn-primary btn-sm"
                         ];
                         echo $this->Html->link(
                             __('Create Batch Files'),
@@ -86,7 +86,7 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                     <p>
                         <?php
                         $options = [
-                            'class' => "btn btn-primary"
+                            'class' => "btn btn-primary btn-sm"
                         ];
                         echo $this->Html->link(
                             __('Start'),
@@ -99,7 +99,7 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                     <p>
                         <?php
                         $options = [
-                            'class' => "btn btn-primary"
+                            'class' => "btn btn-primary btn-sm"
                         ];
                         echo $this->Html->link(
                             __('Kill'),

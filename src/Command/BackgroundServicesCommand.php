@@ -98,7 +98,8 @@ class BackgroundServicesCommand extends Command
         $heartbeatContext = $args->getOption('heartbeat-context');
 
         //====Create a Worker=============================================================
-        $worker = $this->Workers->createWorker('errand');
+        $workerOptions = ['background_services_link' => $heartbeatContext];
+        $worker = $this->Workers->createWorker('errand', $workerOptions);
         if (!$worker) {
             $io->abort(__("Failed to initiate a Worker...Bye!"), 2);
         }
@@ -146,7 +147,7 @@ class BackgroundServicesCommand extends Command
                 $sleepTimeout = Configure::read('Settings.errand_worker_sleep');
                 $sleep = $this->getSleepLength($sleep, $sleepTimeout);
 
-                $msg = __("No errands, sleeping for {0} seconds.", $sleep);
+                $msg = __("Sleeping for {0} seconds.", round($sleep, 1));
                 $io->info($msg);
 
                 $worker->errand_name = $msg;
@@ -186,6 +187,20 @@ class BackgroundServicesCommand extends Command
 
                 $this->Heartbeats->purgePulses();
                 $this->Workers->delete($worker);
+                $io->abort($msg, 4);
+            } elseif ($worker->force_shutdown) {
+                $msg = __("Forced shutdown for Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+                $hbOptions = [
+                    'context' => $heartbeatContext,
+                    'name' => 'Forced Shutdown of Errand Service',
+                    'description' => $msg,
+                ];
+                $this->Workers->createHeartbeat($worker, $hbOptions);
+
+                $this->Heartbeats->purgePulses();
+                $backgroundServiceName = $worker->background_services_link;
+                $this->Workers->delete($worker);
+                $this->shutdownBackgroundServiceByName($backgroundServiceName);
                 $io->abort($msg, 4);
             }
 
@@ -328,5 +343,25 @@ class BackgroundServicesCommand extends Command
 
         $newSleepLength = $currentSleepLength * $rate;
         return min($newSleepLength, $cap);
+    }
+
+    /**
+     * Shutdown a Background Service.
+     *
+     * @param $serviceName
+     * @return bool
+     */
+    private function shutdownBackgroundServiceByName($serviceName)
+    {
+        $cmd = __("net stop \"{0}\" 2>&1", $serviceName);
+        exec($cmd, $out, $ret);
+
+        $out = implode(" ", $out);
+
+        if (strpos(strtolower($out), 'success') !== false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

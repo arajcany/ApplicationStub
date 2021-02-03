@@ -117,8 +117,17 @@ class WorkersTable extends Table
             ->allowEmptyString('force_retirement');
 
         $validator
+            ->boolean('force_shutdown')
+            ->allowEmptyString('force_shutdown');
+
+        $validator
             ->integer('pid')
             ->allowEmptyString('pid');
+
+        $validator
+            ->scalar('background_services_link')
+            ->maxLength('background_services_link', 128)
+            ->allowEmptyString('background_services_link');
 
         return $validator;
     }
@@ -184,9 +193,10 @@ class WorkersTable extends Table
      * Create a Worker and return the Entity
      *
      * @param string $type
+     * @param array $options
      * @return Worker|bool
      */
-    public function createWorker($type = 'errand')
+    public function createWorker($type = 'errand', $options = [])
     {
         $allowed = ['errand', 'message'];
 
@@ -216,9 +226,14 @@ class WorkersTable extends Table
         $worker->retirement_date = $timeObjRetirement;
         $worker->termination_date = $timeObjTermination;
         $worker->force_retirement = false;
+        $worker->force_shutdown = false;
         $worker->pid = getmypid();
+        $worker->background_services_link = '';
         $worker->server = gethostname();
         $worker->domain = parse_url(Router::url("/", true), PHP_URL_HOST);
+
+        $this->patchEntity($worker, $options);
+
         $worker = $this->save($worker);
 
         return $worker;
@@ -364,6 +379,34 @@ class WorkersTable extends Table
     }
 
     /**
+     * Flag a Worker to retire
+     *
+     * @param Worker|int|null $idOrEntity
+     * @return int
+     */
+    public function shutdownWorker($idOrEntity = null)
+    {
+        //find based on passed in Entity/ID or default to current System ProcessID
+        if (is_numeric($idOrEntity)) {
+            $key = 'id';
+            $value = $idOrEntity;
+        } elseif ($idOrEntity instanceof Worker) {
+            $key = 'id';
+            $value = $idOrEntity->id;
+        } else {
+            $key = 'pid';
+            $value = getmypid();
+        }
+
+        $query = $this->getConnection()->newQuery();
+        $query->update($this->getTable())
+            ->set(['force_shutdown' => 1])
+            ->where([$key => $value]);
+
+        return $query->rowCountAndClose();
+    }
+
+    /**
      * Find Heartbeats
      *
      * @param Worker|int|null $idOrEntity
@@ -470,21 +513,54 @@ class WorkersTable extends Table
     }
 
     /**
+     * Flag all Workers to shutdown
+     *
+     * @return int
+     */
+    public function shutdownAllWorkers()
+    {
+        $query = $this->getConnection()->newQuery();
+        $query = $query->update($this->getTable())
+            ->set(['force_shutdown' => 1]);
+
+        try {
+            $result = $query->rowCountAndClose();
+        } catch (\Throwable $exception) {
+            $result = 0;
+        }
+
+        return $result;
+    }
+
+    /**
      * Clean out DB of Workers that are past termination date
      *
      * @return int
      */
     public function purge()
     {
-        //clean out workers that are past termination date
-        $timeObjCurrent = new FrozenTime();
+        //modify query
         $query = $this->getConnection()->newQuery();
         $query = $query->delete($this->getTable());
 
+        //these are the potential workers that exist, base on name of PHP executable.
+        $phpExeName = "php.exe";
+        $cmd = __("tasklist | find \"{0}\" 2>&1", $phpExeName);
+        exec($cmd, $out, $ret);
+        $string = implode(" ", $out);
+        $string = str_replace(" 0 ", "", $string);
+        preg_match_all('!\d+\.*\d*!', $string, $phpCleanedList);
+        $phpCleanedList = $phpCleanedList[0];
+
+        //clean out workers that are past termination date
+        $timeObjCurrent = new FrozenTime();
+
+        //create query
         $query = $query->where(
             [
-                'AND' => [
-                    ['termination_date <=' => $timeObjCurrent->format("Y-m-d H:i:s")]
+                'OR' => [
+                    ['termination_date <=' => $timeObjCurrent->format("Y-m-d H:i:s")],
+                    ['pid NOT IN' => $phpCleanedList]
                 ]
             ]
         );
@@ -497,7 +573,6 @@ class WorkersTable extends Table
 
         return $result;
     }
-
 
     /**
      * Make a random name

@@ -63,5 +63,9 @@ use App\View\AppView;
             <th scope="row"><?= __('Force Retirement') ?></th>
             <td><?= $worker->force_retirement ? __('Yes') : __('No'); ?></td>
         </tr>
+        <tr>
+            <th scope="row"><?= __('Force Shutdown') ?></th>
+            <td><?= $worker->force_shutdown ? __('Yes') : __('No'); ?></td>
+        </tr>
     </table>
 </div>

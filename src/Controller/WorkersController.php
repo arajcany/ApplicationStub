@@ -107,6 +107,47 @@ class WorkersController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+
+    /**
+     * Shutdown method
+     *
+     * @param string|null $id Worker id.
+     * @return \Cake\Http\Response|null Redirects to index.
+     */
+    public function shutdown($id = null)
+    {
+        if ($this->request->is(['post'])) {
+            if (is_numeric($id)) {
+                $id = intval($id);
+                $result = $this->Workers->shutdownWorker($id);
+                if ($result === 0) {
+                    $this->Flash->warning(__("Could not flag WorkerID {0} to shutdown.", $id));
+                } elseif ($result === 1) {
+                    $this->Flash->success(__("Flagged WorkerID {0} to shutdown.", $id));
+                }
+            } else {
+                $this->Flash->error(__("Invalid ID of {0}", $id));
+            }
+        }
+
+        if ($this->request->is(['get'])) {
+            if ($id === 'all') {
+                $result = $this->Workers->shutdownAllWorkers();
+                if ($result === 0) {
+                    $this->Flash->info(__("No Workers to shutdown."));
+                } elseif ($result === 1) {
+                    $this->Flash->success(__("Flagged 1 Worker to shutdown."));
+                } elseif ($result > 1) {
+                    $this->Flash->success(__("Flagged {0} Workers to shutdown.", $result));
+                }
+            } else {
+                $this->Flash->error(__("Invalid ID of {0}", $id));
+            }
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
     /**
      * Clean method
      *

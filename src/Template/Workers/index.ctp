@@ -65,7 +65,7 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                     <p>
                         <?php
                         $options = [
-                            'class' => "btn btn-primary"
+                            'class' => "btn btn-primary btn-sm"
                         ];
                         echo $this->Html->link(
                             __('Recycle'),
@@ -74,21 +74,21 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                         )
                         ?>
                         Workers will gracefully stop/restart Background Services after the current Errand they are
-                        running has completed.
+                        running has completed. Worker name will change.
                     </p>
                     <p>
                         <?php
                         $options = [
-                            'class' => "btn btn-primary"
+                            'class' => "btn btn-primary btn-sm"
                         ];
                         echo $this->Html->link(
                             __('Shutdown'),
-                            ['action' => 'stop', 'all'],
+                            ['action' => 'shutdown', 'all'],
                             $options
                         )
                         ?>
                         Workers will gracefully stop Background Services after the current Errand they are
-                        running has completed.
+                        running has completed. New worker will appear when you re-start via <?= $link ?>.
                     </p>
                 </div>
             </div>
@@ -107,11 +107,9 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                     <th scope="col"><?= $this->Paginator->sort('server') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('domain') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('name') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('type') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('errand_link') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('errand_name') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('retirement_date') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('pid', 'PID') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('retirement_date', 'Auto Recycle') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('background_services_link', 'Background Service') ?></th>
                     <th scope="col" class="actions"><?= __('Actions') ?></th>
                 </tr>
                 </thead>
@@ -122,13 +120,13 @@ $HeartbeatsTable = TableRegistry::getTableLocator()->get('Heartbeats');
                         <td><?= h($worker->server) ?></td>
                         <td><?= h($worker->domain) ?></td>
                         <td><?= h($worker->name) ?></td>
-                        <td><?= h($worker->type) ?></td>
-                        <td><?= $this->Number->format($worker->errand_link) ?></td>
                         <td><?= h($worker->errand_name) ?></td>
-                        <td><?= h($worker->retirement_date->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
-                        <td><?= $this->Number->format($worker->pid) ?></td>
+                        <td><?= h($worker->retirement_date->timeAgoInWords()) ?></td>
+                        <td><?= h($worker->background_services_link) ?></td>
                         <td class="actions">
-                            <?= $this->Form->postLink(__('Retire'), ['action' => 'retire', $worker->id], ['confirm' => __('Are you sure you want to retire {0}?', $worker->name)]) ?>
+                            <?= $this->Form->postLink(__('Recycle'), ['action' => 'retire', $worker->id], ['confirm' => __('Are you sure you want to recycle {0}?', $worker->name)]) ?>
+                            |
+                            <?= $this->Form->postLink(__('Shutdown'), ['action' => 'shutdown', $worker->id], ['confirm' => __('Are you sure you want to shutdown {0}?', $worker->name)]) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

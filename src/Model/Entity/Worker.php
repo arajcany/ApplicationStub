@@ -19,7 +19,9 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\FrozenTime|null $retirement_date
  * @property \Cake\I18n\FrozenTime|null $termination_date
  * @property bool|null $force_retirement
+ * @property bool|null $force_shutdown
  * @property int|null $pid
+ * @property string|null $background_services_link
  */
 class Worker extends Entity
 {
@@ -45,6 +47,8 @@ class Worker extends Entity
         'retirement_date' => true,
         'termination_date' => true,
         'force_retirement' => true,
+        'force_shutdown' => true,
         'pid' => true,
+        'background_services_link' => true,
     ];
 }
