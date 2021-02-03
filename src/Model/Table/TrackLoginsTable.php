@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Model\Table;
 
 use Cake\ORM\Query;
@@ -74,14 +75,28 @@ class TrackLoginsTable extends Table
     }
 
     /**
+     * Track a Users login. Minor impact on performance.
+     *
      * @param array $user
      * @return \App\Model\Entity\TrackLogin|bool
      */
-    public function logUser(array $user)
+    public function trackLogin(array $user)
     {
         $trackLogin = $this->newEntity();
         $trackLogin->username = $user['username'];
 
-        return $this->save($trackLogin);
+        $tryCounter = 0;
+        $tryLimit = 5;
+        $isSaved = false;
+        while ($tryCounter < $tryLimit & !$isSaved) {
+            try {
+                $isSaved = $this->save($trackLogin);
+            } catch (\Throwable $exception) {
+                //do nothing, non critical error
+            }
+            usleep(30);
+
+            $tryCounter++;
+        }
     }
 }

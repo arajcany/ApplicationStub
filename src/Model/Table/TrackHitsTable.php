@@ -141,6 +141,13 @@ class TrackHitsTable extends Table
         return $jsonFields;
     }
 
+    /**
+     * Track a Hit to the application. Can have a performance impact.
+     *
+     * @param \Psr\Http\Message\UriInterface $passed
+     * @param array $otherData
+     * @return \App\Model\Entity\TrackHit|false
+     */
     public function trackHit(\Psr\Http\Message\UriInterface $passed, $otherData = [])
     {
         $url = $passed->__toString();
@@ -210,8 +217,11 @@ class TrackHitsTable extends Table
             } catch (\Throwable $exception) {
                 //do nothing, non critical error
             }
+            usleep(30);
 
             $tryCounter++;
         }
+
+        return $isSaved;
     }
 }
