@@ -8,7 +8,7 @@ class HitTrackingFixResponseTime extends AbstractMigration
     {
 
         $this->table('track_hits')
-            ->changeColumn('response_time', 'decimal', [
+            ->changeColumn('response_time', 'float', [
                 'default' => null,
                 'length' => null,
                 'limit' => null,

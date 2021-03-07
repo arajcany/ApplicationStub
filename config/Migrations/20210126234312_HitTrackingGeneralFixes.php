@@ -16,7 +16,7 @@ class HitTrackingGeneralFixes extends AbstractMigration
             ->update();
 
         $this->table('track_hits')
-            ->addColumn('app_execution_time', 'decimal', [
+            ->addColumn('app_execution_time', 'float', [
                 'after' => 'query',
                 'default' => null,
                 'length' => null,
@@ -41,7 +41,7 @@ class HitTrackingGeneralFixes extends AbstractMigration
             ->update();
 
         $this->table('track_hits')
-            ->addColumn('response_time', 'decimal', [
+            ->addColumn('response_time', 'float', [
                 'after' => 'query',
                 'default' => null,
                 'length' => null,
