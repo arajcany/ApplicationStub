@@ -44,7 +44,7 @@ class HitTracking extends AbstractMigration
                 'limit' => 255,
                 'null' => true,
             ])
-            ->addColumn('response_time', 'string', [
+            ->addColumn('app_execution_time', 'float', [
                 'default' => null,
                 'limit' => 10,
                 'null' => true,
@@ -66,7 +66,7 @@ class HitTracking extends AbstractMigration
             )
             ->addIndex(
                 [
-                    'response_time',
+                    'app_execution_time',
                 ]
             )
             ->addIndex(
@@ -113,7 +113,7 @@ class HitTracking extends AbstractMigration
             [
                 'created' => $currentDate,
                 'modified' => $currentDate,
-                'name' => 'Enable Hit Trackin',
+                'name' => 'Enable Hit Tracking',
                 'description' => 'Track hits on the Application. May have an impact on performance.',
                 'property_group' => 'hit_tracking',
                 'property_key' => 'hit_tracking_enabled',

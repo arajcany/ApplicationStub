@@ -23,12 +23,12 @@ class TrackHitsFixture extends TestFixture
         'port' => ['type' => 'string', 'length' => 10, 'null' => true, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
         'path' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
         'query' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
-        'response_time' => ['type' => 'string', 'length' => 10, 'null' => true, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
+        'app_execution_time' => ['type' => 'string', 'length' => 10, 'null' => true, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
         'data' => ['type' => 'string', 'length' => 2048, 'null' => false, 'default' => null, 'precision' => null, 'comment' => null, 'fixed' => null, 'collate' => null],
         '_indexes' => [
             'track_hits_url_index' => ['type' => 'index', 'columns' => ['url'], 'length' => []],
             'track_hits_scheme_index' => ['type' => 'index', 'columns' => ['scheme'], 'length' => []],
-            'track_hits_response_time_index' => ['type' => 'index', 'columns' => ['response_time'], 'length' => []],
+            'track_hits_app_execution_time_index' => ['type' => 'index', 'columns' => ['app_execution_time'], 'length' => []],
             'track_hits_query_index' => ['type' => 'index', 'columns' => ['query'], 'length' => []],
             'track_hits_port_index' => ['type' => 'index', 'columns' => ['port'], 'length' => []],
             'track_hits_path_index' => ['type' => 'index', 'columns' => ['path'], 'length' => []],
@@ -58,7 +58,7 @@ class TrackHitsFixture extends TestFixture
                 'port' => 'Lorem ip',
                 'path' => 'Lorem ipsum dolor sit amet',
                 'query' => 'Lorem ipsum dolor sit amet',
-                'response_time' => 'Lorem ip',
+                'app_execution_time' => 'Lorem ip',
                 'data' => 'Lorem ipsum dolor sit amet',
             ],
         ];
