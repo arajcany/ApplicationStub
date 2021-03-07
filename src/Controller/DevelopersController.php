@@ -52,7 +52,8 @@ class DevelopersController extends AppController
         $options = [
             'class' => 'Seeds',
             'method' => 'createSeed',
-            'parameters' => [0 => ['token' => sha1(Security::randomBytes(1024))]],
+            //'parameters' => [0 => ['token' => sha1(Security::randomBytes(1024))]],
+            'parameters' => [0 => ['token' => sha1('abc123')]],
         ];
 
         $errand = $this->Errands->createErrand($options);

@@ -354,9 +354,10 @@ class ErrandsTable extends Table
 
     /**
      * @param array $options
+     * @param bool $preventDuplicateCreation
      * @return \App\Model\Entity\Errand|bool
      */
-    public function createErrand(array $options = [])
+    public function createErrand(array $options = [], $preventDuplicateCreation = true)
     {
         $activation = new FrozenTime();
         $expiration = new FrozenTime('+ ' . Configure::read('Settings.data_purge') . ' months');
@@ -408,16 +409,16 @@ class ErrandsTable extends Table
         $errand->hash_sum = $hashSum;
 
 
-        $queryIsHashExists = $this->find('all')
+        $queryIsHashExistsCount = $this->find('all')
             ->where(['hash_sum' => $hashSum])
-            ->where(['started IS NULL'])
+            ->where(['activation <=' => $activation])
+            ->where(['expiration >=' => $activation])
             ->count();
 
-        if (!$queryIsHashExists) {
-            $result = $this->save($errand);
-            return $result;
-        } else {
+        if ($preventDuplicateCreation && ($queryIsHashExistsCount > 0)) {
             return false;
+        } else {
+            return $this->save($errand);
         }
 
     }
