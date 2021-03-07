@@ -192,11 +192,41 @@ class WorkersAndErrands extends AbstractMigration
                 'limit' => null,
                 'null' => true,
             ])
+            ->addColumn('force_shutdown', 'boolean', [
+                'default' => null,
+                'limit' => null,
+                'null' => true,
+            ])
             ->addColumn('pid', 'integer', [
                 'default' => null,
                 'limit' => null,
                 'null' => true,
             ])
+            ->addIndex(
+                [
+                    'appointment_date',
+                ]
+            )
+            ->addIndex(
+                [
+                    'force_retirement',
+                ]
+            )
+            ->addIndex(
+                [
+                    'force_shutdown',
+                ]
+            )
+            ->addIndex(
+                [
+                    'retirement_date',
+                ]
+            )
+            ->addIndex(
+                [
+                    'termination_date',
+                ]
+            )
             ->create();
 
         $this->seedSettings();
