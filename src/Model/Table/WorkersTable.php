@@ -28,7 +28,7 @@ use PDOException;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class WorkersTable extends Table
+class WorkersTable extends AppTable
 {
     /**
      * Initialize method

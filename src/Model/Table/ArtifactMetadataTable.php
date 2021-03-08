@@ -24,7 +24,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class ArtifactMetadataTable extends Table
+class ArtifactMetadataTable extends AppTable
 {
     /**
      * Initialize method

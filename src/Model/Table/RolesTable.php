@@ -23,7 +23,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class RolesTable extends Table
+class RolesTable extends AppTable
 {
 
     /**

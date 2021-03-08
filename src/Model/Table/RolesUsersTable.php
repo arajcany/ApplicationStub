@@ -20,7 +20,7 @@ use Cake\Validation\Validator;
  * @method \App\Model\Entity\RolesUser findOrCreate($search, callable $callback = null, $options = [])
  * @method \Cake\ORM\Query findById(int $id)
  */
-class RolesUsersTable extends Table
+class RolesUsersTable extends AppTable
 {
 
     /**

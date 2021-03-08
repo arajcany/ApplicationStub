@@ -33,7 +33,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class UsersTable extends Table
+class UsersTable extends AppTable
 {
     private $authError = [];
     private $Settings;

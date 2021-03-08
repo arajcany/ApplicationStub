@@ -25,7 +25,7 @@ use mysql_xdevapi\Exception;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class SeedsTable extends Table
+class SeedsTable extends AppTable
 {
     private $seedErrors = [];
 

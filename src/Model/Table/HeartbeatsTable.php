@@ -25,7 +25,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class HeartbeatsTable extends Table
+class HeartbeatsTable extends AppTable
 {
     /**
      * Initialize method

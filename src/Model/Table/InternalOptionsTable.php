@@ -27,7 +27,7 @@ use mersenne_twister\twister;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class InternalOptionsTable extends Table
+class InternalOptionsTable extends AppTable
 {
 
     /**

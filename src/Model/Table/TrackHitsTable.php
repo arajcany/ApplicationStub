@@ -22,7 +22,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class TrackHitsTable extends Table
+class TrackHitsTable extends AppTable
 {
     /**
      * Initialize method
