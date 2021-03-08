@@ -84,7 +84,11 @@ class DevelopersController extends AppController
         //$artifact = $this->Artifacts->createPlaceholderArtifact($options);
         //$toDebug['$errand'] = $artifact;
 
-        $this->Artifacts->massInsert();
+        $deleted = $this->Artifacts->deleteTopExpired();
+        $toDebug['$deleted'] = $deleted;
+
+        $artifact = $this->Artifacts->createArtifactFromUrl('24pp.pdf', 'http://genericrepository.local/24pp.pdf');
+        $toDebug['$artifact'] = $artifact->full_url;
 
         $this->set('toDebug', $toDebug);
     }
@@ -136,7 +140,58 @@ class DevelopersController extends AppController
                 'dud_field' => 'bar',
             ],
         ];
-        $this->TrackUploads->massInsert($data);
+        //$this->TrackUploads->massInsert($data);
+
+        $frozenTime = new FrozenTime();
+        $dataMaster = [
+            'name' => 'the jpg ',
+            'created' => $frozenTime,
+            'modified' => $frozenTime,
+            'type' => 'jpg',
+            'tmp_name' => '/some/jpg',
+            'finfo_mime_type' => 'image/jpeg',
+            'error' => false,
+            'username' => 'some_user',
+            'rnd_hash' => '',
+            'batch_reference' => 1,
+            'dud_field' => 'foo',
+            'size' => mt_rand(111, 999),
+        ];
+        $range = range(1, 1000000);
+        $data = [];
+        foreach ($range as $number) {
+            $dataTmp = $dataMaster;
+            $dataTmp['name'] = $dataTmp['name'] . mt_rand(11111, 99999);
+            $dataTmp['rnd_hash'] = sha1(mt_rand());
+            $data[] = $dataTmp;
+        }
+
+        $dataChunked = partition($data, 1200);
+        $dataSub = $dataChunked[0];
+        debug($dataSub);
+
+
+        $start = new FrozenTime();
+        //$this->TrackUploads->massInsert($data);
+        $end = new FrozenTime();
+        $toDebug['time'] = "Completed in " . $start->diffInSeconds($end) . " seconds";
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
+    public function trackHits()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+        $start = (new FrozenTime())->subMinutes(5);
+        $end = (new FrozenTime())->addMinutes(5);
+
+        $query = $this->TrackHits->findRemoteUserData();
+        //sqld($query);
+        $toDebug['$query'] = $query->toArray();
+
 
         $this->set('toDebug', $toDebug);
     }
