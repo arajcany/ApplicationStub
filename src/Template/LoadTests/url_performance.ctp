@@ -352,9 +352,14 @@ $this->end();
 
                 <span class="lead">Example URLs</span>
                 <p class="mb-0">
-                    Test IIS/Apache Performance - bypasses the framework by calling as static test text file.
+                    Test IIS/Apache Performance - bypasses the framework by calling a static test text file.
                 </p>
+
                 <code><?= $urlRoot ?>/webroot/load-tests/static.txt</code>
+                <p class="mt-3 mb-0">
+                    Test PHP on top of IIS/Apache Performance - bypasses the framework by calling a simple PHP file.
+                </p>
+                <code><?= $urlRoot ?>/webroot/load-tests/static.php</code>
 
                 <p class="mt-3 mb-0">
                     Test Image Performance - generates dynamic image on the fly.
