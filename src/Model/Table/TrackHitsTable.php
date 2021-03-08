@@ -224,4 +224,53 @@ class TrackHitsTable extends AppTable
 
         return $isSaved;
     }
+
+    /**
+     * Find the Remote User data such as IP address and Agent
+     * @param null $timeStart
+     * @param null $timeEnd
+     *
+     * @return Query
+     */
+    public function findRemoteUserData($timeStart = null, $timeEnd = null)
+    {
+        $timeFilteredSubQuery = $this->find('all');
+        $selectSub = [
+            'id' => 'id',
+            'created' => 'created',
+            'url' => 'url',
+            'scheme' => 'scheme',
+            'host' => 'host',
+            'port' => 'port',
+            'path' => 'path',
+            'query' => 'query',
+            'app_execution_time' => 'app_execution_time',
+            'data' => 'data',
+        ];
+        $timeFilteredSubQuery = $timeFilteredSubQuery->select($selectSub, true);
+        if ($timeStart) {
+            $timeFilteredSubQuery = $timeFilteredSubQuery->where(['created >=' => $timeStart]);
+        }
+        if ($timeEnd) {
+            $timeFilteredSubQuery = $timeFilteredSubQuery->where(['created <=' => $timeEnd]);
+        }
+
+        $select = [
+            'id',
+            'created',
+            'url',
+            'scheme',
+            'host',
+            'port',
+            'path',
+            'query',
+            'app_execution_time',
+            'client_ip' => "json_extract(TrackHits.data, '$.HTTP_CLIENT_IP')",
+            'remote_address' => "json_extract(TrackHits.data, '$.REMOTE_ADDR')",
+            'user_agent' => "json_extract(TrackHits.data, '$.headers.User-Agent')"
+        ];
+        $query = $this->find('all')->select($select, false)->from(['TrackHits' => $timeFilteredSubQuery], true);
+
+        return $query;
+    }
 }
