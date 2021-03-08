@@ -108,6 +108,7 @@ if (!is_file(CONFIG . 'config_local.php')) {
 Configure::load('config_local', 'default', false);
 Configure::load('config_stub');
 Configure::load('config_seed');
+Configure::load('config_limits');
 Configure::load('config_cache');
 Configure::load('config_logs_errors');
 Configure::load('config_csrf', 'default');

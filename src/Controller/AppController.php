@@ -38,6 +38,7 @@ use Cake\Core\Configure;
  * @property \App\Model\Table\InternalOptionsTable $InternalOptions
  * @property \App\Model\Table\TrackLoginsTable $TrackLogins
  * @property \App\Model\Table\TrackHitsTable $TrackHits
+ * @property \App\Model\Table\TrackUploadsTable $TrackUploads
  *
  * @property \App\Controller\Component\FlashComponent $Flash
  * @property \TinyAuth\Controller\Component\AuthComponent $Auth
@@ -80,6 +81,7 @@ class AppController extends Controller
         $this->loadModel('InternalOptions');
         $this->loadModel('TrackLogins');
         $this->loadModel('TrackHits');
+        $this->loadModel('TrackUploads');
 
         $this->loadComponent('RequestHandler', [
             'enableBeforeRedirect' => false,

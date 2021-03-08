@@ -8,6 +8,7 @@ use App\Model\Table\ErrandsTable;
 use App\Model\Table\WorkersTable;
 use arajcany\ToolBox\Utility\Security\Security;
 use Cake\Cache\Cache;
+use Cake\I18n\FrozenTime;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -80,8 +81,62 @@ class DevelopersController extends AppController
             'quality' => '90',
         ];
 
-        $artifact = $this->Artifacts->createPlaceholderArtifact($options);
-        $toDebug['$errand'] = $artifact;
+        //$artifact = $this->Artifacts->createPlaceholderArtifact($options);
+        //$toDebug['$errand'] = $artifact;
+
+        $this->Artifacts->massInsert();
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
+    public function trackUploads()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+//        $options = [
+//            'width' => mt_rand(64, 256),
+//            'height' => mt_rand(64, 256),
+//            'background' => '#808080',
+//            'format' => 'png',
+//            'quality' => '90',
+//        ];
+
+//        $artifact = $this->Artifacts->createPlaceholderArtifact($options);
+//        $toDebug['$errand'] = $artifact;
+
+        $data = [
+            [
+                'name' => 'the jpg',
+                'modified' => new FrozenTime(),
+                'type' => 'jpg',
+                'tmp_name' => '/some/jpg',
+                'finfo_mime_type' => 'image/jpeg',
+                //'error' => false,
+                'username' => 'some_user',
+                'created' => new FrozenTime(),
+                'rnd_hash' => 5432,
+                'batch_reference' => 1,
+                'dud_field' => 'foo',
+                'size' => 12345,
+            ],
+            [
+                'created' => new FrozenTime(),
+                'modified' => new FrozenTime(),
+                'name' => 'the png',
+                //'type' => 'png',
+                'tmp_name' => '/some/png',
+                'size' => 12345,
+                //'error' => false,
+                //'finfo_mime_type' => 'image/png',
+                //'username' => 'some_user',
+                'rnd_hash' => 9876,
+                'batch_reference' => 1,
+                'dud_field' => 'bar',
+            ],
+        ];
+        $this->TrackUploads->massInsert($data);
 
         $this->set('toDebug', $toDebug);
     }
