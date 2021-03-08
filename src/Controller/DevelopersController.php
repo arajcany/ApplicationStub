@@ -5,10 +5,13 @@ namespace App\Controller;
 use App\Controller\AppController;
 use App\Model\Table\ArtifactsTable;
 use App\Model\Table\ErrandsTable;
+use App\Model\Table\MessagesTable;
 use App\Model\Table\WorkersTable;
 use arajcany\ToolBox\Utility\Security\Security;
 use Cake\Cache\Cache;
 use Cake\I18n\FrozenTime;
+use Cake\Mailer\Email;
+use Cake\Network\Exception\SocketException;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -17,11 +20,13 @@ use Cake\ORM\TableRegistry;
  * @property ArtifactsTable $Artifacts;
  * @property ErrandsTable $Errands;
  * @property WorkersTable $Workers;
+ * @property MessagesTable $Messages;
  */
 class DevelopersController extends AppController
 {
     private $Errands;
     private $Workers;
+    private $Messages;
 
     public function initialize()
     {
@@ -30,7 +35,7 @@ class DevelopersController extends AppController
         $this->Artifacts = TableRegistry::getTableLocator()->get('Artifacts');
         $this->Errands = TableRegistry::getTableLocator()->get('Errands');
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
-
+        $this->Messages = TableRegistry::getTableLocator()->get('Messages');
     }
 
 
@@ -45,7 +50,7 @@ class DevelopersController extends AppController
     }
 
 
-    public function errands()
+    public function errand()
     {
         $this->viewBuilder()->setTemplate('to_debug');
         $toDebug = [];
@@ -63,6 +68,54 @@ class DevelopersController extends AppController
 
 //        $worker = $this->Workers->getWorker('errand');
 //        $toDebug['$worker'] = $worker;
+
+        $this->set('toDebug', $toDebug);
+    }
+
+
+    public function message()
+    {
+        $this->viewBuilder()->setTemplate('to_debug');
+        $toDebug = [];
+
+        $data = [
+            'name' => 'Developer Test',
+            'description' => 'Send mail called from the Developers Controllers',
+            'view_vars' => [
+                'entities' => [
+                    'user' => 1,
+                    'artifacts' => [1, 2, 3, 4],
+                    'pings' => ['table' => 'users', 'id' => 2],
+                    'pongs' => ['table' => 'users', 'id' => [3, 4, 5]],
+                ],
+                'foo' => 'This is a foo',
+                'bar' => 'This is a bar',
+            ],
+            'email_to' => ["abc@example.com" => "ABC"],
+            'subject' => 'Some Random Number: ' . mt_rand(11111, 99999),
+            'subject' => 'Some Random Number: ' . 000,
+            'body' => '<p>Some HTML Text</p>',
+            //'template' => 'transactional/Invitation/invite_franchisee',
+            //'layout' => 'transactional/process',
+        ];
+
+        $message = $this->Messages->createMessage($data);
+        $toDebug['$message'] = $message;
+
+        //$expandedEntities = $this->Messages->expandEntities($data['view_vars']['entities'], false);
+        //$toDebug['expandedEntities'] = $expandedEntities;
+
+
+//        try {
+//            $email = new Email('default');
+//            $emailResult = $email->setFrom(['me@example.com' => 'My Site'])
+//                ->setTo('you@example.com')
+//                ->setSubject('About')
+//                ->send('My message');
+//            $toDebug['$emailResult'] = $emailResult;
+//        } catch (\Throwable $exception) {
+//            $toDebug['$emailResult'] = $exception;
+//        }
 
         $this->set('toDebug', $toDebug);
     }

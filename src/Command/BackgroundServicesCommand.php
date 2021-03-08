@@ -9,6 +9,8 @@ use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 use Cake\I18n\FrozenTime;
 use Cake\Log\Log;
+use Cake\Mailer\Email;
+use Cake\Network\Exception\SocketException;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Cake\Utility\Text;
@@ -340,8 +342,133 @@ class BackgroundServicesCommand extends Command
      */
     private function runNextMessage(\App\Model\Entity\Worker $worker)
     {
-        return 0;
+        $email = new Email();
+
+        $message = $this->Messages->getNextMessage();
+        if (!$message) {
+            return false;
+        }
+
+        $worker->errand_name = $message->id . ":" . $message->name;
+        $worker->errand_link = $message->id;
+        $this->Workers->save($worker);
+
+        //domain, profile and transport
+        if ($message->domain) {
+            $email->setDomain($message->domain);
+        }
+        if ($message->transport) {
+            $email->setTransport($message->transport);
+        }
+        if ($message->profile) {
+            $email->setProfile($message->profile);
+        }
+
+
+        //templating
+        if ($message->layout) {
+            $email->viewBuilder()->setLayout($message->layout);
+        }
+        if ($message->template) {
+            $email->viewBuilder()->setTemplate($message->template);
+        }
+        if ($message->email_format) {
+            $email->setEmailFormat($message->email_format);
+        }
+
+
+        //to and from
+        if ($message->sender) {
+            $email->setSender($message->sender);
+        }
+        if ($message->email_from) {
+            $email->setFrom($message->email_from);
+        }
+        if ($message->email_to) {
+            $email->setTo($message->email_to);
+        }
+        if ($message->email_cc) {
+            $email->setCc($message->email_cc);
+        }
+        if ($message->email_bcc) {
+            $email->setBcc($message->email_bcc);
+        }
+        if ($message->reply_to) {
+            $email->setReplyTo($message->reply_to);
+        }
+        if ($message->read_receipt) {
+            $email->setReadReceipt($message->read_receipt);
+        }
+
+
+        //subject and body
+        if ($message->subject) {
+            $email->setSubject($message->subject);
+        }
+
+        //view vars
+        $additionalViewVars = [
+            'domain' => $message->domain,
+            'beacon_hash' => $message->beacon_hash,
+        ];
+        if ($message->view_vars) {
+            $viewVars = $message->view_vars;
+
+            if (isset($viewVars['entities'])) {
+                $viewVars['entities'] = $this->Messages->expandEntities($viewVars['entities']);
+            }
+
+            $email->setViewVars(array_merge($additionalViewVars, $viewVars));
+        } else {
+            $email->setViewVars($additionalViewVars);
+        }
+
+
+        //headers
+        if ($message->headers) {
+            $email->setHeaders($message->headers);
+        }
+        if ($message->priority) {
+            $email->setPriority($message->priority);
+        }
+
+
+        //send the message
+        try {
+            $sendResult = $email->send();
+            if ($sendResult) {
+                $message->smtp_code = 1;
+                $message->smtp_message = __("Email Sent.");
+            } else {
+                $message->smtp_code = 0;
+                $message->smtp_message = __("Email Failed.");
+            }
+        } catch (\Throwable $e) {
+            $errorsThrown = [
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTrace(),
+            ];
+
+            $message->completed = null;
+            $message->errors_thrown = $errorsThrown;
+
+            if ($message->errors_retry < $message->errors_retry_limit) {
+                $message->errors_retry = $message->errors_retry + 1;
+                $message->started = null;
+                $message->completed = null;
+            }
+
+        }
+
+        //save SMTP response to db
+        $timeObjCompleted = new FrozenTime('now');
+        $message->completed = $timeObjCompleted;
+        $this->Messages->save($message);
+
+        return $message;
     }
+
 
     /**
      * Get an ever increasing $sleepLength till $cap is reached

@@ -189,6 +189,7 @@ class TrackHitsTable extends AppTable
         $data = [
             'scheme' => $scheme,
             'host' => $host,
+            'port' => $port,
             'path' => $path,
             'query' => $query,
             'HTTP_CLIENT_IP' => $http_client_ip,
