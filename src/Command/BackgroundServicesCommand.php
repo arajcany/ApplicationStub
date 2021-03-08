@@ -261,16 +261,35 @@ class BackgroundServicesCommand extends Command
         $parameters = $errand->parameters;
 
         try {
+            $returnValue = null;
+            $returnMessage = null;
+
             //Switch between a Model and Fully Qualified class
             if (strpos($class, "Table") !== false) {
                 $class = str_replace("Table", "", $class);
                 $Model = $this->loadModel($class);
                 $result = $Model->$method(...$parameters);
+
+                if (method_exists($Model, 'getReturnValue')) {
+                    $returnValue = $Model->getReturnValue();
+                }
+                if (method_exists($Model, 'getReturnMessage')) {
+                    $returnValue = $Model->getReturnMessage();
+                }
             } else {
                 $Object = new $class();
                 $result = $Object->$method(...$parameters);
+
+                if (method_exists($Object, 'getReturnValue')) {
+                    $returnValue = $Object->getReturnValue();
+                }
+                if (method_exists($Object, 'getReturnMessage')) {
+                    $returnValue = $Object->getReturnMessage();
+                }
             }
 
+            $errand->return_value = $returnValue;
+            $errand->return_message = $returnMessage;
             $errand->completed = new FrozenTime('now');
             $errand->status = 'Completed';
             $errand->progress_bar = 100;

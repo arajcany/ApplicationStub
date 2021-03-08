@@ -24,12 +24,6 @@ use Intervention\Image\ImageManager;
  *
  * @property \App\Model\Table\ArtifactMetadataTable&\Cake\ORM\Association\HasMany $ArtifactMetadata
  *
- * @property array $successAlerts
- * @property array $dangerAlerts
- * @property array $warningAlerts
- * @property array $infoAlerts
- * @property int $returnCode
- *
  * @method Artifact get($primaryKey, $options = [])
  * @method Artifact newEntity($data = null, array $options = [])
  * @method Artifact[] newEntities(array $data, array $options = [])

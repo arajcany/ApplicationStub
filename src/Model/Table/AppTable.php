@@ -15,7 +15,7 @@ use Cake\ORM\Table;
  * @property array $dangerAlerts
  * @property array $warningAlerts
  * @property array $infoAlerts
- * @property int $returnCode
+ * @property int $returnValue
  *
  * @package App\Model\Table
  */
@@ -25,7 +25,7 @@ class AppTable extends Table
     private $dangerAlerts = [];
     private $warningAlerts = [];
     private $infoAlerts = [];
-    private $returnCode = 0;
+    private $returnValue = 0;
 
     /**
      * Initialize method
@@ -39,11 +39,34 @@ class AppTable extends Table
     }
 
     /**
+     * @param int $returnValue
+     */
+    public function setReturnValue(int $returnValue)
+    {
+        $this->returnValue = $returnValue;
+    }
+
+    /**
      * @return int
      */
-    public function getReturnCode(): int
+    public function getReturnValue(): int
     {
-        return $this->returnCode;
+        return $this->returnValue;
+    }
+
+    /**
+     * @return array|false|string
+     */
+    public function getReturnMessage()
+    {
+        $return = [
+            'success' => $this->successAlerts,
+            'danger' => $this->successAlerts,
+            'warning' => $this->successAlerts,
+            'info' => $this->successAlerts,
+        ];
+
+        return json_encode($return, JSON_PRETTY_PRINT);
     }
 
     /**
