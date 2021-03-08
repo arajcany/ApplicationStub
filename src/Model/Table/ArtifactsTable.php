@@ -424,6 +424,33 @@ class ArtifactsTable extends AppTable
     }
 
     /**
+     * Convenience function, converts ImageResource to its stream
+     *
+     * @param mixed $name
+     * @param $url
+     * @return Artifact|false
+     */
+    public function createArtifactFromUrl($name, $url)
+    {
+
+        try {
+            $blob = @file_get_contents($url);
+        } catch (\Throwable $exception) {
+            return false;
+        }
+
+        $rnd = mt_rand();
+        $token = sha1($name . $url . $blob . $rnd);
+
+        $data = $this->getDefaultData();
+        $data['name'] = $name;
+        $data['token'] = $token;
+        $data['blob'] = $blob;
+
+        return $this->createArtifact($data);
+    }
+
+    /**
      * @param $artifactOrIdOrToken
      * @param $params
      * @return Artifact|array|EntityInterface|false|null
