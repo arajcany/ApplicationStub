@@ -25,6 +25,7 @@ use Cake\Routing\Router;
  * @property string|null $full_url
  * @property string|null $unc
  * @property string|null $full_unc
+ * @property string|null $hash_sum
  *
  * @property \App\Model\Entity\ArtifactMetadata[] $artifact_metadata
  */
@@ -52,6 +53,7 @@ class Artifact extends Entity
         'token' => true,
         'url' => true,
         'unc' => true,
+        'hash_sum' => true,
         'artifact_metadata' => true,
     ];
 

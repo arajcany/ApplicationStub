@@ -36,6 +36,7 @@
             <?= $this->Form->create($artifact, $formOpts) ?>
             <fieldset>
                 <legend><?= __('Add Artifact') ?></legend>
+                <p>There is an upload limit of <?= ini_get('upload_max_filesize') ?></p>
                 <?php
                 echo $this->Form->control('file', $fileOptions);
                 echo $this->Form->control('description', $defaultOptions);

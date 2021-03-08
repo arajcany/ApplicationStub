@@ -41,14 +41,8 @@ use Intervention\Image\ImageManager;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class ArtifactsTable extends Table
+class ArtifactsTable extends AppTable
 {
-    private $successAlerts = [];
-    private $dangerAlerts = [];
-    private $warningAlerts = [];
-    private $infoAlerts = [];
-    private $returnCode = 0;
-
     /**
      * Initialize method
      *
@@ -128,120 +122,12 @@ class ArtifactsTable extends Table
             ->maxLength('unc', 2048)
             ->allowEmptyString('unc');
 
+        $validator
+            ->scalar('hash_sum')
+            ->maxLength('hash_sum', 50)
+            ->allowEmptyString('hash_sum');
+
         return $validator;
-    }
-
-    /**
-     * @return int
-     */
-    public function getReturnCode(): int
-    {
-        return $this->returnCode;
-    }
-
-    /**
-     * @return array
-     */
-    public function getAllAlerts(): array
-    {
-        return [
-            'success' => $this->successAlerts,
-            'danger' => $this->successAlerts,
-            'warning' => $this->successAlerts,
-            'info' => $this->successAlerts,
-        ];
-    }
-
-    /**
-     * @return array
-     */
-    public function getSuccessAlerts(): array
-    {
-        return $this->successAlerts;
-    }
-
-    /**
-     * @return array
-     */
-    public function getDangerAlerts(): array
-    {
-        return $this->dangerAlerts;
-    }
-
-    /**
-     * @return array
-     */
-    public function getWarningAlerts(): array
-    {
-        return $this->warningAlerts;
-    }
-
-    /**
-     * @return array
-     */
-    public function getInfoAlerts(): array
-    {
-        return $this->infoAlerts;
-    }
-
-    /**
-     * @param array|string $message
-     * @return array
-     */
-    public function addSuccessAlerts($message): array
-    {
-        if (is_string($message)) {
-            $message = [$message];
-        }
-
-        $this->successAlerts = array_merge($this->successAlerts, $message);
-
-        return $this->successAlerts;
-    }
-
-    /**
-     * @param array|string $message
-     * @return array
-     */
-    public function addDangerAlerts($message): array
-    {
-        if (is_string($message)) {
-            $message = [$message];
-        }
-
-        $this->dangerAlerts = array_merge($this->dangerAlerts, $message);
-
-        return $this->dangerAlerts;
-    }
-
-    /**
-     * @param array|string $message
-     * @return array
-     */
-    public function addWarningAlerts($message): array
-    {
-        if (is_string($message)) {
-            $message = [$message];
-        }
-
-        $this->warningAlerts = array_merge($this->warningAlerts, $message);
-
-        return $this->warningAlerts;
-    }
-
-    /**
-     * @param array|string $message
-     * @return array
-     */
-    public function addInfoAlerts($message): array
-    {
-        if (is_string($message)) {
-            $message = [$message];
-        }
-
-        $this->infoAlerts = array_merge($this->infoAlerts, $message);
-
-        return $this->infoAlerts;
     }
 
 
@@ -358,36 +244,36 @@ class ArtifactsTable extends Table
 
         switch ($e = $data["error"]) {
             case 0:
-                $this->infoAlerts[] = ["code" => $e, "message" => "There is no error, the file uploaded with success."];
+                $this->addInfoAlerts(["code" => $e, "message" => "There is no error, the file uploaded with success."]);
                 break;
             case 1:
                 $uploadMaxFilesize = ini_get('upload_max_filesize');
-                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "The uploaded file exceeds the {$uploadMaxFilesize} limit."]);
                 break;
             case 2:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form."]);
                 break;
             case 3:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "The uploaded file was only partially uploaded."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "The uploaded file was only partially uploaded."]);
                 break;
             case 4:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "No file was uploaded."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "No file was uploaded."]);
                 break;
             case 5:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "Unknown error."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "Unknown error."]);
                 break;
             case 6:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "Missing a temporary folder."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "Missing a temporary folder."]);
                 break;
             case 7:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "Failed to write file to disk."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "Failed to write file to disk."]);
                 break;
             case 8:
-                $this->dangerAlerts[] = ["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."];
+                $this->AddDangerAlerts(["code" => $e, "message" => "A PHP extension stopped the file upload. PHP does not provide a way to ascertain which extension caused the file upload to stop; examining the list of loaded extensions with phpinfo() may help."]);
                 break;
         }
 
-
+        $checkSum = null;
         if (isset($data['tmp_name']) && !empty($data['tmp_name'])) {
             //uploaded data takes precedence over blob data
             $src = $data['tmp_name'];
@@ -401,13 +287,14 @@ class ArtifactsTable extends Table
                 }
                 $saveDataResult = move_uploaded_file($src, $dest);
                 if ($saveDataResult) {
-                    $this->infoAlerts[] = ["code" => 0, "message" => "The file was moved to the destination folder."];
+                    $this->addInfoAlerts(["code" => 0, "message" => "The file was moved to the destination folder."]);
+                    $checkSum = sha1_file($dest);
                 } else {
-                    $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to move the file to the destination folder."];
+                    $this->AddDangerAlerts(["code" => 1, "message" => "Failed to move the file to the destination folder."]);
                 }
             } else {
                 $saveDataResult = false;
-                $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+                $this->AddDangerAlerts(["code" => 1, "message" => "Failed to create the destination folder."]);
             }
 
             //mime type
@@ -420,6 +307,7 @@ class ArtifactsTable extends Table
         } elseif (isset($data['blob']) && !empty($data['blob'])) {
             //if a blob $data has been sent
             $src = $data['blob'];
+            $checkSum = sha1($src);
             $dir = TextFormatter::makeEndsWith(Configure::read('Settings.repo_unc'), "\\") . $data['unc'];
             $fso = new Folder($dir, true);
 
@@ -430,13 +318,13 @@ class ArtifactsTable extends Table
                 }
                 $saveDataResult = file_put_contents($dest, $src);
                 if ($saveDataResult) {
-                    $this->infoAlerts[] = ["code" => 0, "message" => "The file was saved to the destination folder."];
+                    $this->addInfoAlerts(["code" => 0, "message" => "The file was saved to the destination folder."]);
                 } else {
-                    $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to save the file to the destination folder."];
+                    $this->AddDangerAlerts(["code" => 1, "message" => "Failed to save the file to the destination folder."]);
                 }
             } else {
                 $saveDataResult = false;
-                $this->dangerAlerts[] = ["code" => 1, "message" => "Failed to create the destination folder."];
+                $this->AddDangerAlerts(["code" => 1, "message" => "Failed to create the destination folder."]);
             }
 
             //mime type
@@ -451,12 +339,13 @@ class ArtifactsTable extends Table
             }
         } else {
             //no blob data to save
-            $this->dangerAlerts[] = ["code" => 1, "message" => "No blob data to save."];
+            $this->AddDangerAlerts(["code" => 1, "message" => "No blob data to save."]);
             $saveDataResult = false;
         }
 
         //save the Entity, only if blob was saved
         if ($saveDataResult) {
+            $data['hash_sum'] = $checkSum;
             $artifact = $this->patchEntity($artifact, $data);
             $saveEntityResult = $this->save($artifact);
 
@@ -496,11 +385,11 @@ class ArtifactsTable extends Table
                 $this->ArtifactMetadata->save($artifactMetadata);
 
             } else {
-                $this->dangerAlerts[] = ["code" => 1, "message" => "Entity could not be saved."];
+                $this->AddDangerAlerts(["code" => 1, "message" => "Entity could not be saved."]);
             }
         } else {
             $saveEntityResult = false;
-            $this->dangerAlerts[] = ["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."];
+            $this->AddDangerAlerts(["code" => 1, "message" => "Aborted saving the Entity due to error in saving data."]);
         }
 
         if ($saveDataResult && $saveEntityResult) {
