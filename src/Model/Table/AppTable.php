@@ -66,7 +66,7 @@ class AppTable extends Table
             'info' => $this->successAlerts,
         ];
 
-        return json_encode($return, JSON_PRETTY_PRINT);
+        return $return;
     }
 
     /**

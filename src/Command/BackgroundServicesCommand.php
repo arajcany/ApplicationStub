@@ -13,6 +13,7 @@ use Cake\Mailer\Email;
 use Cake\Network\Exception\SocketException;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
+use Cake\Utility\Inflector;
 use Cake\Utility\Text;
 use Exception;
 
@@ -25,15 +26,17 @@ use Exception;
  * @property \App\Model\Table\MessagesTable $Messages
  * @property \App\Model\Table\MessageBeaconsTable $MessageBeacons
  * @property \App\Model\Table\HeartbeatsTable $Heartbeats
+ * @property ConsoleIo $io
  */
 class BackgroundServicesCommand extends Command
 {
     public $Settings;
     public $Errands;
     public $Workers;
-    //public $Messages;
-    //public $MessageBeacons;
+    public $Messages;
+    public $MessageBeacons;
     public $Heartbeats;
+    private $io;
 
     /**
      * Hook method for defining this command's option parser.
@@ -69,11 +72,12 @@ class BackgroundServicesCommand extends Command
         $this->Settings = TableRegistry::getTableLocator()->get('Settings');
         $this->Errands = TableRegistry::getTableLocator()->get('Errands');
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
-        //$this->Messages = TableRegistry::getTableLocator()->get('Messages');
-        //$this->MessageBeacons = TableRegistry::getTableLocator()->get('MessageBeacons');
+        $this->Messages = TableRegistry::getTableLocator()->get('Messages');
+        $this->MessageBeacons = TableRegistry::getTableLocator()->get('MessageBeacons');
         $this->Heartbeats = TableRegistry::getTableLocator()->get('Heartbeats');
 
         $serviceType = $args->getArgumentAt(0);
+        $this->io = $io;
 
         if (in_array($serviceType, ['errands', 'errand'])) {
             return $this->runErrandsService($args, $io);
@@ -87,6 +91,18 @@ class BackgroundServicesCommand extends Command
     }
 
     /**
+     * Run the Messages Background Service
+     *
+     * @param Arguments $args
+     * @param ConsoleIo $io
+     * @return int
+     */
+    private function runMessagesService(Arguments $args, ConsoleIo $io)
+    {
+        return $this->_runService('message', $args, $io);
+    }
+
+    /**
      * Run the Errands Background Service
      *
      * @param Arguments $args
@@ -95,22 +111,41 @@ class BackgroundServicesCommand extends Command
      */
     private function runErrandsService(Arguments $args, ConsoleIo $io)
     {
-        $io->out('Initiating an Errand Worker...');
+        return $this->_runService('errand', $args, $io);
+    }
+
+    /**
+     * Run a Background Service
+     *
+     * @param $name
+     * @param Arguments $args
+     * @param ConsoleIo $io
+     * @return int
+     */
+    private function _runService($name, Arguments $args, ConsoleIo $io)
+    {
+        $namePluralUpper = ucwords(Inflector::pluralize($name));
+        $namePluralLower = strtolower(Inflector::pluralize($name));
+        $nameSingleUpper = ucwords(Inflector::singularize($name));
+        $nameSingleLower = strtolower(Inflector::singularize($name));
+        $runNext = 'runNext' . $nameSingleUpper;
+
+        $io->out(__("Initiating an {0} Worker...", $nameSingleUpper));
 
         $heartbeatContext = $args->getOption('heartbeat-context');
 
         //====Create a Worker=============================================================
         $workerOptions = ['background_services_link' => $heartbeatContext];
-        $worker = $this->Workers->createWorker('errand', $workerOptions);
+        $worker = $this->Workers->createWorker($nameSingleLower, $workerOptions);
         if (!$worker) {
             $io->abort(__("Failed to initiate a Worker...Bye!"), 2);
         }
-        $msg = __("Created Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+        $msg = __("Created {0} Worker {1} under PID {2}.", $nameSingleUpper, $worker->name, $worker->pid);
         $io->info($msg, 3);
 
         $hbOptions = [
             'context' => $heartbeatContext,
-            'name' => 'Started Errand Service',
+            'name' => __("Started {0} Service", $nameSingleUpper),
             'description' => $msg,
         ];
         $this->Workers->createHeartbeat($worker, $hbOptions);
@@ -123,16 +158,19 @@ class BackgroundServicesCommand extends Command
         $timeObjCurrent = new FrozenTime();
         while ($timeObjCurrent->lt($worker->retirement_date)) {
 
-            $errandCount = $this->Errands->getReadyToRunCount();
+            $runCount = $this->$namePluralUpper->getReadyToRunCount();
 
-            if ($errandCount > 0) {
+            if ($runCount > 0) {
                 $sleep = 0;
 
-                $io->out(__("====Start of Errand============================================"));
+                $io->out(__("====Start of {0}============================================", $nameSingleUpper));
 
-                $errand = $this->runNextErrand($worker);
-                if ($errand) {
-                    $msg = __("Completed Errand {0}:{1}.", $errand->id, $errand->name);
+                /**
+                 * @var array|bool|null|\App\Model\Entity\Errand|\App\Model\Entity\Message $task
+                 */
+                $task = $this->$runNext($worker);
+                if ($task) {
+                    $msg = __("Completed {0} {1}:{2}.", $nameSingleUpper, $task->id, $task->name);
 
                     $io->info($msg);
 
@@ -143,10 +181,10 @@ class BackgroundServicesCommand extends Command
                     $this->Workers->createPulse(null, $hbOptions);
                 }
 
-                $io->out(__("====End of Errand=============================================="), 3);
+                $io->out(__("====End of {0}==============================================", $nameSingleUpper), 3);
             } else {
                 //go to sleep for a bit because there is nothing to do
-                $sleepTimeout = Configure::read('Settings.errand_worker_sleep');
+                $sleepTimeout = Configure::read("Settings.{$nameSingleLower}_worker_sleep");
                 $sleep = $this->getSleepLength($sleep, $sleepTimeout);
 
                 $msg = __("Sleeping for {0} seconds.", round($sleep, 1));
@@ -168,10 +206,10 @@ class BackgroundServicesCommand extends Command
             //refresh worker and check if deleted or been forced into retirement
             $worker = $this->Workers->refreshWorker($worker);
             if ($worker === false) {
-                $msg = __("PID {0} was deleted in the GUI. Shutting down the Errand Service", getmypid());
+                $msg = __("PID {0} was deleted in the GUI. Shutting down the {1} Service", getmypid(), $nameSingleUpper);
                 $hbOptions = [
                     'context' => $heartbeatContext,
-                    'name' => 'Deleted Errand Service',
+                    'name' => __("Deleted {0} Service", $nameSingleUpper),
                     'description' => $msg,
                 ];
                 $this->Workers->createHeartbeat(null, $hbOptions);
@@ -179,10 +217,10 @@ class BackgroundServicesCommand extends Command
                 $this->Heartbeats->purgePulses();
                 $io->abort($msg, 3);
             } elseif ($worker->force_retirement) {
-                $msg = __("Forced retirement for Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+                $msg = __("Forced retirement for {0} Worker {1} under PID {2}.", $nameSingleUpper, $worker->name, $worker->pid);
                 $hbOptions = [
                     'context' => $heartbeatContext,
-                    'name' => 'Forced Retirement of Errand Service',
+                    'name' => __("Forced Retirement of {0} Service", $nameSingleUpper),
                     'description' => $msg,
                 ];
                 $this->Workers->createHeartbeat($worker, $hbOptions);
@@ -191,10 +229,10 @@ class BackgroundServicesCommand extends Command
                 $this->Workers->delete($worker);
                 $io->abort($msg, 4);
             } elseif ($worker->force_shutdown) {
-                $msg = __("Forced shutdown for Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+                $msg = __("Forced shutdown for {0} Worker {1} under PID {2}.", $nameSingleUpper, $worker->name, $worker->pid);
                 $hbOptions = [
                     'context' => $heartbeatContext,
-                    'name' => 'Forced Shutdown of Errand Service',
+                    'name' => __("Forced Shutdown of {0} Service", $nameSingleUpper),
                     'description' => $msg,
                 ];
                 $this->Workers->createHeartbeat($worker, $hbOptions);
@@ -214,10 +252,10 @@ class BackgroundServicesCommand extends Command
 
 
         //====Retire Worker===============================================================
-        $msg = __("Retiring Errand Worker {0} under PID {1}.", $worker->name, $worker->pid);
+        $msg = __("Retiring {0} Worker {1} under PID {2}.", $nameSingleUpper, $worker->name, $worker->pid);
         $hbOptions = [
             'context' => $heartbeatContext,
-            'name' => 'Retiring Errand Service',
+            'name' => __("Retiring {0} Service", $nameSingleUpper),
             'description' => $msg,
         ];
         $this->Workers->createHeartbeat($worker, $hbOptions);
@@ -276,7 +314,7 @@ class BackgroundServicesCommand extends Command
                     $returnValue = $Model->getReturnValue();
                 }
                 if (method_exists($Model, 'getReturnMessage')) {
-                    $returnValue = $Model->getReturnMessage();
+                    $returnMessage = $Model->getReturnMessage();
                 }
             } else {
                 $Object = new $class();
@@ -286,7 +324,7 @@ class BackgroundServicesCommand extends Command
                     $returnValue = $Object->getReturnValue();
                 }
                 if (method_exists($Object, 'getReturnMessage')) {
-                    $returnValue = $Object->getReturnMessage();
+                    $returnMessage = $Object->getReturnMessage();
                 }
             }
 
@@ -324,18 +362,6 @@ class BackgroundServicesCommand extends Command
     }
 
     /**
-     * Run the Messages Background Service
-     *
-     * @param Arguments $args
-     * @param ConsoleIo $io
-     * @return int
-     */
-    private function runMessagesService(Arguments $args, ConsoleIo $io)
-    {
-        return 0;
-    }
-
-    /**
      * Run the Message
      *
      * @param \App\Model\Entity\Worker $worker
@@ -352,6 +378,8 @@ class BackgroundServicesCommand extends Command
         $worker->errand_name = $message->id . ":" . $message->name;
         $worker->errand_link = $message->id;
         $this->Workers->save($worker);
+
+        $this->io->out($message->id . ":" . $message->name);
 
         //domain, profile and transport
         if ($message->domain) {
@@ -439,9 +467,22 @@ class BackgroundServicesCommand extends Command
             if ($sendResult) {
                 $message->smtp_code = 1;
                 $message->smtp_message = __("Email Sent.");
+
+                $message->completed = new FrozenTime();
+                $message->errors_thrown = null;
             } else {
                 $message->smtp_code = 0;
                 $message->smtp_message = __("Email Failed.");
+
+                $message->completed = null;
+                $message->errors_thrown = __("Email Failed.");
+
+                if ($message->errors_retry < $message->errors_retry_limit) {
+                    $message->errors_retry = $message->errors_retry + 1;
+                    $message->started = null;
+                    $message->completed = null;
+                    $message->lock_code = null;
+                }
             }
         } catch (\Throwable $e) {
             $errorsThrown = [
@@ -450,6 +491,9 @@ class BackgroundServicesCommand extends Command
                 'trace' => $e->getTrace(),
             ];
 
+            $message->smtp_code = 0;
+            $message->smtp_message = __("Fatal Error.");
+
             $message->completed = null;
             $message->errors_thrown = $errorsThrown;
 
@@ -457,13 +501,11 @@ class BackgroundServicesCommand extends Command
                 $message->errors_retry = $message->errors_retry + 1;
                 $message->started = null;
                 $message->completed = null;
+                $message->lock_code = null;
             }
 
         }
 
-        //save SMTP response to db
-        $timeObjCompleted = new FrozenTime('now');
-        $message->completed = $timeObjCompleted;
         $this->Messages->save($message);
 
         return $message;

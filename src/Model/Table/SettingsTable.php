@@ -251,6 +251,28 @@ class SettingsTable extends AppTable
     }
 
     /**
+     * Convenience Method to get all the Email details
+     *
+     * @return array
+     */
+    public function getEmailDetails()
+    {
+        //try to read from Configure First
+        $results = Configure::read("SettingsGrouped.email_server");
+        if ($results) {
+            $results['email_password'] = Security::decrypt64($results['email_password']);
+            return $results;
+        }
+
+        //fall back to read from DB
+        $results = $this->find('list', ['keyField' => 'property_key', 'valueField' => 'property_value'])
+            ->where(['property_group' => 'email_server'])
+            ->toArray();
+        $results['email_password'] = Security::decrypt64($results['email_password']);
+        return $results;
+    }
+
+    /**
      * Return a FrozenTime object for a password expiry date.
      * Date is based on the password_expiry setting.
      *

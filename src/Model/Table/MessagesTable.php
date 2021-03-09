@@ -260,6 +260,7 @@ class MessagesTable extends AppTable
             'read_receipt',
             'view_vars',
             'headers',
+            'errors_thrown',
         ];
 
         return $jsonFields;
@@ -303,7 +304,7 @@ class MessagesTable extends AppTable
      *
      * @return int|null
      */
-    public function getReadyToSendCount()
+    public function getReadyToRunCount()
     {
         $messageQuery = $this->buildQueryForMessages();
         $count = $messageQuery->count();
@@ -317,8 +318,6 @@ class MessagesTable extends AppTable
      */
     public function getNextMessage($typeLimit = null)
     {
-        $timeObjCurrent = new FrozenTime();
-
         //generate RND number and double check not in use
         $rnd = mt_rand(1, mt_getrandmax());
         $count = $this->find('all')->where(['lock_code' => $rnd])->count();
@@ -326,35 +325,53 @@ class MessagesTable extends AppTable
             return false;
         }
 
-        //lock the row first with the RND number
-        $messageRowLockSubQuery = $this->buildQueryForMessagesRowLock();
-        if ($typeLimit) {
-            $messageRowLockSubQuery = $messageRowLockSubQuery->where(['Messages.type' => $typeLimit]);
+        //prevent deadlocks
+        try {
+            //lock the row first with the RND number
+            $messageRowLockSubQuery = $this->buildQueryForMessagesRowLock();
+            if ($typeLimit) {
+                $messageRowLockSubQuery = $messageRowLockSubQuery->where(['Messages.type' => $typeLimit]);
+            }
+            $query = $this->query();
+            $res = $query->update()
+                ->set(['lock_code' => $rnd])
+                ->where(['id' => $messageRowLockSubQuery])
+                ->rowCountAndClose();
+        } catch (\Throwable $e) {
+            return false;
         }
-        $query = $this->query();
-        $res = $query->update()
-            ->set(['lock_code' => $rnd])
-            ->where(['id' => $messageRowLockSubQuery])
-            ->rowCountAndClose();
 
         if ($res == 0) {
             //no messages to send
             return false;
         }
 
-        //now get the locked row based on the RND number
-        /**
-         * @var \App\Model\Entity\Message $message
-         */
-        $message = $this->find('all')->where(['lock_code' => $rnd])->first();
+        $messageRetryLimit = Configure::read("Settings.message_retry_limit");
+        $messageRetryLimit = max(1, $messageRetryLimit);
+        $messageRetry = 0;
+        while ($messageRetry < $messageRetryLimit) {
+            //prevent deadlocks
+            try {
+                //now get the locked row based on the RND number
+                /**
+                 * @var \App\Model\Entity\Message $message
+                 */
+                $message = $this->find('all')->where(['lock_code' => $rnd])->first();
 
-        if ($message) {
-            $message->started = $timeObjCurrent;
-            $this->save($message);
-            return $message;
-        } else {
-            return false;
+                if ($message) {
+                    $timeObjCurrent = new FrozenTime();
+                    $message->started = $timeObjCurrent;
+                    $this->save($message);
+                    return $message;
+                } else {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                $messageRetry++;
+            }
         }
+
+        return false;
     }
 
     /**

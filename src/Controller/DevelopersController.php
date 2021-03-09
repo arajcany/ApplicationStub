@@ -93,7 +93,7 @@ class DevelopersController extends AppController
             ],
             'email_to' => ["abc@example.com" => "ABC"],
             'subject' => 'Some Random Number: ' . mt_rand(11111, 99999),
-            'subject' => 'Some Random Number: ' . 000,
+            //'subject' => 'Some Random Number: ' . 000,
             'body' => '<p>Some HTML Text</p>',
             //'template' => 'transactional/Invitation/invite_franchisee',
             //'layout' => 'transactional/process',

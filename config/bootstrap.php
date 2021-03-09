@@ -235,6 +235,46 @@ if (isset($tablesInternal['internal_options'])) {
     $InternalOptionsTable->buildInternalOptionsTable();
 }
 
+//build email config from DB
+try {
+    //config from DB
+    if ($SettingsTable) {
+        $emailConfigFromDb = $SettingsTable->getEmailDetails();
+    } else {
+        $emailConfigFromDb = false;
+    }
+
+    //config from file (defaults)
+    $loader = new PhpConfig();
+    $emailConfigFromFile = $loader->read('config_email');
+    $emailConfigMerged = $emailConfigFromFile;
+
+    if ($emailConfigFromDb) {
+        //merge Transport
+        $emailConfigMerged['EmailTransport']['default']['host'] = $emailConfigFromDb['email_smtp_host'];
+        $emailConfigMerged['EmailTransport']['default']['port'] = $emailConfigFromDb['email_smtp_port'];
+        $emailConfigMerged['EmailTransport']['default']['username'] = $emailConfigFromDb['email_username'];
+        $emailConfigMerged['EmailTransport']['default']['password'] = $emailConfigFromDb['email_password'];
+        $emailConfigMerged['EmailTransport']['default']['tls'] =
+            filter_var($emailConfigFromDb['email_tls'], FILTER_VALIDATE_BOOLEAN);
+
+        //merge Profile
+        $emailConfigMerged['Email']['default']['transport'] = 'default';
+        $emailConfigMerged['Email']['default']['from'] =
+            [$emailConfigFromDb['email_from_address'] => $emailConfigFromDb['email_from_name']];
+        $emailConfigMerged['Email']['default']['charset'] = 'utf-8';
+        $emailConfigMerged['Email']['default']['headerCharset'] = 'utf-8';
+    }
+
+    //save into Email configuration
+    TransportFactory::drop('default');
+    Email::drop('default');
+    TransportFactory::setConfig($emailConfigMerged['EmailTransport']);
+    Email::setConfig($emailConfigMerged['Email']);
+} catch (\Exception $e) {
+    exit($e->getMessage() . "\n");
+}
+
 /*
  * The default crypto extension in 3.0 is OpenSSL.
  * If you are migrating from 2.x uncomment this code to
