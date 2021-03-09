@@ -8,6 +8,7 @@ use App\Utility\Install\Checker;
 use App\Utility\Install\VersionControl;
 use App\Utility\Release\BuildTasks;
 use App\Utility\Release\GitTasks;
+use arajcany\ToolBox\Utility\TextFormatter;
 use Cake\Console\Arguments;
 use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
@@ -107,7 +108,7 @@ class ReleasesCommand extends Command
         $this->BuildTasks->setIo($io);
 
         $remote_update_url = $this->Settings->findByPropertyKey('remote_update_url')->first();
-        $remote_update_url = $remote_update_url['property_value'];
+        $remote_update_url = TextFormatter::makeEndsWith($remote_update_url['property_value'], "/");
 
         $remote_update_unc = $this->InternalOptions->getOption('remote_update_unc');
         $remote_update_sftp_host = $this->InternalOptions->getOption('remote_update_sftp_host');
