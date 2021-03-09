@@ -149,6 +149,8 @@ class ReleasesCommand extends Command
             $buildOptions['remoteUpdateUnc'] = $uncRoundTripSettings;
         }
 
+        $buildOptions['remoteUpdateErrors'] = $Checker->getMessages();
+
         $buildResult = $this->BuildTasks->build($buildOptions);
 
         if ($buildResult) {

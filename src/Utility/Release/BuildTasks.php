@@ -146,6 +146,25 @@ class BuildTasks
      */
     public function build($options = [])
     {
+        if (!$options['remoteUpdateUnc'] && !$options['remoteUpdateSftp']) {
+            $this->io->nl(2);
+            if (isset($options['remoteUpdateErrors'])) {
+                foreach ($options['remoteUpdateErrors'] as $error) {
+                    $this->io->out(__("Error Message: {2}", $error['element'], $error['key'], $error['message']));
+                }
+            } else {
+                $this->io->out(__('Cannot Read Remote Update UNC!'));
+                $this->io->out(__('Cannot Read Remote Update sFTP!'));
+            }
+
+            $this->io->out(__('I will not be able to upload this release for people to upgrade.'));
+            $proceed = $this->io->askChoice('Do you wish to proceed?', ['Yes', 'No',], 'No');
+
+            if (strtolower($proceed) == 'no') {
+                return false;
+            }
+        }
+
         $app_name = Inflector::underscore(APP_NAME);
 
         $VC = new VersionControl();
