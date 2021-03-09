@@ -23,8 +23,15 @@ class BackgroundServicesComponent extends Component
 
     public $components = ['Flash'];
 
+    private function getAppNameCamelized()
+    {
+        return Inflector::camelize(APP_NAME);
+    }
+
     public function createBackgroundServicesBatchFiles()
     {
+        $appName = $this->getAppNameCamelized();
+
         $batchLocation = ROOT . DS . 'bin' . DS . 'BackgroundServices' . DS;
         $nssm = $batchLocation . 'nssm.exe';
 
@@ -59,7 +66,7 @@ class BackgroundServicesComponent extends Component
             $workerLimit = Configure::read("Settings.{$workerTypeLowerCased}_worker_limit");
             foreach (range(1, $workerLimit) as $counter) {
                 $counterPadded = str_pad($counter, 2, '0', STR_PAD_LEFT);
-                $serviceName = Inflector::camelize(APP_NAME) . "_{$workerType}Worker_" . $counterPadded;
+                $serviceName = $appName . "_{$workerType}Worker_" . $counterPadded;
                 $serviceDescription = "{$workerType} Worker for " . APP_NAME;
                 $parameters = __("-f \"{0}cake.php\" BackgroundServices {2} -h {1}", $binDirectory, $serviceName, $workerTypeLowerCased);
                 $commands[] = __("\"{0}\" install \"{1}\" \"{2}\"", $nssm, $serviceName, $phpExe);
@@ -92,7 +99,7 @@ class BackgroundServicesComponent extends Component
         foreach (range(1, $repoPurgeLimit) as $counter) {
             $counterPadded = str_pad($counter, 2, '0', STR_PAD_LEFT);
             $delay = intval($offset * ($counter - 1));
-            $serviceName = Inflector::camelize(APP_NAME) . "_ArtifactsDeleter_" . $counterPadded;
+            $serviceName = $appName . "_ArtifactsDeleter_" . $counterPadded;
             $serviceDescription = "Artifacts Cleanup for " . APP_NAME;
             $parameters = __("-f \"{0}cake.php\" ArtifactsDeleter -d {1} -h {2}", $binDirectory, $delay, $serviceName);
             $commands[] = __("\"{0}\" install \"{1}\" \"{2}\"", $nssm, $serviceName, $phpExe);
@@ -141,7 +148,8 @@ class BackgroundServicesComponent extends Component
 
     public function _getServices()
     {
-        $appName = Inflector::camelize(APP_NAME);
+        $appName = $this->getAppNameCamelized();
+
         $cmd = __("sc.exe query state= all | find \"SERVICE_NAME: {0}_\"", $appName);
         exec($cmd, $foundServices, $ret);
 
