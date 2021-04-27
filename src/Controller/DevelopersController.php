@@ -21,12 +21,16 @@ use Cake\ORM\TableRegistry;
  * @property ErrandsTable $Errands;
  * @property WorkersTable $Workers;
  * @property MessagesTable $Messages;
+ * @property \App\Model\Table\TrackLoginsTable $TrackLogins
+ * @property \App\Model\Table\TrackHitsTable $TrackHits
  */
 class DevelopersController extends AppController
 {
     private $Errands;
     private $Workers;
     private $Messages;
+    private $TrackLogins;
+    private $TrackHits;
 
     public function initialize()
     {
@@ -36,6 +40,8 @@ class DevelopersController extends AppController
         $this->Errands = TableRegistry::getTableLocator()->get('Errands');
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
         $this->Messages = TableRegistry::getTableLocator()->get('Messages');
+        $this->loadModel('TrackLogins');
+        $this->loadModel('TrackHits');
     }
 
 
@@ -142,92 +148,6 @@ class DevelopersController extends AppController
 
         $artifact = $this->Artifacts->createArtifactFromUrl('24pp.pdf', 'http://genericrepository.local/24pp.pdf');
         $toDebug['$artifact'] = $artifact->full_url;
-
-        $this->set('toDebug', $toDebug);
-    }
-
-
-    public function trackUploads()
-    {
-        $this->viewBuilder()->setTemplate('to_debug');
-        $toDebug = [];
-
-//        $options = [
-//            'width' => mt_rand(64, 256),
-//            'height' => mt_rand(64, 256),
-//            'background' => '#808080',
-//            'format' => 'png',
-//            'quality' => '90',
-//        ];
-
-//        $artifact = $this->Artifacts->createPlaceholderArtifact($options);
-//        $toDebug['$errand'] = $artifact;
-
-        $data = [
-            [
-                'name' => 'the jpg',
-                'modified' => new FrozenTime(),
-                'type' => 'jpg',
-                'tmp_name' => '/some/jpg',
-                'finfo_mime_type' => 'image/jpeg',
-                //'error' => false,
-                'username' => 'some_user',
-                'created' => new FrozenTime(),
-                'rnd_hash' => 5432,
-                'batch_reference' => 1,
-                'dud_field' => 'foo',
-                'size' => 12345,
-            ],
-            [
-                'created' => new FrozenTime(),
-                'modified' => new FrozenTime(),
-                'name' => 'the png',
-                //'type' => 'png',
-                'tmp_name' => '/some/png',
-                'size' => 12345,
-                //'error' => false,
-                //'finfo_mime_type' => 'image/png',
-                //'username' => 'some_user',
-                'rnd_hash' => 9876,
-                'batch_reference' => 1,
-                'dud_field' => 'bar',
-            ],
-        ];
-        //$this->TrackUploads->massInsert($data);
-
-        $frozenTime = new FrozenTime();
-        $dataMaster = [
-            'name' => 'the jpg ',
-            'created' => $frozenTime,
-            'modified' => $frozenTime,
-            'type' => 'jpg',
-            'tmp_name' => '/some/jpg',
-            'finfo_mime_type' => 'image/jpeg',
-            'error' => false,
-            'username' => 'some_user',
-            'rnd_hash' => '',
-            'batch_reference' => 1,
-            'dud_field' => 'foo',
-            'size' => mt_rand(111, 999),
-        ];
-        $range = range(1, 1000000);
-        $data = [];
-        foreach ($range as $number) {
-            $dataTmp = $dataMaster;
-            $dataTmp['name'] = $dataTmp['name'] . mt_rand(11111, 99999);
-            $dataTmp['rnd_hash'] = sha1(mt_rand());
-            $data[] = $dataTmp;
-        }
-
-        $dataChunked = partition($data, 1200);
-        $dataSub = $dataChunked[0];
-        debug($dataSub);
-
-
-        $start = new FrozenTime();
-        //$this->TrackUploads->massInsert($data);
-        $end = new FrozenTime();
-        $toDebug['time'] = "Completed in " . $start->diffInSeconds($end) . " seconds";
 
         $this->set('toDebug', $toDebug);
     }

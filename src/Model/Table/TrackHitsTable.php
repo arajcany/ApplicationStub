@@ -142,91 +142,6 @@ class TrackHitsTable extends AppTable
     }
 
     /**
-     * Track a Hit to the application. Can have a performance impact.
-     *
-     * @param \Psr\Http\Message\UriInterface $passed
-     * @param array $otherData
-     * @return \App\Model\Entity\TrackHit|false
-     */
-    public function trackHit(\Psr\Http\Message\UriInterface $passed, $otherData = [])
-    {
-        $url = $passed->__toString();
-
-        $scheme = $passed->getScheme();
-        $host = $passed->getHost();
-        $port = $passed->getPort();
-        $path = $passed->getPath();
-        $query = $passed->getQuery();
-
-        $headers = getallheaders();
-
-        if (isset($headers['Accept'])) {
-            unset($headers['Accept']);
-        }
-
-        if (isset($headers['Cookie'])) {
-            unset($headers['Cookie']);
-        }
-
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $http_client_ip = $_SERVER['HTTP_CLIENT_IP'];
-        } else {
-            $http_client_ip = '';
-        }
-
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $http_x_forwarded_for = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $http_x_forwarded_for = '';
-        }
-
-        if (isset($_SERVER['REMOTE_ADDR'])) {
-            $remote_addr = $_SERVER['REMOTE_ADDR'];
-        } else {
-            $remote_addr = '';
-        }
-
-        $data = [
-            'scheme' => $scheme,
-            'host' => $host,
-            'port' => $port,
-            'path' => $path,
-            'query' => $query,
-            'HTTP_CLIENT_IP' => $http_client_ip,
-            'HTTP_X_FORWARDED_FOR' => $http_x_forwarded_for,
-            'REMOTE_ADDR' => $remote_addr,
-            'headers' => $headers,
-        ];
-        $data = array_merge($data, $otherData);
-
-        $hit = $this->newEntity();
-        $hit->url = $url;
-        $hit->data = $data;
-        $hit->scheme = substr($scheme, 0, 10);
-        $hit->host = substr($host, 0, 255);
-        $hit->port = substr($port, 0, 10);
-        $hit->path = substr($path, 0, 255);
-        $hit->query = substr($query, 0, 255);
-        $hit->app_execution_time = round($data['app_execution_time'], 10);
-
-        $tryCounter = 0;
-        $tryLimit = 5;
-        $isSaved = false;
-        while ($tryCounter < $tryLimit & !$isSaved) {
-            try {
-                $isSaved = $this->save($hit);
-            } catch (\Throwable $exception) {
-                //do nothing, non critical error
-            }
-            usleep(30);
-
-            $tryCounter++;
-        }
-
-        return $isSaved;
-    }
-
-    /**
      * Find the Remote User data such as IP address and Agent
      * @param null $timeStart
      * @param null $timeEnd
@@ -268,7 +183,9 @@ class TrackHitsTable extends AppTable
             'app_execution_time',
             'client_ip' => "json_extract(TrackHits.data, '$.HTTP_CLIENT_IP')",
             'remote_address' => "json_extract(TrackHits.data, '$.REMOTE_ADDR')",
-            'user_agent' => "json_extract(TrackHits.data, '$.headers.User-Agent')"
+            'user_agent' => "json_extract(TrackHits.data, '$.headers.User-Agent')",
+            'app_user_id' => "json_extract(TrackHits.data, '$.app_user_id')",
+            'app_username' => "json_extract(TrackHits.data, '$.app_username')",
         ];
         $query = $this->find('all')->select($select, false)->from(['TrackHits' => $timeFilteredSubQuery], true);
 

@@ -32,6 +32,10 @@ return [
             'url' => env('LOG_QUERIES_URL', null),
             'scopes' => ['queriesLog'],
         ],
+        'allToDatabase' => [
+            'className' => 'App\Log\Engine\Auditor',
+            'levels' => [],
+        ],
     ],
 
     /**

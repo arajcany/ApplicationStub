@@ -16,6 +16,7 @@
 namespace App\Controller;
 
 use App\Controller\Component\AppSettingsForUserComponent;
+use App\Log\Engine\Auditor;
 use Cake\Cache\Cache;
 use Cake\Controller\Controller;
 use Cake\Controller\Exception\SecurityException;
@@ -36,14 +37,13 @@ use Cake\Core\Configure;
  * @property \App\Model\Table\SeedsTable $Seeds
  * @property \App\Model\Table\RolesTable $Roles
  * @property \App\Model\Table\InternalOptionsTable $InternalOptions
- * @property \App\Model\Table\TrackLoginsTable $TrackLogins
- * @property \App\Model\Table\TrackHitsTable $TrackHits
- * @property \App\Model\Table\TrackUploadsTable $TrackUploads
  *
  * @property \App\Controller\Component\FlashComponent $Flash
  * @property \TinyAuth\Controller\Component\AuthComponent $Auth
  * @property \TinyAuth\Controller\Component\AuthUserComponent $AuthUser
  * @property AppSettingsForUserComponent $AppSettingsForUser
+ *
+ * @property Auditor $Auditor
  *
  * @link https://book.cakephp.org/3.0/en/controllers.html#the-app-controller
  *
@@ -54,10 +54,9 @@ class AppController extends Controller
     public $Seeds;
     public $Roles;
     public $InternalOptions;
-    public $TrackLogins;
-    public $TrackHits;
     public $timeStartup;
     public $timeShutdown;
+    public $Auditor;
 
     /**
      * Initialization hook method.
@@ -75,13 +74,12 @@ class AppController extends Controller
 
         parent::initialize();
 
+        $this->Auditor = new Auditor();
+
         $this->loadModel('Settings');
         $this->loadModel('Seeds');
         $this->loadModel('Roles');
         $this->loadModel('InternalOptions');
-        $this->loadModel('TrackLogins');
-        $this->loadModel('TrackHits');
-        $this->loadModel('TrackUploads');
 
         $this->loadComponent('RequestHandler', [
             'enableBeforeRedirect' => false,
@@ -98,9 +96,6 @@ class AppController extends Controller
             $this->loadComponent('Security', $securityConfig);
             $this->Security->requireSecure();
         }
-
-        //$error = 'Always throw this error';
-        //throw new Exception($error);
 
 
         $this->set('basePath', Router::url(null, false));
@@ -276,7 +271,7 @@ class AppController extends Controller
             $otherData = [
                 'app_execution_time' => $execution_time,
             ];
-            $this->TrackHits->trackHit($passed, $otherData);
+            $this->Auditor->trackHit($passed, $otherData);
         }
     }
 }

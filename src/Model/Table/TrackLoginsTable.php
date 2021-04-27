@@ -73,30 +73,4 @@ class TrackLoginsTable extends AppTable
 
         return $rules;
     }
-
-    /**
-     * Track a Users login. Minor impact on performance.
-     *
-     * @param array $user
-     * @return \App\Model\Entity\TrackLogin|bool
-     */
-    public function trackLogin(array $user)
-    {
-        $trackLogin = $this->newEntity();
-        $trackLogin->username = $user['username'];
-
-        $tryCounter = 0;
-        $tryLimit = 5;
-        $isSaved = false;
-        while ($tryCounter < $tryLimit & !$isSaved) {
-            try {
-                $isSaved = $this->save($trackLogin);
-            } catch (\Throwable $exception) {
-                //do nothing, non critical error
-            }
-            usleep(30);
-
-            $tryCounter++;
-        }
-    }
 }

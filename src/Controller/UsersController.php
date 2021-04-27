@@ -243,7 +243,7 @@ class UsersController extends AppController
                 $accountStatus = $this->Users->validateAccountStatus($userDetails);
                 if ($accountStatus) {
                     $this->Auth->setUser($userDetails);
-                    $this->TrackLogins->trackLogin($userDetails);
+                    $this->Auditor->trackLogin($userDetails);
                     return $this->redirect($this->Auth->redirectUrl());
                 } else {
                     $messages = $this->Users->getAuthError();
@@ -406,7 +406,7 @@ class UsersController extends AppController
                     $accountStatus = $this->Users->validateAccountStatus($userDetails);
                     if ($accountStatus) {
                         $this->Auth->setUser($userDetails);
-                        $this->TrackLogins->trackLogin($userDetails);
+                        $this->Auditor->trackLogin($userDetails);
                         return $this->redirect($this->Auth->redirectUrl());
                     } else {
                         $messages = $this->Users->getAuthError();
