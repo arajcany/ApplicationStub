@@ -8,17 +8,9 @@
 return [
     'Csrf' => [
         'ignore' => [
-            ['controller' => 'users', 'action' => 'preLogin', 'requestType' => 'ajax'],
-            ['controller' => 'mySchools', 'action' => ['validate', 'configure', 'reviewDates', 'reviewNotifications'], 'requestType' => 'ajax'],
-            ['controller' => 'developers', 'action' => ['spreadsheet'], 'requestType' => 'ajax'],
-            ['controller' => 'myFolders', 'action' => ['validate'], 'requestType' => 'ajax'],
-            ['controller' => 'invitations', 'action' => ['inviteFranchiseeMulti', 'invitePhotoCoordinatorMulti', 'inviteTeacherMulti'], 'requestType' => 'ajax'],
-            ['controller' => 'mySubjects', 'action' => ['validate'], 'requestType' => 'ajax'],
-            ['controller' => 'sync', 'action' => ['activeSeasons', 'activeSchools'], 'requestType' => 'ajax'],
-            ['controller' => 'singleSignOn', 'action' => ['check', 'login'], 'requestType' => 'ajax'],
-            ['controller' => 'singleSignOn', 'action' => ['check', 'login'], 'requestType' => 'post'],
-            ['controller' => 'singleSignOn', 'action' => ['check', 'login'], 'requestType' => 'get'],
-            ['controller' => 'myMessages', 'action' => ['index'], 'requestType' => 'post'],
+            ['controller' => 'load-tests', 'action' => 'splat', 'requestType' => ['ajax', 'post', 'get']],
+            ['controller' => 'foo', 'action' => 'bar', 'requestType' => 'ajax'],
+            ['controller' => 'foo', 'action' => ['bar', 'bar', 'bar', 'bar'], 'requestType' => 'ajax'],
         ]
     ],
 ];
