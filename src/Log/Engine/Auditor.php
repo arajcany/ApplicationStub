@@ -47,7 +47,11 @@ class Auditor extends BaseLog
         $this->TrackLogins = TableRegistry::getTableLocator()->get('TrackLogins');
         $this->TrackHits = TableRegistry::getTableLocator()->get('TrackHits');
 
-        $this->Session = Router::getRequest()->getSession();
+        if (!is_cli()) {
+            $this->Session = Router::getRequest()->getSession();
+        } else {
+            $this->Session = null;
+        }
     }
 
     /**
