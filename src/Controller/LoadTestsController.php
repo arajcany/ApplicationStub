@@ -198,6 +198,10 @@ class LoadTestsController extends AppController
 
         $responseData = Router::parseRequest($this->request);
 
+        $postData = $this->request->getData();
+        $responseData['post'] = $postData;
+        $responseData['method'] = $this->request->getMethod();
+
         $responseData = json_encode($responseData, JSON_PRETTY_PRINT);
 
         $this->response = $this->response->withType('json');
