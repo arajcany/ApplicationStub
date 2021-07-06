@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\User[]|\Cake\Collection\CollectionInterface $users
+ * @var \App\Model\Entity\User $user
  */
 ?>
 
@@ -46,7 +46,7 @@
                 'class' => "btn btn-lg btn-primary btn-block",
             ];
             echo $this->Form->hidden('login');
-            echo $this->Form->button(__('Login'), $options);
+            echo $this->Form->button(__('Reset & Login'), $options);
             ?>
         </div>
         <?= $this->Form->end() ?>

@@ -75,6 +75,8 @@ Router::scope('/', function (RouteBuilder $routes) {
      */
     $routes->connect('/login/*', ['controller' => 'Users', 'action' => 'login']);
     $routes->connect('/logout/*', ['controller' => 'Users', 'action' => 'logout']);
+    $routes->connect('/forgot/*', ['controller' => 'Users', 'action' => 'forgot']);
+    $routes->connect('/reset/*', ['controller' => 'Users', 'action' => 'reset']);
     $routes->connect('/bcn/*', ['controller' => 'Messages', 'action' => 'beacons']);
 
     /**

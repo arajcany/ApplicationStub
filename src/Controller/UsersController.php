@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Model\Table\MessagesTable;
 use Cake\Cache\Cache;
 use Cake\Database\Driver\Sqlite;
 use Cake\I18n\FrozenTime;
+use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Cake\Validation\Validation;
 
@@ -159,6 +161,50 @@ class UsersController extends AppController
         return null;
     }
 
+
+    /**
+     * Pre-login to the application. Called via ajax when the login page loads.
+     * Put logic in here to warm up the site for the User
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function preLogin()
+    {
+        //warm up the site
+        if ($this->request->is('ajax')) {
+            if ($this->request->getData('username')) {
+                //do stuff here to warm up the user account
+
+                $username = $this->request->getData('username');
+                $this->response = $this->response->withType('json');
+                $this->response = $this->response->withStringBody(json_encode(true));
+                return $this->response;
+            } elseif ($this->request->getData('page_load')) {
+                //do stuff here on the page load
+
+                $userCount = $this->Users->find('all')->where(['username' => 'SuperAdmin', 'password' => 'secret',])->count();
+
+                if ($userCount > 0) {
+                    Cache::write('first_run', true, 'quick_burn');
+                    $url = Router::url(['controller' => 'installers', 'action' => 'configure'], true);
+                    $data = ['redirect' => $url];
+                } else {
+                    $data = [];
+                }
+
+                $this->response = $this->response->withType('json');
+                $this->response = $this->response->withStringBody(json_encode($data));
+                return $this->response;
+            } else {
+                $this->response = $this->response->withType('json');
+                $this->response = $this->response->withStringBody(true);
+                return $this->response;
+            }
+        }
+
+        return $this->redirect(['action' => 'login']);
+    }
+
     /**
      * Login to the application
      *
@@ -273,6 +319,81 @@ class UsersController extends AppController
         $this->request->getSession()->destroy();
         $this->Flash->success(__('Successfully logged out'));
         return $this->redirect($this->Auth->logout());
+    }
+
+
+    /**
+     * Forgot password flow
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function forgot()
+    {
+        $this->viewBuilder()->setLayout('login');
+
+        $user = $this->Users->newEntity();
+
+        $dbDriver = ($this->Users->getConnection())->getDriver();
+        if ($dbDriver instanceof Sqlite) {
+            $caseSensitive = true;
+        } else {
+            $caseSensitive = false;
+        }
+        $this->set('caseSensitive', $caseSensitive);
+
+        if ($this->request->is('post')) {
+            $user = $this->Users->find()
+                ->where([
+                    "OR" => [
+                        'email' => $this->request->getData('email'),
+                        'username' => $this->request->getData('username')
+                    ]
+                ])
+                ->first();
+
+            if ($user) {
+                $options = [
+                    'url' => ['controller' => 'users', 'action' => 'reset', '{token}'],
+                    'expiration' => new FrozenTime('+ 1 hour'),
+                    'user_link' => $user->id,
+                ];
+                $token = $this->Seeds->createSeedReturnToken($options);
+
+                /**
+                 * @var MessagesTable $Messages
+                 */
+                $data = [
+                    'name' => 'Reset Password',
+                    'description' => __("User {0}:{1} initiated Password Reset", $user->id, $user->full_name),
+                    'view_vars' => [
+                        'entities' => [
+                            'user' => $user->id,
+                        ],
+                        'token' => $token,
+                        'url' => Router::url(['controller' => 'users', 'action' => 'reset', $token], true),
+                    ],
+                    'email_to' => [$user->email => $user->full_name],
+                    'email_from' => [$this->Users->getMailWorkerUser()->email => $this->Users->getMailWorkerUser()->full_name],
+                    'subject' => __("{0}: Password reset link for {1}", APP_NAME, $user->full_name),
+                    'template' => 'password_rest_link',
+                ];
+                $Messages = TableRegistry::getTableLocator()->get('messages');
+                $Messages->createMessage($data);
+
+                $this->viewBuilder()->setTemplate('generic_message');
+                $header = "Email Sent";
+                $message = "A password reset link has been sent to the associated email. Please check your inbox.";
+                $this->set('header', $header);
+                $this->set('message', $message);
+            } else {
+                $this->Flash->error(__('User does not exit'));
+            }
+        }
+
+        $this->set(compact('user'));
+        $this->set('_serialize', ['user']);
+
+        return null;
     }
 
     /**

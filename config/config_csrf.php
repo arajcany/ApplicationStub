@@ -8,9 +8,10 @@
 return [
     'Csrf' => [
         'ignore' => [
-            ['controller' => 'load-tests', 'action' => 'splat', 'requestType' => ['ajax', 'post', 'get']],
             ['controller' => 'foo', 'action' => 'bar', 'requestType' => 'ajax'],
             ['controller' => 'foo', 'action' => ['bar', 'bar', 'bar', 'bar'], 'requestType' => 'ajax'],
+            ['controller' => 'users', 'action' => ['preLogin'], 'requestType' => 'ajax'],
+            ['controller' => 'load-tests', 'action' => 'splat', 'requestType' => ['ajax', 'post', 'get']],
         ]
     ],
 ];

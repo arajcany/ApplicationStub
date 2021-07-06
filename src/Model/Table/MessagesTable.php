@@ -448,7 +448,7 @@ class MessagesTable extends AppTable
             'profile' => 'default',
             'layout' => 'default',
             'template' => 'default',
-            'email_format' => 'both',
+            'email_format' => 'html',
             'sender' => [Configure::read('Settings.email_from_address') => Configure::read('Settings.email_from_name')],
             'email_from' => [$fromEmail => $fromName],
             'email_to' => null,
