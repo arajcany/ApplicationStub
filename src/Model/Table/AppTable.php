@@ -182,6 +182,15 @@ class AppTable extends Table
         }
 
         $typeMapUsed = [];
+
+        if (isset($typeMap['created'])) {
+            $typeMapUsed['created'] = $typeMap['created'];
+        }
+
+        if (isset($typeMap['modified'])) {
+            $typeMapUsed['modified'] = $typeMap['modified'];
+        }
+
         //loop once to find what fields are being used
         foreach ($records as $i => $record) {
             foreach ($record as $fieldKey => $fieldValue) {

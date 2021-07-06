@@ -9,6 +9,7 @@ use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\ZipMaker;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
+use Cake\Database\Driver\Sqlite;
 use Cake\Event\Event;
 use Cake\Filesystem\File;
 use Cake\Mailer\MailerAwareTrait;
@@ -81,7 +82,9 @@ class InstallersController extends AppController
      */
     public function configure()
     {
-        if (Cache::read('first_run', 'quick_burn') !== true) {
+        if ($this->request->is('post') && isset($this->request->getData()['configure'])) {
+            //allow to pass as an update is being called
+        } elseif (Cache::read('first_run', 'quick_burn') !== true) {
             return $this->redirect(['controller' => 'users', 'action' => 'login']);
         }
 
@@ -90,11 +93,21 @@ class InstallersController extends AppController
          */
         $user = $this->Users->findUsersByRoleNameOrRoleAlias("SuperAdmin")->order('Users.id', true)->first();
 
+        //bare minimum checks. SuperAdmin has a password.
         if (strlen($user->password) >= 40) {
             Cache::delete('first_run', 'quick_burn');
             return $this->redirect(['controller' => 'users', 'action' => 'login']);
         }
 
+        $dbDriver = ($this->Users->getConnection())->getDriver();
+        if ($dbDriver instanceof Sqlite) {
+            $caseSensitive = true;
+        } else {
+            $caseSensitive = false;
+        }
+        $this->set('caseSensitive', $caseSensitive);
+
+        $this->viewBuilder()->setLayout('login');
 
         if ($this->request->is('post')) {
             if (isset($this->request->getData()['configure'])) {

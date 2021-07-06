@@ -19,6 +19,7 @@ if (!defined('STDIN')) {
     define('STDIN', fopen('php://stdin', 'r'));
 }
 
+use Cake\Cache\Cache;
 use Cake\Utility\Inflector;
 use Cake\Utility\Security;
 use Cake\Utility\Text;
@@ -99,6 +100,8 @@ class Installer
         }
 
         static::removeReferencesToApplicationStub($rootDir, $io);
+
+        Cache::write('first_run', true, 'quick_burn');
     }
 
     /**
