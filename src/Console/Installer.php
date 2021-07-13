@@ -319,6 +319,10 @@ class Installer
         static::updateValueInFile($appConfig, "__APP_NAME__", Inflector::camelize(Inflector::variable($validatedAppName)), $io);
         static::updateValueInFile($appConfig, "__APP_DESCRIPTION__", $validatedAppDescription, $io);
 
+        $appConfig = $rootDir . '/config/app.default.php';
+        static::updateValueInFile($appConfig, "__APP_NAME__", Inflector::camelize(Inflector::variable($validatedAppName)), $io);
+        static::updateValueInFile($appConfig, "__APP_DESCRIPTION__", $validatedAppDescription, $io);
+
         return;
     }
 
