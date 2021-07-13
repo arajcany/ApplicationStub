@@ -7,4 +7,4 @@ Build a project from this repo:
 
 
 Build a project from the latest commit (at own risk):
-`composer create-project --prefer-dist arajcany/application-stub:dev-master <YourProjectName>`
+`composer create-project --prefer-source arajcany/application-stub:dev-master <YourProjectName>`
