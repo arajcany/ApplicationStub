@@ -40,8 +40,8 @@ class DevelopersController extends AppController
         $this->Errands = TableRegistry::getTableLocator()->get('Errands');
         $this->Workers = TableRegistry::getTableLocator()->get('Workers');
         $this->Messages = TableRegistry::getTableLocator()->get('Messages');
-        $this->loadModel('TrackLogins');
-        $this->loadModel('TrackHits');
+        $this->TrackLogins = TableRegistry::getTableLocator()->get('TrackLogins');
+        $this->TrackHits = TableRegistry::getTableLocator()->get('TrackHits');
     }
 
 
