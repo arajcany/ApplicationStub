@@ -101,7 +101,11 @@ class Installer
 
         static::removeReferencesToApplicationStub($rootDir, $io);
 
-        Cache::write('first_run', true, 'quick_burn');
+        try {
+            Cache::write('first_run', true, 'quick_burn');
+        } catch (\Throwable $exception) {
+
+        }
     }
 
     /**
