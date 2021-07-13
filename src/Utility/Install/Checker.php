@@ -104,6 +104,18 @@ class Checker
         return $return;
     }
 
+    public function checkUrlSettings($settings){
+        //check basic network connectivity
+        $isConn = NetworkConnection::checkUrlConnection($settings['url']);
+        if (!$isConn) {
+            $message = __("Cannot read from the URL path {0}", $settings['url']);
+            $this->addToMessages(['message' => $message, 'key' => 'checkUncRepoSettings', 'element' => 'error']);
+            return false;
+        }
+
+        return true;
+    }
+
     public function checkUncSettings($settings)
     {
         $rnd = sha1(mt_rand(1000, 9999));

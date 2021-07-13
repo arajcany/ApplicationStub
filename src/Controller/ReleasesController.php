@@ -101,7 +101,13 @@ class ReleasesController extends AppController
             'unc' => $remote_update_unc,
         ];
 
+        $urlSettings = [
+            'url' => $remote_update_url,
+        ];
+
         $Checker = new Checker();
+        $isUrl = $Checker->checkUrlSettings($urlSettings);
+        $this->set('isUrl', $isUrl);
         $isSFTP = $Checker->checkSftpSettings($sftpRoundTripSettings);
         $this->set('isSFTP', $isSFTP);
         $isUNC = $Checker->checkUncSettings($uncRoundTripSettings);

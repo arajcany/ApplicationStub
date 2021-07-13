@@ -18,6 +18,7 @@
  * @var string $remote_update_sftp_password
  * @var string $remote_update_sftp_timeout
  * @var string $remote_update_sftp_path
+ * @var bool $isUrl
  * @var bool $isSFTP
  * @var bool $isUNC
  * @var array $remoteUpdateDebug
@@ -55,7 +56,7 @@
 
                     <p>
                         <?php
-                        if ($isSFTP) {
+                        if ($isUrl) {
                             echo __("Connection to URL <strong>{0}</strong> established.", $remote_update_url);
                         } else {
                             echo __("Could not connect to URL <strong>{0}</strong>.", $remote_update_url);
@@ -66,7 +67,7 @@
                     <p>
                         <?php
                         if ($isSFTP) {
-                            echo __("Connection to SFTP <strong>{0}@{1}:{2}</strong> established.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
+                            echo __("Round trip connection to SFTP <strong>{0}@{1}:{2}</strong> established.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
                         } else {
                             echo __("Could not connect to SFTP <strong>{0}@{1}:{2}</strong>.", $remote_update_sftp_username, $remote_update_sftp_host, $remote_update_sftp_port);
                         }
@@ -76,7 +77,7 @@
                     <p>
                         <?php
                         if ($isUNC) {
-                            echo __("Connection to UNC path <strong>{0}</strong> established.", $remote_update_unc);
+                            echo __("Round trip connection to UNC path <strong>{0}</strong> established.", $remote_update_unc);
                         } else {
                             echo __("Could not connect to UNC path <strong>{0}</strong>.", $remote_update_unc);
                         }
