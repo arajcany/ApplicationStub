@@ -216,8 +216,18 @@ class AppController extends Controller
             }
         }
 
-        $version = file_get_contents(CONFIG . 'version.json');
-        $version = json_decode($version, JSON_OBJECT_AS_ARRAY);
+        if (is_file(CONFIG . 'version.json')) {
+            $version = file_get_contents(CONFIG . 'version.json');
+            $version = json_decode($version, JSON_OBJECT_AS_ARRAY);
+        } else {
+            $version = [
+                "name" => "ApplicationStub",
+                "tag" => "0.0.0",
+                "desc" => "",
+                "codename" => ""
+            ];
+        }
+
         $this->set('version', $version);
 
     }
