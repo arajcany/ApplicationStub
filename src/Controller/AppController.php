@@ -221,7 +221,7 @@ class AppController extends Controller
             $version = json_decode($version, JSON_OBJECT_AS_ARRAY);
         } else {
             $version = [
-                "name" => "ApplicationStub",
+                "name" => APP_NAME,
                 "tag" => "0.0.0",
                 "desc" => "",
                 "codename" => ""
