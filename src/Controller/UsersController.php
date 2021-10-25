@@ -177,23 +177,30 @@ class UsersController extends AppController
 
                 $username = $this->request->getData('username');
                 $this->response = $this->response->withType('json');
-                $this->response = $this->response->withStringBody(json_encode(true));
+
+                $user = $this->Users->find('all')->where(['username' => $username])->first();
+                if ($user) {
+                    //insert warm-up routines here
+                    $this->response = $this->response->withStringBody(json_encode(true));
+                } else {
+                    $this->response = $this->response->withStringBody(json_encode(false));
+                }
+
                 return $this->response;
             } elseif ($this->request->getData('page_load')) {
                 //do stuff here on the page load
+                $returnData = [];
 
+                //determine if to expose the 'first-run' link
                 $userCount = $this->Users->find('all')->where(['username' => 'SuperAdmin', 'password' => 'secret',])->count();
-
                 if ($userCount > 0) {
                     Cache::write('first_run', true, 'quick_burn');
                     $url = Router::url(['controller' => 'installers', 'action' => 'configure'], true);
-                    $data = ['redirect' => $url];
-                } else {
-                    $data = [];
+                    $returnData['redirect'] = $url;
                 }
 
                 $this->response = $this->response->withType('json');
-                $this->response = $this->response->withStringBody(json_encode($data));
+                $this->response = $this->response->withStringBody(json_encode($returnData));
                 return $this->response;
             } else {
                 $this->response = $this->response->withType('json');

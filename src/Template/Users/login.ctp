@@ -89,11 +89,14 @@ $targetUrl = Router::url(['controller' => 'users', 'action' => 'pre-login'], tru
 ?>
 <script>
     $(document).ready(function () {
-        var usernameField;
+        var usernameField = $("input[name*='username']");
         var usernameValue;
         var usernameFound = false;
-        $("input[name*='username']").keyup(function () {
-            $("input[name*='email']").val(this.value);
+
+        var emailField = $("input[name*='email']");
+
+        usernameField.keyup(function () {
+            emailField.val(this.value);
         }).change(function () {
             if (usernameFound === false) {
                 runUser();
@@ -134,6 +137,7 @@ $targetUrl = Router::url(['controller' => 'users', 'action' => 'pre-login'], tru
 
         function runUser() {
             usernameValue = usernameField.val();
+            console.log(usernameValue);
 
             var targetUrl = "<?= $targetUrl?>";
             var formData = new FormData();
