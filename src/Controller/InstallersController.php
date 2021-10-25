@@ -6,6 +6,7 @@ use App\Controller\Component\BackgroundServicesComponent;
 use App\Model\Entity\User;
 use App\Utility\Install\VersionControl;
 use arajcany\ToolBox\Utility\Security\Security;
+use arajcany\ToolBox\Utility\TextFormatter;
 use arajcany\ToolBox\Utility\ZipMaker;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -163,8 +164,14 @@ class InstallersController extends AppController
     public function updates()
     {
         $hash = $this->Version->_getOnlineVersionHistoryHash();
-        $hash = array_reverse($hash);
+        $hash = @array_reverse($hash);
         $this->set('versions', $hash);
+
+        $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
+        $this->set('remote_update_url', $remote_update_url);
+
+        $settingRemoteUpdateUrl = $this->Settings->find('all')->where(['property_key' => 'remote_update_url'])->first();
+        $this->set('remote_update_url_id', $settingRemoteUpdateUrl->id);
 
         $this->set('currentVersion', $this->Version->getCurrentVersionTag());
 

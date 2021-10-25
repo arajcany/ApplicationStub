@@ -107,8 +107,7 @@ class ReleasesCommand extends Command
         $this->BuildTasks->setArgs($args);
         $this->BuildTasks->setIo($io);
 
-        $remote_update_url = $this->Settings->findByPropertyKey('remote_update_url')->first();
-        $remote_update_url = TextFormatter::makeEndsWith($remote_update_url['property_value'], "/");
+        $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
 
         $remote_update_unc = $this->InternalOptions->getOption('remote_update_unc');
         $remote_update_sftp_host = $this->InternalOptions->getOption('remote_update_sftp_host');

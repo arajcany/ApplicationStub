@@ -106,7 +106,7 @@ class VersionControl
 
     /**
      * Return the contents of version_history.json in array format.
-     * If version_history.json doe not exist, default is created and returned.
+     * If version_history.json does not exist, default is created and returned.
      *
      * @return array
      */
@@ -237,8 +237,15 @@ class VersionControl
     public function _getOnlineVersionHistoryHash()
     {
 
-        $remote_update_url = $this->Settings->getSetting('remote_update_url');
-        $versionHistoryHash = @file_get_contents($remote_update_url . "version_history_hash.txt");
+        $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
+
+        $arrContextOptions = [
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false,
+            ],
+        ];
+        $versionHistoryHash = @file_get_contents($remote_update_url . "version_history_hash.txt", false, stream_context_create($arrContextOptions));
 
         if ($versionHistoryHash) {
             $versionHistoryHash = \arajcany\ToolBox\Utility\Security\Security::decrypt64Url($versionHistoryHash);
@@ -267,7 +274,7 @@ class VersionControl
         }
 
         //publish the hash
-        $versionHistoryHash = $this->_getLocalVersionHistoryHash();
+        $versionHistoryHash = $this->getVersionHistoryHashtxt();
         if (strlen($versionHistoryHash) > 0) {
             $result = $sftp->put('versionHistory' . APP_NAME . '.hash', $versionHistoryHash);
             if ($result == 1) {

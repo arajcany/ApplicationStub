@@ -4,6 +4,8 @@
  *
  * @var array $versions
  * @var string $currentVersion
+ * @var string $remote_update_url
+ * @var int $remote_update_url_id
  */
 ?>
 
@@ -22,6 +24,9 @@ if ($versions == false) {
         <div class="col-lg-12 installers update">
             <?php
             echo __("Sorry, something went wrong with the Update List. Please try again later.");
+
+            echo __("Edit Update URL ");
+            echo $this->Html->link($remote_update_url, ['controller' => 'settings', 'action' => 'edit', $remote_update_url_id]);
             return;
             ?>
         </div>
@@ -36,8 +41,23 @@ if ($versions == false) {
             <div class="card">
                 <div class="card-header">
                     <i class="fa fa-align-justify"></i> <?= __('Published Updates') ?>
+
                 </div>
                 <div class="card-body">
+                    <p>
+                        Update URL
+                        <strong>
+                            <?php
+                            echo __("{0}", $remote_update_url);
+                            ?>
+                        </strong>
+
+                        <small>
+                            <?php
+                            echo $this->Html->link('Edit', ['controller' => 'settings', 'action' => 'edit', $remote_update_url_id]);
+                            ?>
+                        </small>
+                    </p>
 
                     <table class="table table-bordered table-striped table-sm">
                         <thead>
