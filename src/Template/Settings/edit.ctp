@@ -3,6 +3,9 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Setting $setting
  */
+
+use Cake\I18n\FrozenTime;
+
 ?>
 <div class="row">
     <div class="col-12 ml-auto mr-auto">
@@ -67,13 +70,14 @@
 
                 echo $this->Form->hidden('property_value', ['value' => '']);
                 echo $this->Form->control('property_value', array_merge($defaultOptions, $opts));
+                echo $this->Form->hidden('forceRefererRedirect', ['value' => $this->request->referer(false)]);
                 ?>
             </fieldset>
             <?php
             $options = [
                 'class' => 'btn btn-secondary float-left'
             ];
-            echo $this->Html->link(__('Back'), $this->request->referer(), $options);
+            echo $this->Html->link(__('Back'), $this->request->referer(false), $options);
 
             $options = [
                 'class' => 'btn btn-primary float-right'

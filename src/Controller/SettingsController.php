@@ -66,6 +66,9 @@ class SettingsController extends AppController
                 //update Configure
                 $this->Settings->saveSettingsToConfigure(false);
 
+                if (isset($dataToSave['forceRefererRedirect']) && strlen($dataToSave['forceRefererRedirect']) > 10) {
+                    return $this->redirect($dataToSave['forceRefererRedirect']);
+                }
                 return $this->redirect(['action' => 'index']);
             }
             $this->Flash->error(__('The setting could not be saved. Please, try again.'));
