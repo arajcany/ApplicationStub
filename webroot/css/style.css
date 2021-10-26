@@ -30,11 +30,11 @@ header {
 }
 
 header .header-title {
-    padding-left:80px
+    padding-left: 80px
 }
 
 legend {
-    color:#15848F;
+    color: #15848F;
 }
 
 .row {
@@ -42,14 +42,14 @@ legend {
 }
 
 .actions.columns {
-    margin-top:1rem;
+    margin-top: 1rem;
     border-left: 5px solid #15848F;
     padding-left: 15px;
     padding: 32px 20px;
 }
 
 .actions.columns h3 {
-    color:#15848F;
+    color: #15848F;
 }
 
 .related table {
@@ -64,9 +64,9 @@ legend {
 
 .header-help {
     float: right;
-    margin-right:2rem;
+    margin-right: 2rem;
     margin-top: -80px;
-    font-size:16px;
+    font-size: 16px;
 }
 
 .header-help span {
@@ -88,7 +88,7 @@ legend {
 }
 
 ul.pagination li a {
-    color: rgba(0, 0 ,0 , 0.54);
+    color: rgba(0, 0, 0, 0.54);
 }
 
 ul.pagination li.active a {
@@ -97,6 +97,7 @@ ul.pagination li.active a {
     font-weight: bold;
     cursor: default;
 }
+
 ul.pagination .disabled:hover a {
     background: none;
 }
@@ -112,12 +113,13 @@ ul.pagination .disabled:hover a {
 
 .paginator p {
     text-align: right;
-    color: rgba(0, 0 ,0 , 0.54);
+    color: rgba(0, 0, 0, 0.54);
 }
 
 .asc:after {
     content: " \2193";
 }
+
 .desc:after {
     content: " \2191";
 }
@@ -136,15 +138,17 @@ ul.pagination .disabled:hover a {
 .required > label {
     font-weight: bold;
 }
+
 .required > label:after {
     content: ' *';
     color: #C3232D;
 }
 
 select[multiple] {
-    min-height:150px;
+    min-height: 150px;
     background: none;
 }
+
 input[type=checkbox],
 input[type=radio] {
     margin-right: 0.5em;
@@ -170,7 +174,7 @@ input[type=radio] {
 .view .columns.strings {
     border-radius: 3px;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.24);
-    margin-right:0.7rem;
+    margin-right: 0.7rem;
 }
 
 .view .numbers {
@@ -184,15 +188,15 @@ input[type=radio] {
 .view .columns.dates {
     border-radius: 3px;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.24);
-    margin-right:0.7rem;
-    background-color:#DCE47E;
+    margin-right: 0.7rem;
+    background-color: #DCE47E;
     color: #fff;
 }
 
 .view .columns.booleans {
     border-radius: 3px;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.24);
-    margin-right:0.7rem;
+    margin-right: 0.7rem;
     background-color: #8D6E65;
     color: #fff;
 }
@@ -200,15 +204,17 @@ input[type=radio] {
 .view .strings p {
     border-bottom: 1px solid #eee;
 }
+
 .view .numbers .subheader, .view .dates .subheader {
-    color:#747474;
+    color: #747474;
 }
+
 .view .booleans .subheader {
     color: #E9E9E9
 }
 
 .view .texts .columns {
-    margin-top:1.2rem;
+    margin-top: 1.2rem;
     border-bottom: 1px solid #eee;
 }
 
@@ -244,17 +250,17 @@ pre {
     background: none repeat scroll 0% 0% #FFF;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.24);
     margin: 15px 0px;
-    color: rgba(0, 0 ,0 , 0.74);
-    padding:5px;
+    color: rgba(0, 0, 0, 0.74);
+    padding: 5px;
 }
 
 .cake-error .cake-stack-trace {
-    margin-top:10px;
+    margin-top: 10px;
 }
 
 .cake-stack-trace code {
     background: inherit;
-    border:0;
+    border: 0;
 }
 
 .cake-code-dump .code-highlight {
@@ -264,12 +270,12 @@ pre {
 
 .cake-error a,
 .cake-error a:hover {
-    color:#fff;
+    color: #fff;
     text-decoration: underline;
 }
 
 .checks {
-    padding:30px;
+    padding: 30px;
     color: #626262;
     background-color: #B7E3EC;
     border-radius: 3px;
@@ -292,6 +298,7 @@ pre {
 .checks .problem {
     margin-left: 10px;
 }
+
 .checks .success:before,
 .checks .problem:before {
     line-height: 0px;
@@ -322,7 +329,7 @@ pre {
     background: #01545b;
 }
 
-.top-bar.expanded, .top-bar,.top-bar-section ul li,.top-bar-section li:not(.has-form) a:not(.button) {
+.top-bar.expanded, .top-bar, .top-bar-section ul li, .top-bar-section li:not(.has-form) a:not(.button) {
     background: #116d76;
 }
 
@@ -453,6 +460,7 @@ div.message.error:before {
     color: #C3232D;
     content: "x";
 }
+
 div.message.hidden {
     height: 0;
 }
@@ -490,7 +498,8 @@ div.message.hidden {
     margin-bottom: -99999px;
     padding-bottom: 99999px;
 }
-@media(max-width: 640px) {
+
+@media (max-width: 640px) {
     #actions-sidebar {
         padding-bottom: 2rem;
         margin-bottom: 0;

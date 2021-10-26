@@ -47,20 +47,9 @@ class SettingsController extends AppController
         }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $dataToSave = $this->request->getData();
+            $saveResult = $this->Settings->setSetting($setting, $this->request->getData()['property_value']);
 
-            if ($setting->html_select_type == 'multiple') {
-                if (is_array($dataToSave['property_value'])) {
-                    $dataToSave['property_value'] = implode(',', $dataToSave['property_value']);
-                }
-            }
-
-            if ($setting->is_masked == true) {
-                $dataToSave['property_value'] = Security::encrypt64($dataToSave['property_value']);
-            }
-
-            $setting = $this->Settings->patchEntity($setting, $dataToSave);
-            if ($this->Settings->save($setting)) {
+            if ($saveResult) {
                 $this->Flash->success(__('The setting has been saved.'));
 
                 //update Configure
@@ -75,6 +64,56 @@ class SettingsController extends AppController
         }
         $this->set(compact('setting'));
         $this->set('_serialize', ['setting']);
+
+        return null;
+    }
+
+    /**
+     * Edit gorup method
+     *
+     * @param string|null $groupName
+     * @return \Cake\Http\Response|null Redirects on successful edit, renders view otherwise.
+     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+     */
+    public function editGroup($groupName = null)
+    {
+        if ($groupName === null) {
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $groupName = strtolower($groupName);
+
+        $settings = $this->Settings->find('all')->where(['property_group' => $groupName]);
+
+        if ($settings->count() <= 0) {
+            $this->Flash->error(__('Sorry, no settings found for the {0} group.', $groupName));
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $this->viewBuilder()->setTemplate('edit_group_' . $groupName);
+        $this->set('settings', $settings);
+
+        if ($this->request->is(['patch', 'post', 'put'])) {
+            $dataToSave = $this->request->getData();
+
+            $saveResult = false;
+            if ($groupName === 'repository') {
+                $saveResult = $this->Settings->setRepositoryDetails($dataToSave);
+            }
+
+            if ($saveResult) {
+                $this->Flash->success(__('The {0} settings has been saved.', $groupName));
+
+                //update Configure
+                $this->Settings->saveSettingsToConfigure(false);
+
+                if (isset($dataToSave['forceRefererRedirect']) && strlen($dataToSave['forceRefererRedirect']) > 10) {
+                    return $this->redirect($dataToSave['forceRefererRedirect']);
+                }
+                return $this->redirect(['action' => 'index']);
+            }
+            $this->Flash->error(__('The {0} settings could not be saved. Please, try again.', $groupName));
+        }
 
         return null;
     }

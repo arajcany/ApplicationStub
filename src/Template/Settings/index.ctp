@@ -4,19 +4,25 @@
  * @var \App\Model\Entity\Setting[]|\Cake\Collection\CollectionInterface $settings
  */
 ?>
-<div class="row">
-    <div class="col-2 d-none">
-        <nav class="large-3 medium-4 columns" id="actions-sidebar">
-            <ul class="side-nav">
-                <li class="heading"><?= __('Actions') ?></li>
-                <li><?= $this->Html->link(__('New Setting'), ['action' => 'add']) ?></li>
-            </ul>
-        </nav>
-    </div>
 
+<div class="row">
     <div class="col-12 ml-auto mr-auto">
         <div class="settings index large-9 medium-8 columns content">
             <h3><?= __('Settings') ?></h3>
+
+            <div class="row">
+                <div class="col-12 ml-auto mr-auto">
+                    Edit by Group:
+                    <?php
+                    $q = $this->request->getQuery();
+                    $opts = [
+                        'class' => '',
+                    ];
+                    echo $this->Html->link(__('Repository'), ['action' => 'edit-group', 'repository', '?' => $q], $opts)
+                    ?>
+                </div>
+            </div>
+
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>

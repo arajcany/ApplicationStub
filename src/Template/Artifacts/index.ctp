@@ -20,6 +20,19 @@
     <div class="col-12 ml-auto mr-auto">
         <div class="artifacts index large-9 medium-8 columns content">
             <h3><?= __('Artifacts') ?></h3>
+            <div class="row">
+                <div class="col-12 ml-auto mr-auto">
+                    Artifacts are stored in the Repository.
+                    <?php
+                    $q = $this->request->getQuery();
+                    $opts = [
+                        'class' => '',
+                    ];
+                    echo $this->Html->link(__('Edit Settings'), ['controller' => 'settings', 'action' => 'edit-group', 'repository', '?' => $q], $opts)
+                    ?>.
+                </div>
+            </div>
+
             <table class="table table-sm table-striped table-bordered">
                 <thead>
                 <tr>
