@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Utility\Install\Checker;
 use arajcany\ToolBox\Utility\Security\Security;
+use arajcany\ToolBox\Utility\TextFormatter;
 
 /**
  * Settings Controller
@@ -69,7 +71,8 @@ class SettingsController extends AppController
     }
 
     /**
-     * Edit gorup method
+     * Edit group method.
+     * Each group needs to be individually set due to nuances within the group.
      *
      * @param string|null $groupName
      * @return \Cake\Http\Response|null Redirects on successful edit, renders view otherwise.
@@ -92,6 +95,10 @@ class SettingsController extends AppController
 
         $this->viewBuilder()->setTemplate('edit_group_' . $groupName);
         $this->set('settings', $settings);
+
+        if ($groupName === 'repository') {
+            $this->_varsRepository();
+        }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataToSave = $this->request->getData();
@@ -138,5 +145,51 @@ class SettingsController extends AppController
         }
 
         $this->set('seeds', $seeds);
+    }
+
+    private function _varsRepository()
+    {
+        $repo_url = TextFormatter::makeEndsWith($this->Settings->getSetting('repo_url'), "/");
+        $this->set(compact('repo_url'));
+
+        $repo_unc = $this->Settings->getSetting('repo_unc');
+        $repo_sftp_host = $this->Settings->getSetting('repo_sftp_host');
+        $repo_sftp_port = $this->Settings->getSetting('repo_sftp_port');
+        $repo_sftp_username = $this->Settings->getSetting('repo_sftp_username');
+        $repo_sftp_password = $this->Settings->getSetting('repo_sftp_password');
+        $repo_sftp_timeout = $this->Settings->getSetting('repo_sftp_timeout');
+        $repo_sftp_path = $this->Settings->getSetting('repo_sftp_path');
+        $this->set(compact('repo_unc'));
+        $this->set(compact('repo_sftp_host', 'repo_sftp_port', 'repo_sftp_username'));
+        $this->set(compact('repo_sftp_password', 'repo_sftp_timeout', 'repo_sftp_path'));
+
+        $sftpRoundTripSettings = [
+            'url' => $repo_url,
+            'host' => $repo_sftp_host,
+            'port' => $repo_sftp_port,
+            'username' => $repo_sftp_username,
+            'password' => $repo_sftp_password,
+            'timeout' => $repo_sftp_timeout,
+            'path' => $repo_sftp_path,
+        ];
+
+        $uncRoundTripSettings = [
+            'url' => $repo_url,
+            'unc' => $repo_unc,
+        ];
+
+        $urlSettings = [
+            'url' => $repo_url,
+        ];
+
+        $Checker = new Checker();
+        $isUrl = $Checker->checkUrlSettings($urlSettings);
+        $this->set('isUrl', $isUrl);
+        $isSFTP = $Checker->checkSftpSettings($sftpRoundTripSettings);
+        $this->set('isSFTP', $isSFTP);
+        $isUNC = $Checker->checkUncSettings($uncRoundTripSettings);
+        $this->set('isUNC', $isUNC);
+
+        $this->set('remoteUpdateDebug', $Checker->getMessages());
     }
 }

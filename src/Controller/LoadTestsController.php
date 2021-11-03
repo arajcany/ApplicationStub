@@ -5,9 +5,12 @@ namespace App\Controller;
 use App\Controller\AppController;
 use App\Controller\Component\LoadTestsUrlMakerComponent;
 use App\Model\Table\ArtifactsTable;
+use App\Model\Table\SettingsTable;
+use arajcany\ToolBox\Utility\TextFormatter;
 use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Http\Response;
+use Cake\I18n\Number;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Cake\Utility\Security;
@@ -17,6 +20,7 @@ use Intervention\Image\ImageManager;
 /**
  * LoadTests Controller
  * @property LoadTestsUrlMakerComponent $LoadTestsUrlMaker
+ * @property SettingsTable $Settings
  * @property ArtifactsTable $Artifacts
  *
  */
@@ -182,6 +186,92 @@ class LoadTestsController extends AppController
         $this->set('url', $url);
         $this->set('finalUrls', $finalUrls);
         $this->set('delayMatrix', $delayMatrix);
+    }
+
+    /**
+     * Index method
+     *
+     * @param null $timespan
+     * @param null $hits
+     * @param null $url
+     * @return void
+     */
+    public function repositoryPerformance($cycles = null, $sizeMb = null)
+    {
+        //safety limiting
+        $cyclesMax = 500;
+        $sizeMbMax = 10;
+        $cycles = min($cycles, $cyclesMax);
+        $sizeMb = min($sizeMb, $sizeMbMax);
+
+        $cyclesMin = 10;
+        $sizeMbMin = 0.1;
+        $cycles = max($cycles, $cyclesMin);
+        $sizeMb = max($sizeMb, $sizeMbMin);
+
+        $this->set('cycles', $cycles);
+        $this->set('sizeMb', $sizeMb);
+        $this->set('localPerformance', 0);
+        $this->set('uncPerformance', 0);
+
+
+        if ($this->request->is('post')) {
+            $cycles = $this->request->getData('cycles');
+            $sizeMb = $this->request->getData('sizeMb');
+            $this->set('cycles', $cycles);
+            $this->set('sizeMb', $sizeMb);
+
+            $cycleTicker = range(1, $cycles);
+
+            $basePaths = [
+                'appTmpPath' => TMP,
+                'uncRepo' => TextFormatter::makeEndsWith($this->Settings->getSetting('repo_unc'), '\\'),
+            ];
+            $performance = [];
+            foreach ($basePaths as $name => $path) {
+                $time_total_w = 0;
+                $time_total_r = 0;
+                $byteCounter = 0;
+                foreach ($cycleTicker as $cycle) {
+                    $filename = $path . sha1(Security::randomBytes(1024)) . ".txt";
+                    $sizeBytes = 1024 * 1024 * $sizeMb;
+                    $data = Security::randomBytes($sizeBytes);
+
+                    //write
+                    $time_start_w = microtime(true);
+                    file_put_contents($filename, $data);
+                    $time_end_w = microtime(true);
+
+                    //read
+                    $time_start_r = microtime(true);
+                    file_put_contents($filename, $data);
+                    $time_end_r = microtime(true);
+
+                    //delete
+                    unlink($filename);
+
+                    $time_total_w += ($time_end_w - $time_start_w);
+                    $time_total_r += ($time_end_r - $time_start_r);
+
+                    $byteCounter = $byteCounter + $sizeBytes;
+                }
+                $performance[$name] = [
+                    'path' => $path,
+                    'size_bytes' => $sizeBytes,
+                    'cycles' => $cycles,
+                    'total_time_write' => $time_total_w,
+                    'total_time_read' => $time_total_r,
+                    'size_bytes_total' => $byteCounter,
+                    'write_speed_bytes_per_second' => $byteCounter / $time_total_w,
+                    'write_speed_human' => Number::toReadableSize($byteCounter / $time_total_w) . "/sec",
+                    'read_speed_bytes_per_second' => $byteCounter / $time_total_r,
+                    'read_speed_human' => Number::toReadableSize($byteCounter / $time_total_r) . "/sec",
+                ];
+            }
+
+            $this->set('performance', $performance);
+
+        }
     }
 
 

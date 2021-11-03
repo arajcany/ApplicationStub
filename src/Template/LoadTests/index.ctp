@@ -64,6 +64,20 @@ use Cake\ORM\Query;
                         ?>
                         Call almost any URL (internal or external) and insert random numbers and words. Can be used to test image rendering performance.
                     </p>
+
+                    <p>
+                        <?php
+                        $options = [
+                            'class' => "btn btn-primary"
+                        ];
+                        echo $this->Html->link(
+                            __('Repository Performance'),
+                            ['action' => 'repository-performance',],
+                            $options
+                        )
+                        ?>
+                        Test the speed of writing to the Repository via UNC vs the local TMP path
+                    </p>
                 </div>
             </div>
         </div>

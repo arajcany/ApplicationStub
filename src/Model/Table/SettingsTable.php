@@ -128,7 +128,7 @@ class SettingsTable extends AppTable
         //if Cache has expired read from DB and push back to Cache for next time
         if (!$settings) {
             $settings = $this->find('all')
-                ->select(['id', 'property_key', 'property_value', 'property_group'])
+                ->select(['id', 'property_key', 'property_value', 'property_group', 'is_masked'])
                 ->orderAsc('property_group')
                 ->orderAsc('id')
                 ->toArray();
@@ -141,6 +141,7 @@ class SettingsTable extends AppTable
 
         $settingsList = [];
         $settingsGrouped = [];
+        $settingsEncrypted = [];
 
         /**
          * @var \App\Model\Entity\Setting $setting
@@ -162,10 +163,16 @@ class SettingsTable extends AppTable
 
             $settingsList[$setting->property_key] = $value;
             $settingsGrouped[$setting->property_group][$setting->property_key] = $value;
+            if ($setting->is_masked == true) {
+                $settingsEncrypted[$setting->property_key] = true;
+            } else {
+                $settingsEncrypted[$setting->property_key] = false;
+            }
         }
 
         Configure::write('Settings', $settingsList);
         Configure::write('SettingsGrouped', $settingsGrouped);
+        Configure::write('SettingsMasked', $settingsEncrypted);
     }
 
     /**
@@ -186,11 +193,20 @@ class SettingsTable extends AppTable
      */
     public function getSetting($propertyKey, $autoDecrypt = true)
     {
+        /**
+         * @var Setting $setting
+         */
+
         //try to get the value from Configure first
         $configValue = Configure::read("Settings.{$propertyKey}");
+        $configIsMasked = Configure::read("SettingsMasked.{$propertyKey}");
         if ($configValue !== null) {
             if ($autoDecrypt == true) {
-                $configValue = Security::decrypt64($configValue);
+                if ($configIsMasked == true) {
+                    if (strlen($configValue) > 0) {
+                        $configValue = Security::decrypt64($configValue);
+                    }
+                }
             }
             return $configValue;
         }
@@ -199,30 +215,39 @@ class SettingsTable extends AppTable
         $this->saveSettingsToConfigure(false);
 
         //fallback to reading from DB
-        $value = $this->findByPropertyKey($propertyKey)->toArray();
+        $setting = $this->findByPropertyKey($propertyKey)->first();
+        debug($setting);
 
-        if (isset($value[0]->property_value)) {
-            $value = $value[0]->property_value;
+        if (!$setting) {
+            return false;
+        }
+
+        if (isset($setting->property_value)) {
+            $configValue = $setting->property_value;
             if ($autoDecrypt == true) {
-                $value = Security::decrypt64($value);
+                if ($setting->is_masked == true) {
+                    if (strlen($configValue) > 0) {
+                        $configValue = Security::decrypt64($configValue);
+                    }
+                }
             }
         } else {
-            $value = false;
+            $configValue = false;
         }
 
-        if ($value === 'false') {
-            $value = false;
+        if ($configValue === 'false') {
+            $configValue = false;
         }
 
-        if ($value === 'true') {
-            $value = true;
+        if ($configValue === 'true') {
+            $configValue = true;
         }
 
-        if ($value === 'null') {
-            $value = null;
+        if ($configValue === 'null') {
+            $configValue = null;
         }
 
-        return $value;
+        return $configValue;
     }
 
     /**

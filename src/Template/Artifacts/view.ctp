@@ -20,6 +20,10 @@
     <h3><?= h($artifact->name) ?></h3>
     <table class="vertical-table table-bordered">
         <tr>
+            <th scope="row"><?= __('ID') ?></th>
+            <td><?= $this->Number->format($artifact->id) ?></td>
+        </tr>
+        <tr>
             <th scope="row"><?= __('Name') ?></th>
             <td><?= h($artifact->name) ?></td>
         </tr>
@@ -38,26 +42,14 @@
         <tr>
             <th scope="row"><?= __('URL') ?></th>
             <td>
-                <?= h($artifact->url) ?>
-                <br>
                 <?= h($artifact->full_url) ?>
             </td>
         </tr>
         <tr>
             <th scope="row"><?= __('UNC') ?></th>
             <td>
-                <?= h($artifact->unc) ?>
-                <br>
                 <?= h($artifact->full_unc) ?>
             </td>
-        </tr>
-        <tr>
-            <th scope="row"><?= __('Artifact Metadata') ?></th>
-            <td><?= $artifact->has('artifact_metadata') ? $this->Html->link($artifact->artifact_metadata->id, ['controller' => 'ArtifactMetadata', 'action' => 'view', $artifact->artifact_metadata->id]) : '' ?></td>
-        </tr>
-        <tr>
-            <th scope="row"><?= __('ID') ?></th>
-            <td><?= $this->Number->format($artifact->id) ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Size') ?></th>
@@ -85,7 +77,9 @@
         </tr>
         <tr>
             <th scope="row"><?= __('Preview') ?></th>
-            <td><?= $this->Html->image($artifact->full_url) ?></td>
+            <td>
+                <div class="artifact-preview"><?= $this->Html->image($artifact->full_url) ?></div>
+            </td>
         </tr>
     </table>
 </div>
