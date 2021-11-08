@@ -137,7 +137,6 @@ $targetUrl = Router::url(['controller' => 'users', 'action' => 'pre-login'], tru
 
         function runUser() {
             usernameValue = usernameField.val();
-            console.log(usernameValue);
 
             var targetUrl = "<?= $targetUrl?>";
             var formData = new FormData();
