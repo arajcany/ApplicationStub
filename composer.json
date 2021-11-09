@@ -12,7 +12,7 @@
         "ext-zip": "*",
         "arajcany/pre-press-tricks": "*",
         "arajcany/tool-box": "*",
-        "cakephp/cakephp": "3.9.3",
+        "cakephp/cakephp": "3.10.*",
         "cakephp/migrations": "@stable",
         "cakephp/plugin-installer": "^1.0",
         "dereuromark/cakephp-tinyauth": "*",
