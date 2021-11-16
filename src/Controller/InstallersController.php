@@ -77,7 +77,7 @@ class InstallersController extends AppController
      * This Controller/Action is declared as 'allowed' in auth_allow.ini, therefore it only contains the minimum
      * configuration options. The application will still need to be configured through the 'checks' action.
      * There is a safeguard against running this action once the initial configure is completed. If there is no error
-     * with the bare minimum configuration, this action will automatically redirect to the dashboard.
+     * with the bare minimum configuration, this action will automatically redirect to the login page.
      *
      * @return \Cake\Http\Response|null
      */

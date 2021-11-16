@@ -41,7 +41,7 @@ $user = $this->request->getSession()->read('Auth.User');
 
         </ul>
 
-        <?php if (isset($user) && $user) { ?>
+        <?php if (isset($user) && $user && isset($this->AuthUser)) { ?>
             <?php if ($this->AuthUser->hasRoles(['superadmin', 'admin'])) { ?>
                 <ul class="navbar-nav ml-auto">
 

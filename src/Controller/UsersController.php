@@ -150,7 +150,7 @@ class UsersController extends AppController
             if ($this->Users->save($user)) {
 
                 $this->Flash->success(__('Your profile has been updated.'));
-                return $this->redirect(['controller' => 'dashboard', 'action' => 'index']);
+                return $this->redirect("/");
             } else {
                 $this->Flash->error(__('Your profile could not be updated. Please, try again.'));
             }
