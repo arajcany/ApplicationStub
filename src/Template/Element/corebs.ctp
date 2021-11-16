@@ -11,6 +11,11 @@ echo $this->Html->css('/webroot/vendors/bootstrap-4.4.0/css/bootstrap-grid.css')
 echo $this->Html->css('/webroot/vendors/bootstrap-4.4.0/css/bootstrap-reboot.css');
 ?>
 
+<!-- Font Awesome CSS -->
+<?php
+echo $this->Html->css('/webroot/vendors/fontawesome/css/all.css');
+?>
+
 <!-- Custom styles for this template -->
 <?php
 echo $this->Html->css('/webroot/vendors/bootstrap-ui/override.css');

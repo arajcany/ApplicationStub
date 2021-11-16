@@ -9,6 +9,11 @@
 echo $this->Html->script('/webroot/vendors/jquery-3.4.1/jquery-3.4.1.min.js');
 ?>
 
+<!-- Font Awesome -->
+<?php
+echo $this->Html->script('/webroot/vendors/fontawesome/js/all.js');
+?>
+
 <!-- Popper JS -->
 <?php
 echo $this->Html->script('/webroot/vendors/popperjs-1.16.0/popper.min.js');
