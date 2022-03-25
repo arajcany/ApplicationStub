@@ -61,9 +61,9 @@ class AppTable extends Table
     {
         $return = [
             'success' => $this->successAlerts,
-            'danger' => $this->successAlerts,
-            'warning' => $this->successAlerts,
-            'info' => $this->successAlerts,
+            'danger' => $this->dangerAlerts,
+            'warning' => $this->warningAlerts,
+            'info' => $this->infoAlerts,
         ];
 
         return $return;
@@ -76,9 +76,9 @@ class AppTable extends Table
     {
         return [
             'success' => $this->successAlerts,
-            'danger' => $this->successAlerts,
-            'warning' => $this->successAlerts,
-            'info' => $this->successAlerts,
+            'danger' => $this->dangerAlerts,
+            'warning' => $this->warningAlerts,
+            'info' => $this->infoAlerts,
         ];
     }
 

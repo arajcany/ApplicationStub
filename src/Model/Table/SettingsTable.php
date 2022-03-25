@@ -261,6 +261,9 @@ class SettingsTable extends AppTable
      */
     public function setSetting($propertyKeyOrEntity, $propertyValue, $autoEncrypt = true)
     {
+        //make sure the cache is clear of previous settings
+        $this->clearCache();
+
         /**
          * @var Setting $setting
          */

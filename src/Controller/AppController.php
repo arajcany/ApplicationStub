@@ -244,6 +244,14 @@ class AppController extends Controller
     {
         //http/s
         if ($type == 'secure') {
+            //catch AWS load balancers that are HTTPS but forward to an internal HTTP server
+            //https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-proto
+            if (isset($_SERVER['HTTP_X_FORWARDED_PORT']) && isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                if (intval($_SERVER['HTTP_X_FORWARDED_PORT']) === 443 && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+                    return null;
+                }
+            }
+
             if (!$this->request->is('ssl')) {
                 return $this->redirect('https://' . env('SERVER_NAME') . Router::url($this->request->getRequestTarget()));
             }

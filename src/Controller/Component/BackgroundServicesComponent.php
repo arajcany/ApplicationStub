@@ -68,10 +68,10 @@ class BackgroundServicesComponent extends Component
                 $counterPadded = str_pad($counter, 2, '0', STR_PAD_LEFT);
                 $serviceName = $appName . "_{$workerType}Worker_" . $counterPadded;
                 $serviceDescription = "{$workerType} Worker for " . APP_NAME;
-                $parameters = __("-f \"{0}cake.php\" BackgroundServices {2} -h {1}", $binDirectory, $serviceName, $workerTypeLowerCased);
+                $parameters = __("-f \"\"\"{0}cake.php\"\"\" BackgroundServices {2} -h {1}", $binDirectory, $serviceName, $workerTypeLowerCased);
                 $commands[] = __("\"{0}\" install \"{1}\" \"{2}\"", $nssm, $serviceName, $phpExe);
                 if (strlen($username) > 0 && strlen($password) > 0) {
-                    $commands[] = __("\"{0}\" set \"{1}\" ObjectName {2} {3}", $nssm, $serviceName, $username, $password);
+                    $commands[] = __("\"{0}\" set \"{1}\" ObjectName \"{2}\" \"{3}\"", $nssm, $serviceName, $username, $password);
                 }
                 $commands[] = __("\"{0}\" set \"{1}\" Application \"{2}\"", $nssm, $serviceName, $phpExe);
                 $commands[] = __("\"{0}\" set \"{1}\" AppDirectory \"{2}\"", $nssm, $serviceName, $phpLocation);
@@ -101,10 +101,10 @@ class BackgroundServicesComponent extends Component
             $delay = intval($offset * ($counter - 1));
             $serviceName = $appName . "_ArtifactsDeleter_" . $counterPadded;
             $serviceDescription = "Artifacts Cleanup for " . APP_NAME;
-            $parameters = __("-f \"{0}cake.php\" ArtifactsDeleter -d {1} -h {2}", $binDirectory, $delay, $serviceName);
+            $parameters = __("-f \"\"\"{0}cake.php\"\"\" ArtifactsDeleter -d {1} -h {2}", $binDirectory, $delay, $serviceName);
             $commands[] = __("\"{0}\" install \"{1}\" \"{2}\"", $nssm, $serviceName, $phpExe);
             if (strlen($username) > 0 && strlen($password) > 0) {
-                $commands[] = __("\"{0}\" set \"{1}\" ObjectName {2} {3}", $nssm, $serviceName, $username, $password);
+                $commands[] = __("\"{0}\" set \"{1}\" ObjectName \"{2}\" \"{3}\"", $nssm, $serviceName, $username, $password);
             }
             $commands[] = __("\"{0}\" set \"{1}\" Application \"{2}\"", $nssm, $serviceName, $phpExe);
             $commands[] = __("\"{0}\" set \"{1}\" AppDirectory \"{2}\"", $nssm, $serviceName, $phpLocation);

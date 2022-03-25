@@ -107,7 +107,7 @@ class Connection
                 ]
             ]);
             $urlAsTcp = "tcp://{$url_info['host']}:{$port}";
-            $streamResult = stream_socket_client($urlAsTcp, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $context);
+            $streamResult = @stream_socket_client($urlAsTcp, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $context);
         } catch (Exception $e) {
             $streamResult = false;
         }
