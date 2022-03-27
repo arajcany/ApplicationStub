@@ -73,7 +73,7 @@ class VersionControl
 
     /**
      * Return the contents of version.json in array format.
-     * If version.json doe not exist, default is created and returned.
+     * If version.json does not exist, default is created and returned.
      *
      * @return array
      */
@@ -106,7 +106,7 @@ class VersionControl
 
     /**
      * Return the contents of version_history.json in array format.
-     * If version_history.json does not exist, default is created and returned.
+     * If version_history.json doe not exist, default is created and returned.
      *
      * @return array
      */

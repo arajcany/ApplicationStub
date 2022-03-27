@@ -66,6 +66,30 @@ class Connection
 
 
     /**
+     * Check if you can write to and delete from a UNC path
+     *
+     * @param null $uncPathWithTrailingSlash
+     * @return bool
+     */
+    public static function checkUncConnection($uncPathWithTrailingSlash)
+    {
+        $rndFile = $uncPathWithTrailingSlash . mt_rand() . ".txt";
+        $contentToWrite = 'test';
+        $contentLength = strlen($contentToWrite);
+
+        $writeResult = @file_put_contents($rndFile, $contentToWrite);
+        $deleteResult = @unlink($rndFile);
+
+        if (($writeResult == $contentLength) && $deleteResult) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+
+    /**
      * Check if there is an Internet connection to http/https server
      * @param $url
      * @param int $timeout

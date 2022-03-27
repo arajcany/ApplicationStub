@@ -164,7 +164,12 @@ class HeartbeatsTable extends AppTable
      */
     public function _createHeartbeatOrPulse(array $options)
     {
-        $expiration = new FrozenTime('+ ' . Configure::read('Settings.audit_purge') . ' months');
+        $auditPurgeMonths = Configure::read('Settings.audit_purge');
+        if (empty($auditPurgeMonths) || $auditPurgeMonths <= 0) {
+            $auditPurgeMonths = 3;
+        }
+
+        $expiration = new FrozenTime('+ ' . $auditPurgeMonths . ' months');
 
         $defaultOptions = [
             'expiration' => $expiration,

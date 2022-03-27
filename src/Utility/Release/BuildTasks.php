@@ -228,6 +228,15 @@ class BuildTasks
             "bin\\BuildRelease.bat",
             "src\\Controller\\DevelopersController.php",
             "src\\Template\\Developers\\",
+            ".editorconfig",
+            ".gitattributes",
+            ".gitignore",
+            ".travis.yml",
+            "composer.json",
+            "composer.lock",
+            "phpunit.xml.dist",
+            "README.md",
+            "LICENSE",
         ];
 
         if (isset($options['gitIgnored'])) {
