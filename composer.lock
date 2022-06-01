@@ -4,11 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "708f0297421948b9d2d6f3a61ce60361",
+    "content-hash": "73c17e1d2094ebf53661b89db2ffb2a8",
     "packages": [
         {
             "name": "arajcany/pre-press-tricks",
-            "version": "dev-back",
+            "version": "1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/arajcany/PrePressTricks.git",
@@ -63,13 +63,13 @@
             ],
             "support": {
                 "issues": "https://github.com/arajcany/PrePressTricks/issues",
-                "source": "https://github.com/arajcany/PrePressTricks/tree/back"
+                "source": "https://github.com/arajcany/PrePressTricks/tree/1.1.1"
             },
             "time": "2022-05-31T05:57:56+00:00"
         },
         {
             "name": "arajcany/tool-box",
-            "version": "dev-back",
+            "version": "2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/arajcany/ToolBox.git",
@@ -116,7 +116,7 @@
             ],
             "support": {
                 "issues": "https://github.com/arajcany/ToolBox/issues",
-                "source": "https://github.com/arajcany/ToolBox/tree/back"
+                "source": "https://github.com/arajcany/ToolBox/tree/2.0.2"
             },
             "time": "2022-05-31T23:55:53+00:00"
         },
@@ -6553,8 +6553,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "arajcany/tool-box": 20,
-        "arajcany/pre-press-tricks": 20,
         "cakephp/migrations": 0,
         "psy/psysh": 0
     },
