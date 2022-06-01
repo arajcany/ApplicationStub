@@ -11,8 +11,8 @@ SET lib=%~dp0
 
 php "%lib%cake.php" Releases debug_off
 
-cmd /C composer install --no-dev --no-scripts
-cmd /C composer dump-autoload
+cmd /C composer install --no-dev --no-scripts --ignore-platform-reqs
+cmd /C composer dump-autoload --ignore-platform-reqs
 
 echo.
 
@@ -20,8 +20,8 @@ php "%lib%cake.php" Releases build
 
 echo.
 
-cmd /C composer install --no-scripts
-cmd /C composer dump-autoload
+cmd /C composer install --no-scripts --ignore-platform-reqs
+cmd /C composer dump-autoload --ignore-platform-reqs
 
 php "%lib%cake.php" Releases debug_on
 
