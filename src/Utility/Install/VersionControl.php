@@ -260,6 +260,27 @@ class VersionControl
         }
     }
 
+    /**
+     * Display the versionHistory.json file in encrypted format
+     *
+     * @return false|array
+     */
+    public function _getOnlineVersionHistoryHashForDebug()
+    {
+
+        $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
+
+        $arrContextOptions = [
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false,
+            ],
+        ];
+        $versionHistoryHash = @file_get_contents($remote_update_url . "version_history_hash.txt", false, stream_context_create($arrContextOptions));
+
+        return $versionHistoryHash;
+    }
+
 
     /**
      * Publish the version history hash to the sFTP site

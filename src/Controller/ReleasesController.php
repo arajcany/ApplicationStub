@@ -6,9 +6,12 @@ use App\Model\Table\InternalOptionsTable;
 use App\Utility\Install\VersionControl;
 use App\Utility\Release\BuildTasks;
 use App\Utility\Release\GitTasks;
+use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
+use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Utility\Text;
+use PharIo\Version\Version;
 use phpseclib\Net\SFTP;
 use App\Utility\Install\Checker;
 
@@ -114,6 +117,9 @@ class ReleasesController extends AppController
 
         $this->set('remoteUpdateDebug', $Checker->getMessages());
 
+        $VC = new VersionControl();
+        $this->set('onlineVersionHistoryHash', $VC->_getOnlineVersionHistoryHashForDebug());
+
         return null;
     }
 
@@ -186,6 +192,20 @@ class ReleasesController extends AppController
         $this->set('_serialize', ['remoteUpdateUrl']);
 
         return null;
+    }
+
+    public function republishVersionHistoryHash()
+    {
+        $VC = new VersionControl();
+        $versionHistoryHashData = $VC->getVersionHistoryHashtxt();
+
+        $remote_update_unc = Configure::read('InternalOptions.remote_update_unc');
+
+        if ($remote_update_unc) {
+            file_put_contents("{$remote_update_unc}version_history_hash.txt", $versionHistoryHashData);
+        }
+
+        return $this->redirect(['action' => 'index']);
     }
 
 

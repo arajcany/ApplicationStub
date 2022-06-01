@@ -7,7 +7,7 @@ use App\Model\Entity\User;
 use App\Utility\Install\VersionControl;
 use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
-use arajcany\ToolBox\Utility\ZipMaker;
+use arajcany\ToolBox\ZipPackager;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Database\Driver\Sqlite;
@@ -207,13 +207,26 @@ class InstallersController extends AppController
             $this->Flash->error(__('Sorry, invalid upgrade file.'));
             return $this->redirect(['action' => 'updates']);
         } else {
+            $arrContextOptions = [
+                "ssl" => [
+                    "verify_peer" => false,
+                    "verify_peer_name" => false,
+                ],
+            ];
+            $zipFileContents = file_get_contents($upgradeFile, false, stream_context_create($arrContextOptions));
+
+            if (!$zipFileContents) {
+                $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
+                $zipFileContents = file_get_contents($remote_update_url . pathinfo($upgradeFile, PATHINFO_BASENAME), false, stream_context_create($arrContextOptions));
+            }
+
             $zipFilePathName = TMP . pathinfo($upgradeFile, PATHINFO_BASENAME);
-            $zipFileContents = @file_get_contents($upgradeFile);
             if ($zipFileContents) {
                 $this->Flash->success(__('Downloaded the upgrade file.'));
                 file_put_contents($zipFilePathName, $zipFileContents);
             } else {
-                $this->Flash->error(__('Sorry, could not download the upgrade file.'));
+                $this->Flash->error(__('Sorry, could not download the upgrade file. {0}', $remote_update_url . pathinfo($upgradeFile, PATHINFO_BASENAME)));
+                $this->Flash->error(__('{0}', $zipFileContents));
                 return $this->redirect(['action' => 'updates']);
             }
         }
@@ -225,59 +238,28 @@ class InstallersController extends AppController
             $this->Flash->success(__('Stopped {0} Background Services.', $count));
         }
 
-        $zip = zip_open($zipFilePathName);
-        if ($zip) {
-            $countUpgraded = 0;
-            $countNotUpgraded = 0;
-            $countExtracted = 0;
-            $countNotExtracted = 0;
-            $safeList = [];
-            $notUpgradedList = [];
-            while ($zip_entry = zip_read($zip)) {
-                $currentFilenameInZip = zip_entry_name($zip_entry);
-                $currentFilenameInZipAsParts = explode("\\", $currentFilenameInZip);
-                $zipStartOfPath = $currentFilenameInZipAsParts[0] . "\\";
+        $zipPackager = new ZipPackager();
+        $result = $zipPackager->extractZip($zipFilePathName, $baseExtractDir, true);
 
-                if (zip_entry_open($zip, $zip_entry)) {
-                    $countExtracted++;
-                    $contents = zip_entry_read($zip_entry, zip_entry_filesize($zip_entry));
-                    if (strlen($contents) >= 0) {
-                        if (count($currentFilenameInZipAsParts) >= 2) {
-                            $currentFileNameInZipTrimmed = str_replace($zipStartOfPath, "", $currentFilenameInZip);
-                            $putResult = (new File($baseExtractDir . $currentFileNameInZipTrimmed, true))->write($contents);
+        $countRemoved = $this->removeUnusedFiles($result['file_list_diff']);
 
-                            if ($putResult !== false) {
-                                $countUpgraded++;
-                            } else {
-                                $countNotUpgraded++;
-                                $notUpgradedList[] = $currentFileNameInZipTrimmed;
-                            }
-
-                            $safeList[] = $baseExtractDir . $currentFileNameInZipTrimmed;
-                        } else {
-                            $countNotUpgraded++;
-                        }
-                    }
-                    zip_entry_close($zip_entry);
-                } else {
-                    $countNotExtracted++;
-                }
-            }
-            zip_close($zip);
-
-            $countRemoved = $this->removeUnusedFiles($safeList);
-
-            $msg = '';
-            $msg .= __('{0} files extracted, {1} files failed to extract. ', $countExtracted, $countNotExtracted);
-            $msg .= __('{0} files upgraded, {1} files failed to upgrade. ', $countUpgraded, $countNotUpgraded);
-            $msg .= __('{0} files removed. ', $countRemoved);
-            $msg = trim($msg);
-            $this->Flash->success($msg);
-            $this->Flash->success(__('Successfully upgraded to version {0}.', $tag));
-
+        $msg = '';
+        if ($result['status']) {
+            $msg .= __('Zip update extracted successfully. ');
         } else {
-            $this->Flash->error(__('Could not read the update package. Please try again.'));
+            $msg .= __('Zip update extracted with errors. ');
         }
+        $msg .= __('{0} files extracted, {1} files failed to extract. ', count($result['extract_passed']), count($result['extract_failed']));
+        $msg .= __('{0} files removed. ', $countRemoved);
+        $msg = trim($msg);
+
+        if ($result['status']) {
+            $this->Flash->success($msg);
+        } else {
+            $this->Flash->warning($msg);
+        }
+
+        $this->Flash->success(__('Successfully upgraded to version {0}.', $tag));
 
         //clear the Cache
         try {
@@ -302,27 +284,28 @@ class InstallersController extends AppController
     /**
      * Remove unused files
      *
-     * @param null $safeList
+     * @param null $removeList
      * @return int
      */
-    public function removeUnusedFiles($safeList = null)
+    public function removeUnusedFiles($removeList = null)
     {
-        $zm = new ZipMaker();
+        $zipPackager = new ZipPackager();
 
-        $baseDir = ROOT;
         $ignoreFilesFolders = [
-            "config\\app.php",
-            "bin\\BackgroundServices\\nssm.exe",
-            "logs\\",
-            "tmp\\",
+            "config/app.php",
+            "config/config_local.php",
+            "config/Stub_DB.sqlite",
+            "bin/BackgroundServices/nssm.exe",
+            "logs/",
+            "tmp/",
         ];
 
-        $fileListToCheck = $zm->makeFileList($baseDir, $ignoreFilesFolders);
-        $fileListToRemove = array_diff($fileListToCheck, $safeList);
+        $removeList = $zipPackager->filterOutFoldersAndFiles($removeList, $ignoreFilesFolders);
 
         $removedCounter = 0;
-        foreach ($fileListToRemove as $file) {
-            if (unlink($file)) {
+        foreach ($removeList as $file) {
+            $baseDir = ROOT . DS;
+            if (unlink($baseDir . $file)) {
                 $removedCounter++;
             }
         }

@@ -6,7 +6,7 @@ namespace App\Utility\Release;
 use App\Model\Table\InternalOptionsTable;
 use arajcany\ToolBox\Utility\Security\Security;
 use arajcany\ToolBox\Utility\TextFormatter;
-use arajcany\ToolBox\Utility\ZipMaker;
+use arajcany\ToolBox\ZipPackager;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use Cake\Console\ConsoleIo;
@@ -205,7 +205,7 @@ class BuildTasks
         $drive = implode(DS, $drive);
         $drive = TextFormatter::makeEndsWith($drive, DS);
 
-        $zm = new ZipMaker();
+        $zipPackager = new ZipPackager();
 
         //----create a file list to zip---------------------------------
         $baseDir = ROOT;
@@ -217,6 +217,7 @@ class BuildTasks
             "config\\Stub_DB.sqlite",
             "config\\internal.sqlite",
             "bin\\installer\\",
+            "bin\\ComposerCommands.txt",
             ".git\\",
             ".idea\\",
             "logs\\",
@@ -237,49 +238,57 @@ class BuildTasks
             "phpunit.xml.dist",
             "README.md",
             "LICENSE",
+            "web.xml",
         ];
 
         if (isset($options['gitIgnored'])) {
             $ignoreFilesFolders = array_merge($ignoreFilesFolders, $options['gitIgnored']);
         }
 
-        $fileList = $zm->makeFileList($baseDir, $ignoreFilesFolders);
+        $rawFileList = $zipPackager->rawFileList($baseDir);
+        $rawFileList = $zipPackager->filterOutFoldersAndFiles($rawFileList, $ignoreFilesFolders);
+        $rawFileList = $zipPackager->filterOutVendorExtras($rawFileList);
+        $fileList = $zipPackager->convertRawFileListToZipList($rawFileList, $baseDir, $app_name);
 
         $fileList[] = [
+            'external' => "web.xml",
+            'internal' => "$app_name/web.config"
+        ];
+        $fileList[] = [
             'external' => CONFIG . "internal.sqlite",
-            'internal' => "$app_name\\config\\internal.sqlite"
+            'internal' => "$app_name/config/internal.sqlite"
         ];
         $fileList[] = [
             'external' => CONFIG . "version.json",
-            'internal' => "$app_name\\config\\version.json"
+            'internal' => "$app_name/config/version.json"
         ];
         $fileList[] = [
             'external' => CONFIG . "version_history.json",
-            'internal' => "$app_name\\config\\version_history.json"
+            'internal' => "$app_name/config/version_history.json"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\logs\\empty"
+            'internal' => "$app_name/logs/empty"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\tmp\\empty"
+            'internal' => "$app_name/tmp/empty"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\tmp\\sessions\\empty"
+            'internal' => "$app_name/tmp/sessions/empty"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\tmp\\cache\\empty"
+            'internal' => "$app_name/tmp/cache/empty"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\tmp\\configure.txt"
+            'internal' => "$app_name/tmp/configure.txt"
         ];
         $fileList[] = [
             'external' => CONFIG . "empty",
-            'internal' => "$app_name\\tmp\\cache\\clear_all.txt"
+            'internal' => "$app_name/tmp/cache/clear_all.txt"
         ];
         //------------------------------------------------------------------------
         $this->writeToLog(__("Compiled a list of {0} files to Zip.", count($fileList)));
@@ -299,7 +308,7 @@ class BuildTasks
         $this->writeToLog(__('Zipping files to {0}', $drive));
         $date = date('Ymd_His');
         $zipFileName = str_replace(" ", "_", "{$date}_{$app_name}_v{$newVersionData['tag']}.zip");
-        $zipResult = $zm->makeZipFromFileList($fileList, "{$drive}{$zipFileName}", $baseDir, $app_name);
+        $zipResult = $zipPackager->makeZipFromZipList("{$drive}{$zipFileName}", $fileList);
         if ($zipResult) {
             $this->writeToLog(__('Created {0}', "{$drive}{$zipFileName}"));
             $return = true;

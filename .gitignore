@@ -56,3 +56,5 @@ nbproject/*
 /bin/BackgroundServices/services_stop.bat
 /bin/BackgroundServices/services_test_commands.bat
 /bin/BuildRelease_Test.bat
+bin/ComposerCommands.txt
+web.config

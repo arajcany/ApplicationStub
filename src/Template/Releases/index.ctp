@@ -23,6 +23,7 @@
  * @var bool $isUNC
  * @var array $remoteUpdateDebug
  *
+ * @var string $onlineVersionHistoryHash
  */
 
 ?>
@@ -180,6 +181,32 @@
                             ?></pre>
                     <?php } ?>
 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-lg-12">
+        <div class="releases index">
+            <div class="card">
+                <div class="card-header">
+                    <strong>OnlineVersionHistoryHash Debug</strong>
+                    <?php echo $this->Html->link('Republish', ['action' => 'republish_version_history_hash']) ?>
+                </div>
+                <div class="card-body">
+                    <pre><?php
+                        print_r($onlineVersionHistoryHash);
+                        ?></pre>
+                    <pre><?php
+                        $decrypted = \arajcany\ToolBox\Utility\Security\Security::decrypt64Url($onlineVersionHistoryHash);
+                        print_r($decrypted);
+                        ?></pre>
+                    <pre><?php
+                        $arrayed = json_decode($decrypted, JSON_OBJECT_AS_ARRAY);
+                        print_r($arrayed);
+                        ?></pre>
                 </div>
             </div>
         </div>

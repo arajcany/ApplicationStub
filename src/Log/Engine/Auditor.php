@@ -10,6 +10,7 @@ use Cake\Log\Engine\BaseLog;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Exception;
+use Throwable;
 
 /**
  * Auditor class for logging events into the DB
@@ -48,7 +49,10 @@ class Auditor extends BaseLog
         $this->TrackHits = TableRegistry::getTableLocator()->get('TrackHits');
 
         if (!is_cli()) {
-            $this->Session = Router::getRequest()->getSession();
+            try {
+                $this->Session = Router::getRequest()->getSession();
+            } catch (Throwable $exception) {
+            }
         } else {
             $this->Session = null;
         }
@@ -290,7 +294,7 @@ class Auditor extends BaseLog
         while ($tryCounter < $tryLimit & !$isSaved) {
             try {
                 $isSaved = $this->TrackLogins->save($trackLogin);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 //do nothing, non critical error
             }
             usleep(30);
@@ -377,7 +381,7 @@ class Auditor extends BaseLog
         while ($tryCounter < $tryLimit & !$isSaved) {
             try {
                 $isSaved = $this->TrackHits->save($hit);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 //do nothing, non critical error
             }
             usleep(20);
