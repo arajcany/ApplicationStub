@@ -248,7 +248,10 @@ class InstallersController extends AppController
         $zipPackager = new ZipPackager();
         $result = $zipPackager->extractZip($zipFilePathName, $baseExtractDir, true);
 
-        $countRemoved = $this->removeUnusedFiles($result['file_list_diff']);
+        $diffReport = $zipPackager->getZipFsoDifference($zipFilePathName, $baseExtractDir);
+        $toRemove = $diffReport['fsoExtra'];
+        $toRemove = str_replace($baseExtractDir, "", $toRemove);
+        $countRemoved = $this->removeUnusedFiles($toRemove);
 
         $msg = '';
         if ($result['status']) {
@@ -305,6 +308,8 @@ class InstallersController extends AppController
             "bin/BackgroundServices/nssm.exe",
             "logs/",
             "tmp/",
+            "web.xml",
+            "web.config",
         ];
 
         $removeList = $zipPackager->filterOutFoldersAndFiles($removeList, $ignoreFilesFolders);

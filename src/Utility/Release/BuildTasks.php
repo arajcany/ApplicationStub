@@ -238,7 +238,6 @@ class BuildTasks
             "phpunit.xml.dist",
             "README.md",
             "LICENSE",
-            "web.xml",
         ];
 
         if (isset($options['gitIgnored'])) {
@@ -250,10 +249,6 @@ class BuildTasks
         $rawFileList = $zipPackager->filterOutVendorExtras($rawFileList);
         $fileList = $zipPackager->convertRawFileListToZipList($rawFileList, $baseDir, $app_name);
 
-        $fileList[] = [
-            'external' => "web.xml",
-            'internal' => "$app_name/web.config"
-        ];
         $fileList[] = [
             'external' => CONFIG . "internal.sqlite",
             'internal' => "$app_name/config/internal.sqlite"
