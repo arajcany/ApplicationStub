@@ -238,7 +238,7 @@ class InstallersController extends AppController
             }
         }
 
-        $baseExtractDir = ROOT . DS;
+        $baseExtractDir = TextFormatter::makeDirectoryTrailingForwardSlash(ROOT);
 
         $count = $this->BackgroundServices->stop('all', false);
         if ($count > 0) {
@@ -246,12 +246,32 @@ class InstallersController extends AppController
         }
 
         $zipPackager = new ZipPackager();
+
+        //extract FILES
         $result = $zipPackager->extractZipDifference($zipFilePathName, $baseExtractDir, true);
 
+        //remove unused files
         $diffReport = $zipPackager->getZipFsoDifference($zipFilePathName, $baseExtractDir, true);
-        $toRemove = $diffReport['fsoExtra'];
-        $toRemove = str_replace($baseExtractDir, "", $toRemove);
-        $countRemoved = $this->removeUnusedFiles($toRemove);
+        $removeList = $diffReport['fsoExtra'];
+        $removeList = str_replace($baseExtractDir, "", $removeList);
+        $ignoreFilesFolders = [
+            "config/app.php",
+            "config/config_local.php",
+            "config/Stub_DB.sqlite",
+            "bin/BackgroundServices/nssm.exe",
+            "logs/",
+            "tmp/",
+            "web.xml",
+            "web.config",
+        ];
+        $removeList = $zipPackager->filterOutFoldersAndFiles($removeList, $ignoreFilesFolders);
+        $removedCounter = 0;
+        foreach ($removeList as $file) {
+            if (unlink($baseExtractDir . $file)) {
+                $removedCounter++;
+            }
+        }
+
 
         $msg = '';
         if ($result['status']) {
@@ -260,7 +280,7 @@ class InstallersController extends AppController
             $msg .= __('Zip update extracted with errors. ');
         }
         $msg .= __('{0} files extracted, {1} files failed to extract. ', count($result['extract_passed']), count($result['extract_failed']));
-        $msg .= __('{0} files removed. ', $countRemoved);
+        $msg .= __('{0} files removed. ', $removedCounter);
         $msg = trim($msg);
 
         if ($result['status']) {
@@ -292,38 +312,6 @@ class InstallersController extends AppController
     }
 
     /**
-     * Remove unused files
-     *
-     * @param null $removeList
-     * @return int
-     */
-    public function removeUnusedFiles($removeList = null)
-    {
-        $zipPackager = new ZipPackager();
-
-        $ignoreFilesFolders = [
-            "config/app.php",
-            "config/config_local.php",
-            "config/Stub_DB.sqlite",
-            "bin/BackgroundServices/nssm.exe",
-            "logs/",
-            "tmp/",
-            "web.xml",
-            "web.config",
-        ];
-
-        $removeList = $zipPackager->filterOutFoldersAndFiles($removeList, $ignoreFilesFolders);
-
-        $removedCounter = 0;
-        foreach ($removeList as $file) {
-            $baseDir = ROOT . DS;
-            if (unlink($baseDir . $file)) {
-                $removedCounter++;
-            }
-        }
-
-        return $removedCounter;
-    }
 
     /**
      * To test status and requests-per-second
