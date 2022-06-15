@@ -246,9 +246,11 @@ class InstallersController extends AppController
         }
 
         $zipPackager = new ZipPackager();
-        $result = $zipPackager->extractZip($zipFilePathName, $baseExtractDir, true);
+        $result = $zipPackager->extractZipDifference($zipFilePathName, $baseExtractDir, true);
 
-        $diffReport = $zipPackager->getZipFsoDifference($zipFilePathName, $baseExtractDir);
+        $diffReport = $zipPackager->getZipFsoDifference($zipFilePathName, $baseExtractDir, true);
+        print_r($diffReport);
+        die();
         $toRemove = $diffReport['fsoExtra'];
         $toRemove = str_replace($baseExtractDir, "", $toRemove);
         $countRemoved = $this->removeUnusedFiles($toRemove);
