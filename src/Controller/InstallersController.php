@@ -248,7 +248,7 @@ class InstallersController extends AppController
         $zipPackager = new ZipPackager();
 
         //extract FILES
-        $result = $zipPackager->extractZipDifference($zipFilePathName, $baseExtractDir, true);
+        $unzipResult = $zipPackager->extractZipDifference($zipFilePathName, $baseExtractDir, true);
 
         //remove unused files
         $diffReport = $zipPackager->getZipFsoDifference($zipFilePathName, $baseExtractDir, true);
@@ -274,16 +274,17 @@ class InstallersController extends AppController
 
 
         $msg = '';
-        if ($result['status']) {
+        if ($unzipResult['status']) {
             $msg .= __('Zip update extracted successfully. ');
         } else {
             $msg .= __('Zip update extracted with errors. ');
         }
-        $msg .= __('{0} files extracted, {1} files failed to extract. ', count($result['extract_passed']), count($result['extract_failed']));
+        //todo fix the reporting
+        //$msg .= __('{0} files extracted, {1} files failed to extract. ', count($diffReport['extract_passed']), count($diffReport['extract_failed']));
         $msg .= __('{0} files removed. ', $removedCounter);
         $msg = trim($msg);
 
-        if ($result['status']) {
+        if ($unzipResult['status']) {
             $this->Flash->success($msg);
         } else {
             $this->Flash->warning($msg);
