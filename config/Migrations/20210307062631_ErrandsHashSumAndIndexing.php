@@ -104,14 +104,6 @@ class ErrandsHashSumAndIndexing extends AbstractMigration
             )
             ->addIndex(
                 [
-                    'parameters',
-                ],
-                [
-                    'name' => 'errands_parameters_index',
-                ]
-            )
-            ->addIndex(
-                [
                     'priority',
                 ],
                 [
@@ -168,7 +160,6 @@ class ErrandsHashSumAndIndexing extends AbstractMigration
             ->removeIndexByName('errands_method_index')
             ->removeIndexByName('errands_modified_index')
             ->removeIndexByName('errands_name_index')
-            ->removeIndexByName('errands_parameters_index')
             ->removeIndexByName('errands_priority_index')
             ->removeIndexByName('errands_server_index')
             ->removeIndexByName('errands_started_index')

@@ -19,7 +19,7 @@ return [
      * e.g. if the value is 'dev' you might want to show a green bar in
      * the header so that the developer can see this a dev instance
      */
-    'mode' => 'prod',
+    'mode' => 'dev',
 
     /**
      * Debug Level:
