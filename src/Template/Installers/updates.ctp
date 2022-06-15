@@ -24,8 +24,7 @@ if ($versions == false) {
         <div class="col-lg-12 installers update">
             <?php
             echo __("Sorry, something went wrong with the Update List. Please try again later.");
-
-            echo __("Edit Update URL ");
+            echo __("<br>Edit the Update URL ");
             echo $this->Html->link($remote_update_url, ['controller' => 'settings', 'action' => 'edit', $remote_update_url_id]);
             return;
             ?>
@@ -41,7 +40,6 @@ if ($versions == false) {
             <div class="card">
                 <div class="card-header">
                     <i class="fa fa-align-justify"></i> <?= __('Published Updates') ?>
-
                 </div>
                 <div class="card-body">
                     <p>

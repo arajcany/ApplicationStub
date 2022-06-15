@@ -164,7 +164,11 @@ class InstallersController extends AppController
     public function updates()
     {
         $hash = $this->Version->_getOnlineVersionHistoryHash();
-        $hash = @array_reverse($hash);
+        if ($hash) {
+            $hash = @array_reverse($hash);
+        } else {
+            $hash = [];
+        }
         $this->set('versions', $hash);
 
         $remote_update_url = TextFormatter::makeEndsWith($this->Settings->getSetting('remote_update_url'), "/");
@@ -191,6 +195,9 @@ class InstallersController extends AppController
 
         if (strtolower(Configure::read('mode')) !== 'uat' && strtolower(Configure::read('mode')) !== 'prod') {
             $this->Flash->error(__('You are not allowed to Upgrade!'));
+            return $this->redirect(['action' => 'updates']);
+        } elseif (empty(Configure::read('mode'))) {
+            $this->Flash->error(__('Please add a Config value of  ["mode"=>"prod"] to allow upgrading'));
             return $this->redirect(['action' => 'updates']);
         }
 
