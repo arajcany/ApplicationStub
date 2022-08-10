@@ -440,12 +440,14 @@ class UsersController extends AppController
             $options = [
                 'fieldList' => [
                     'password',
+                    'password_1',
                     'password_2',
                     'is_confirmed'
                 ]
             ];
 
             $patchData = $this->request->getData();
+            $patchData['password_1'] = $patchData['password'];
             $patchData['is_confirmed'] = true;
             $user = $this->Users->patchEntity($user, $patchData, $options);
 

@@ -104,11 +104,10 @@ class UsersTable extends AppTable
         }
 
         $validator
-            ->allowEmptyString('password_2', null, 'create')
-            ->allowEmptyString('password_2', null, 'update')
-            ->add('password_2', 'compareWith', [
-                'rule' => ['compareWith', 'password'],
-                'message' => 'Passwords do not match.'
+            ->add('password_1', 'passwordsAreMatched', [
+                'rule' => ['isPasswordsMatched', 'password_2'],
+                'message' => __('Passwords do not match.'),
+                'provider' => 'table',
             ]);
 
         $validator
@@ -170,6 +169,26 @@ class UsersTable extends AppTable
         return $validator;
     }
 
+    /**
+     * Check for matching passwords
+     *
+     * @param $check
+     * @param $field
+     * @param array $context
+     * @return bool
+     */
+    public function isPasswordsMatched($check, $field, array $context)
+    {
+        if (!isset($context['data']) || !array_key_exists($field, $context['data'])) {
+            return false;
+        }
+
+        if ($check === $context['data'][$field]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Strong password validation rules.
