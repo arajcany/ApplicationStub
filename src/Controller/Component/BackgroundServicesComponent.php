@@ -41,14 +41,19 @@ class BackgroundServicesComponent extends Component
         $serviceStopFile = $batchLocation . 'services_stop.bat';
         $serviceCommandsTestFile = $batchLocation . 'services_test_commands.bat';
 
+        $phpVersion = $this->getController()->request->getData('php_version');
         $username = $this->getController()->request->getData('username');
         $password = $this->getController()->request->getData('password');
         $serviceStartMode = $this->getController()->request->getData('service_start');
 
-        exec('where  php', $phpExe, $ret);
-        asort($phpExe);
-        $phpExe = array_reverse($phpExe);
-        $phpExe = $phpExe[0];
+        if (empty($phpVersion) || !is_file($phpVersion)) {
+            exec('where  php', $phpExe, $ret);
+            asort($phpExe);
+            $phpExe = array_reverse($phpExe);
+            $phpExe = $phpExe[0];
+        } else {
+            $phpExe = $phpVersion;
+        }
         $phpLocation = pathinfo($phpExe, PATHINFO_DIRNAME);
         $binDirectory = ROOT . DS . 'bin' . DS;
 

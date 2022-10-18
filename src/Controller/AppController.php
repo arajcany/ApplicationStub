@@ -68,7 +68,7 @@ class AppController extends Controller
      * @return Response
      * @throws \Exception
      */
-    public function initialize()
+    public function initialize(): void
     {
         $this->timeStartup = microtime(true);
 

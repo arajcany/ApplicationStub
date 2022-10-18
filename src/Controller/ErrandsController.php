@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Controller\AppController;
@@ -19,9 +20,18 @@ class ErrandsController extends AppController
      */
     public function index()
     {
+        $this->paginate = [
+            //'contain' => [],
+            'limit' => 10,
+            'order' => [
+                'Errands.id' => 'desc'
+            ],
+        ];
         $errands = $this->paginate($this->Errands);
 
-        $this->set(compact('errands'));
+        $readyToRun = $this->Errands->getReadyToRunCount();
+
+        $this->set(compact('errands', 'readyToRun'));
     }
 
     /**

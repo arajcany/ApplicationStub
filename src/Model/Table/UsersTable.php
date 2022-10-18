@@ -109,6 +109,22 @@ class UsersTable extends AppTable
                 'message' => __('Passwords do not match.'),
                 'provider' => 'table',
             ]);
+        
+//todo implement old_password check on password changing
+//        $validator
+//            ->add('old_password','custom',[
+//                'rule'=>  function($value, $context){
+//                    $user = $this->get($context['data']['id']);
+//                    if ($user) {
+//                        if ((new DefaultPasswordHasher)->check($value, $user->password)) {
+//                            return true;
+//                        }
+//                    }
+//                    return false;
+//                },
+//                'message'=>'The old password does not match the current password!',
+//            ])
+//            ->notEmpty('old_password');
 
         $validator
             ->scalar('first_name')

@@ -11,6 +11,7 @@ use arajcany\ToolBox\Utility\TextFormatter;
 use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Utility\Text;
+use Exception;
 use PharIo\Version\Version;
 use phpseclib\Net\SFTP;
 use App\Utility\Install\Checker;
@@ -35,10 +36,10 @@ class ReleasesController extends AppController
     /**
      * Initialize method
      *
-     * @return \Cake\Http\Response|null
-     * @throws \Exception
+     * @return void
+     * @throws Exception
      */
-    public function initialize()
+    public function initialize(): void
     {
         parent::initialize();
 
@@ -46,8 +47,6 @@ class ReleasesController extends AppController
         $this->VersionControl = new VersionControl();
 
         $this->loadModel('InternalOptions');
-
-        return null;
     }
 
 

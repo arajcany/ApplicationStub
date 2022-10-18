@@ -296,7 +296,7 @@ class HeartbeatsTable extends AppTable
      */
     public function findLastHeartbeats()
     {
-        $cte = ";WITH cte AS ( SELECT *, ROW_NUMBER() OVER (PARTITION BY context ORDER BY created DESC) AS rn FROM Heartbeats Where type = 'heartbeat' )SELECT * FROM cte WHERE rn = 1";
+        $cte = ";WITH cte AS ( SELECT *, ROW_NUMBER() OVER (PARTITION BY context ORDER BY id DESC) AS rn FROM Heartbeats Where type = 'heartbeat' )SELECT * FROM cte WHERE rn = 1";
 
         $conn = $this->getConnection();
         $results = $conn->execute($cte)->fetchAll('assoc');

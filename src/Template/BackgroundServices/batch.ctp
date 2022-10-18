@@ -41,6 +41,13 @@ if (!$isNssm) {
                 'SERVICE_DISABLED' => 'Service is disabled'
             ];
 
+            exec('where  php', $phpExe, $ret);
+            asort($phpExe);
+            $phpExe = array_reverse($phpExe);
+            $phpOptions = $defaultOptions;
+            $phpOptions['options'] = array_combine($phpExe, $phpExe);
+            $phpOptions['label']['text'] = __("Use PHP Version");
+
             $usernameStartOptions = $defaultOptions;
             $usernameStartOptions['label']['text'] = __("Username the Windows Service will run under (Optional)");
 
@@ -55,6 +62,7 @@ if (!$isNssm) {
             <fieldset>
                 <legend><?= __('Background Services Installation Options.') ?></legend>
                 <?php
+                echo $this->Form->control('php_version', $phpOptions);
                 echo $this->Form->control('username', $usernameStartOptions);
                 echo $this->Form->control('password', $passwordStartOptions);
                 echo $this->Form->control('service_start', $serviceStartOptions);

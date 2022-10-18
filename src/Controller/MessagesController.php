@@ -23,16 +23,14 @@ class MessagesController extends AppController
     /**
      * Initialize method
      *
-     * @return Response|null
+     * @return void
      * @throws Exception
      */
-    public function initialize()
+    public function initialize(): void
     {
         parent::initialize();
 
         $this->loadModel('MessageBeacons');
-
-        return null;
     }
 
 

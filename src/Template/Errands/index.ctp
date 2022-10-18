@@ -2,6 +2,7 @@
 /**
  * @var AppView $this
  * @var Errand[]|CollectionInterface $errands
+ * @var int $readyToRun ;
  */
 
 use App\Model\Entity\Errand;
@@ -14,6 +15,16 @@ use Cake\Collection\CollectionInterface;
         <h1 class="page-header">
             <?= __('Errands') ?>
         </h1>
+        <p><?php
+            if ($readyToRun === 0) {
+                echo __('There are no Errands waiting to run.', $readyToRun);
+            } elseif ($readyToRun === 1) {
+                echo __('There is {0} Errand waiting to run.', $readyToRun);
+            } elseif ($readyToRun > 1) {
+                echo __('There are {0} Errands waiting to run.', $readyToRun);
+            }
+            ?>
+        </p>
     </div>
 </div>
 
@@ -24,15 +35,8 @@ use Cake\Collection\CollectionInterface;
                 <thead>
                 <tr>
                     <th scope="col"><?= $this->Paginator->sort('id', 'ID') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('activation') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('expiration') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('server') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('domain') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('name') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('worker_link') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('worker_name') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('class') ?></th>
-                    <th scope="col"><?= $this->Paginator->sort('method') ?></th>
+                    <th scope="col"><?= $this->Paginator->sort('class', 'Class & Method') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('status') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('progress_bar', 'Progress') ?></th>
                     <th scope="col"><?= $this->Paginator->sort('priority') ?></th>
@@ -43,15 +47,8 @@ use Cake\Collection\CollectionInterface;
                 <?php foreach ($errands as $errand): ?>
                     <tr>
                         <td><?= $this->Number->format($errand->id) ?></td>
-                        <td><?= h($errand->activation->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
-                        <td><?= h($errand->expiration->i18nFormat("yyyy-MM-dd HH:mm:ss", TZ)) ?></td>
-                        <td><?= h($errand->server) ?></td>
-                        <td><?= h($errand->domain) ?></td>
-                        <td><?= h($errand->name) ?></td>
-                        <td><?= $this->Number->format($errand->worker_link) ?></td>
                         <td><?= h($errand->worker_name) ?></td>
-                        <td><?= h($errand->class) ?></td>
-                        <td><?= h($errand->method) ?></td>
+                        <td><?= h($errand->class) ?><br><?= h($errand->method) ?></td>
                         <td><?= h($errand->status) ?></td>
                         <td><?= $this->Number->format($errand->progress_bar) ?></td>
                         <td><?= $this->Number->format($errand->priority) ?></td>

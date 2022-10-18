@@ -308,7 +308,11 @@ class BackgroundServicesCommand extends Command
             if (strpos($class, "Table") !== false) {
                 $class = str_replace("Table", "", $class);
                 $Model = $this->loadModel($class);
-                $result = $Model->$method(...$parameters);
+                if (empty($parameters)) {
+                    $result = $Model->$method();
+                } else {
+                    $result = $Model->$method(...$parameters);
+                }
 
                 if (method_exists($Model, 'getReturnValue')) {
                     $returnValue = $Model->getReturnValue();
@@ -318,7 +322,11 @@ class BackgroundServicesCommand extends Command
                 }
             } else {
                 $Object = new $class();
-                $result = $Object->$method(...$parameters);
+                if (empty($parameters)) {
+                    $result = $Object->$method();
+                } else {
+                    $result = $Object->$method(...$parameters);
+                }
 
                 if (method_exists($Object, 'getReturnValue')) {
                     $returnValue = $Object->getReturnValue();

@@ -200,7 +200,7 @@ class ErrandsTable extends AppTable
      */
     public function getReadyToRunCount()
     {
-        //prevent deadlocks
+        //avoid deadlocks
         try {
             $errandQuery = $this->buildQueryForErrands();
             $count = $errandQuery->count();
@@ -266,37 +266,45 @@ class ErrandsTable extends AppTable
     }
 
     /**
-     * Returns a query of Errands that can be run
+     * Returns a query of a single Errand to run (i.e. the next one to run)
      *
      * @return \Cake\ORM\Query
      */
     public function buildQueryForErrandsRowLock()
     {
-        $timeObjCurrent = new FrozenTime();
-
         $selectList = [
             "Errands.id",
         ];
-        $errandQuery = $this->find('all')
-            ->join([
-                'ErrandsParent' => [
-                    'table' => 'errands',
-                    'alias' => 'ErrandsParent',
-                    'type' => 'LEFT',
-                    'conditions' => 'ErrandsParent.id = Errands.wait_for_link'
-                ],
-            ])
-            ->select($selectList)
-            ->where(['Errands.status IS NULL'])
-            ->where(['Errands.started IS NULL'])
-            ->where(['OR' => ['Errands.activation <=' => $timeObjCurrent, 'Errands.activation IS NULL']])
-            ->where(['OR' => ['Errands.expiration >=' => $timeObjCurrent, 'Errands.expiration IS NULL']])
-            ->where(['OR' => ['Errands.wait_for_link IS NULL', 'ErrandsParent.completed IS NOT NULL']])
-            ->orderAsc('Errands.priority')
-            ->orderAsc('Errands.id')
+        $errandQuery = $this->buildQueryForErrands()
+            ->select($selectList, true)
             ->limit(1);
-
         return $errandQuery;
+
+//        $timeObjCurrent = new FrozenTime();
+//
+//        $selectList = [
+//            "Errands.id",
+//        ];
+//        $errandQuery = $this->find('all')
+//            ->join([
+//                'ErrandsParent' => [
+//                    'table' => 'errands',
+//                    'alias' => 'ErrandsParent',
+//                    'type' => 'LEFT',
+//                    'conditions' => 'ErrandsParent.id = Errands.wait_for_link'
+//                ],
+//            ])
+//            ->select($selectList)
+//            ->where(['Errands.status IS NULL'])
+//            ->where(['Errands.started IS NULL'])
+//            ->where(['OR' => ['Errands.activation <=' => $timeObjCurrent, 'Errands.activation IS NULL']])
+//            ->where(['OR' => ['Errands.expiration >=' => $timeObjCurrent, 'Errands.expiration IS NULL']])
+//            ->where(['OR' => ['Errands.wait_for_link IS NULL', 'ErrandsParent.completed IS NOT NULL']])
+//            ->orderAsc('Errands.priority')
+//            ->orderAsc('Errands.id')
+//            ->limit(1);
+//
+//        return $errandQuery;
     }
 
     /**
@@ -341,13 +349,13 @@ class ErrandsTable extends AppTable
                 ],
             ])
             ->select($selectList)
+            ->where(['Errands.status IS NULL'])
             ->where(['Errands.started IS NULL'])
             ->where(['OR' => ['Errands.activation <=' => $timeObjCurrent, 'Errands.activation IS NULL']])
             ->where(['OR' => ['Errands.expiration >=' => $timeObjCurrent, 'Errands.expiration IS NULL']])
             ->where(['OR' => ['Errands.wait_for_link IS NULL', 'ErrandsParent.completed IS NOT NULL']])
             ->orderAsc('Errands.priority')
-            ->orderAsc('Errands.id')
-            ->limit(1);
+            ->orderAsc('Errands.id');
 
         return $errandQuery;
     }

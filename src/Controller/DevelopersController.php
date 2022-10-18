@@ -32,7 +32,7 @@ class DevelopersController extends AppController
     private $TrackLogins;
     private $TrackHits;
 
-    public function initialize()
+    public function initialize(): void
     {
         parent::initialize();
 

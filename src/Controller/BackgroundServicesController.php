@@ -9,6 +9,7 @@ use Cake\Event\Event;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Inflector;
 use App\Model\Table\HeartbeatsTable;
+use Exception;
 use ZipArchive;
 
 /**
@@ -31,10 +32,9 @@ class BackgroundServicesController extends AppController
     /**
      * Initialize method
      *
-     * @return \Cake\Http\Response|null
-     * @throws \Exception
-     */
-    public function initialize()
+     * @return void
+     * @throws Exception
+     */    public function initialize(): void
     {
         parent::initialize();
 
@@ -48,8 +48,6 @@ class BackgroundServicesController extends AppController
         } else {
             $this->isNssm = false;
         }
-
-        return null;
     }
 
 
@@ -80,7 +78,7 @@ class BackgroundServicesController extends AppController
     /**
      * Create Batch files that aid with Install/Remove of the Windows Serevice
      * @return \Cake\Http\Response|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function downloadNssm()
     {
@@ -145,7 +143,7 @@ class BackgroundServicesController extends AppController
     /**
      * Create Batch files that aid with Install/Remove of the Windows Serevice
      * @return \Cake\Http\Response|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function batch()
     {

@@ -22,6 +22,11 @@ class WorkersController extends AppController
     {
         $this->Workers->purge();
 
+        $this->paginate = [
+            'order' => [
+                'Workers.background_services_link' => 'asc'
+            ],
+        ];
         $workers = $this->paginate($this->Workers);
 
         $heartbeats = $this->Workers->Heartbeats->findLastHeartbeats();

@@ -39,10 +39,10 @@ class InstallersController extends AppController
     /**
      * Initialize method
      *
-     * @return \Cake\Http\Response|null
+     * @return void
      * @throws Exception
      */
-    public function initialize()
+    public function initialize(): void
     {
         parent::initialize();
 
@@ -50,8 +50,6 @@ class InstallersController extends AppController
         $this->Users = TableRegistry::getTableLocator()->get('Users');
 
         $this->loadComponent('BackgroundServices');
-
-        return null;
     }
 
 
@@ -270,6 +268,10 @@ class InstallersController extends AppController
             if (unlink($baseExtractDir . $file)) {
                 $removedCounter++;
             }
+        }
+
+        if (!is_file($baseExtractDir . "web.config") && is_file($baseExtractDir . "web.xml")) {
+            copy($baseExtractDir . "web.xml", $baseExtractDir . "web.config");
         }
 
 

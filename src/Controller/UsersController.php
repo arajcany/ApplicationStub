@@ -5,10 +5,12 @@ namespace App\Controller;
 use App\Model\Table\MessagesTable;
 use Cake\Cache\Cache;
 use Cake\Database\Driver\Sqlite;
+use Cake\Http\Response;
 use Cake\I18n\FrozenTime;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Cake\Validation\Validation;
+use Exception;
 
 /**
  * Users Controller
@@ -24,7 +26,11 @@ class UsersController extends AppController
     public $Settings;
     public $Seeds;
 
-    public function initialize()
+    /**
+     * @return Response|void
+     * @throws Exception
+     */
+    public function initialize(): void
     {
         parent::initialize();
 
@@ -35,7 +41,7 @@ class UsersController extends AppController
     /**
      * Index method
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function index()
     {
@@ -50,7 +56,7 @@ class UsersController extends AppController
     /**
      * Add method
      *
-     * @return \Cake\Http\Response|null Redirects on successful add, renders view otherwise.
+     * @return Response|null Redirects on successful add, renders view otherwise.
      */
     public function add()
     {
@@ -73,7 +79,7 @@ class UsersController extends AppController
      * Edit method
      *
      * @param string|null $id User id.
-     * @return \Cake\Http\Response|null Redirects on successful edit, renders view otherwise.
+     * @return Response|null Redirects on successful edit, renders view otherwise.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function edit($id = null)
@@ -99,7 +105,7 @@ class UsersController extends AppController
      * Delete method
      *
      * @param string|null $id User id.
-     * @return \Cake\Http\Response|null Redirects to index.
+     * @return Response|null Redirects to index.
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function delete($id = null)
@@ -118,7 +124,7 @@ class UsersController extends AppController
     /**
      * Update method - Users can self-update their details
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function profile()
     {
@@ -166,7 +172,7 @@ class UsersController extends AppController
      * Pre-login to the application. Called via ajax when the login page loads.
      * Put logic in here to warm up the site for the User
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function preLogin()
     {
@@ -215,7 +221,7 @@ class UsersController extends AppController
     /**
      * Login to the application
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function login()
     {
@@ -318,7 +324,7 @@ class UsersController extends AppController
     /**
      * Logout of the application
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function logout()
     {
@@ -332,7 +338,7 @@ class UsersController extends AppController
     /**
      * Forgot password flow
      *
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function forgot()
     {
@@ -408,7 +414,7 @@ class UsersController extends AppController
      *
      * @param bool $token
      * @param bool $autoLoginToken
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function reset($token = false, $autoLoginToken = false)
     {
@@ -494,7 +500,7 @@ class UsersController extends AppController
      * Used for one-time entries and after password expiry reset.
      *
      * @param bool $autoLoginToken
-     * @return \Cake\Http\Response|null
+     * @return Response|null
      */
     public function entry($autoLoginToken = false)
     {
