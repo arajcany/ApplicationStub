@@ -34,7 +34,8 @@ class BackgroundServicesController extends AppController
      *
      * @return void
      * @throws Exception
-     */    public function initialize(): void
+     */
+    public function initialize(): void
     {
         parent::initialize();
 
